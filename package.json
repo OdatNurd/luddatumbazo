@@ -11,7 +11,8 @@
   "private": true,
   "scripts": {
     "client": "wrangler pages dev --compatibility-date=2023-12-01 --port=3000 client/",
-    "backend": "cd backend && wrangler dev"
+    "backend": "cd backend && wrangler dev",
+    "deploy": "cd backend && wrangler deploy"
   },
   "devDependencies": {
     "wrangler": "^3.0.0"

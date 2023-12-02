@@ -1,0 +1,57 @@
+name = "luddatumbazo-api"
+main = "src/index.js"
+compatibility_date = "2023-12-01"
+
+# Dev versions should have no route; production versions go directly to our
+# customized route instead.
+#
+# Here the zone_id comes from the API section of the overview page of a site
+# in the CF Dashboard.
+workers_dev = false
+route = { pattern = "luddatumbazo.odatnurd.net/api/*", zone_id="228f86abc5bc8b04719dc4671eb09dc0" }
+
+# For CF Images setup, set up an account and make a note of your account hash,
+# which is readily visible in the images dashboard. Then, set up a page rewrite
+# rule to get at the images for the assigned domain more directly:
+#
+#  1. Log into the CF dash and navigate to the website you want to serve from
+#  2. Select Rules > Transform Rules and pick Create Rule; give it a name
+#  3. Choose 'Custom Expression', click the Edit Expression Link
+#     - Expression: (http.request.uri.path matches "^/images/.*$")
+#  4. Choose 'Then > Rewrite To > Dynamic' and edit the expression
+#     - concat( "/cdn-cgi/imagedelivery/Dx4jrYPNAcY0IcNpYD9HJA", substring(http.request.uri.path, 7) )
+#
+# In #4, the dx4jr bit is your account hash; that is available in CF Images
+#
+# Images are now available under:
+#   https://luddatumbazo.odatnurd.net/images/<IMAGEID>/<VARIANT-NAME>
+#   https://luddatumbazo.odatnurd.net/cdn-cgi/imagedelivery/Dx4jrYPNAcY0IcNpYD9HJA/<IMAGEID>/<VARIANT-NAME>
+#   https://imagedelivery.net/Dx4jrYPNAcY0IcNpYD9HJA/<IMAGEID>/<VARIANT-NAME>
+#
+# The first two of these are gated behind any IAM, but the third ia always
+# public unless the image is not public (in which case the request will require
+# a key).
+
+# Bind our database; the name and ID come from the D1 page and are visible when
+# you create DB or go back to look at one.
+[[d1_databases]]
+binding = "DB"
+database_name = "luddatumbazo-db"
+database_id = "12c1daa5-0e78-4a83-ae4e-6785dd098005"
+
+# Bind our data bucket; the name is specified by you when you create the bucket
+# initially.
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "luddatumbazo-assets"
+
+[vars]
+# The Account ID of the CF account that is running the worker; this is visible
+# from the same place as the zone_id for the worker router; it's specific to an
+# account and not a domain.
+CF_ACCOUNT_ID = 'd8cc4339c920f6d32079a5b483603063'
+
+# Local dev server settings
+[dev]
+ip = "localhost"
+port = 8000
