@@ -1,0 +1,299 @@
+// Owner: odatnurd@gmail.com
+//
+// https://dbdiagram.io/d/GameDB-6557eafa3be14957873b557c
+// https://dbml.dbdiagram.io/docs/#table-notes
+
+Project Luddatumbazo {
+  database_type: 'SQLite'
+  Note: 'Personalized Board Game ownership and playtime tracker'
+}
+
+Table ConfigInfo {
+  name TEXT [unique, pk]
+  value VALUE [not null, note: 'setting value can be string, number or boolean']
+
+  Note: 'Allows for free form system configuration. Settings must be unique, and values can be any string, number of boolean value'
+}
+
+Table Log {
+  logID INTEGER [unique, increment, pk]
+  message TEXT [not null]
+  ip TEXT [not null]
+  userID INTEGER [ref: < User.userId]
+  eventTime TIME [default: 'now()']
+
+  Note: 'Log messages regarding users that are taking actions, and what they are'
+}
+
+enum AssetType {
+  R2 [note: 'stored within the data bucket; path defines the URL']
+  Images [note: 'stored as an image in Cloudflare Images; path is the full image URL']
+  ImageKit [note: 'stored as an image in Imagekit; path is the full imagekit URL']
+}
+
+Table Asset {
+  id INTEGER [unique, increment, pk]
+  mimetype STRING [not null, note: 'The mime type of the asset being stored']
+  filename STRING [not null, note: 'The original name of the file when it was uploaded']
+  storage AssetType [not null, note: 'The storage location for this asset (e.g. R2)']
+  path STRING [not null, note: 'The location within storage for this asset']
+
+  Note: 'Storage for some form of external asset, such as an image, a PDF, etc. Asset type is open ended'
+}
+
+Table User {
+  userId INTEGER [unique, increment, pk, note: 'internal identifier for this user']
+  externalId TEXT [unique, note: 'unique identifier based on the external auth being used']
+  profileImage INTEGER [ref: > Asset.id]
+  firstName TEXT [not null]
+  lastName TEXT [not null]
+  emailAddress TEXT [not null]
+  lastLoginTime TIME [not null, default: 'now()']
+
+  indexes {
+    externalId
+  }
+
+  Note: 'A known user in the system; associates an external authentication ID with a specific user'
+}
+
+Table UserConfigInfo {
+  userID INTEGER [ref: - User.userId]
+
+  name TEXT
+  value TEXT [not null, note: 'setting value can be string, number or boolean']
+
+  Note: 'Allows for free form user configuration. Settings must be unique, and values can be any string, number of boolean value'
+}
+
+Table UserPermissions {
+  userID INTEGER [unique, increment, pk, ref: < User.userId]
+
+  canEditUser BOOLEAN [default: false]
+  canRemoveUser BOOLEAN [default: false]
+
+  canAddGame BOOLEAN [default: false]
+  canEditGame BOOLEAN [default: false]
+  canRemoveGame BOOLEAN [default: false]
+
+  canAddDesigner BOOLEAN [default: false]
+  canEditDesigner BOOLEAN [default: false]
+  canRemoveDesigner BOOLEAN [default: false]
+
+  canAddArtist BOOLEAN [default: false]
+  canEditArtist BOOLEAN [default: false]
+  canRemoveArtist BOOLEAN [default: false]
+
+  canAddPublisher BOOLEAN [default: false]
+  canEditPublisher BOOLEAN [default: false]
+  canRemovePublisher BOOLEAN [default: false]
+
+  canAddCategory BOOLEAN [default: false]
+  canEditCategory BOOLEAN [default: false]
+  canRemoveCategory BOOLEAN [default: false]
+
+  canAddMechanic BOOLEAN [default: false]
+  canEditMechanic BOOLEAN [default: false]
+  canRemoveMechanic BOOLEAN [default: false]
+
+  canAddAsset BOOLEAN [default: false]
+  canEditAsset BOOLEAN [default: false]
+  canRemoveAsset BOOLEAN [default: false]
+
+  canAddSessionReport BOOLEAN [default: false]
+  canEditSessionReport BOOLEAN [default: false]
+  canRemoveSessionReport BOOLEAN [default: false]
+
+  canConfigSystem BOOLEAN [default: false]
+
+  Note: 'Granular permissions that allow specific users to carry out specific actions'
+}
+
+Table Game {
+    id INTEGER [unique, increment, pk]
+    slug TEXT [unique, not null]
+    publishDate INTEGER [not null]
+    primaryName TEXT [not null, note: 'Games may have many names; others are linked elsewhere']
+    expandsGameId INTEGER [note: 'denotes if this game is an expansion of some other game']
+    description TEXT [not null]
+    bggId INTEGER [not null]
+    officialURL TEXT [default: '']
+    teachingURL TEXT [default: '', note: 'Link to a YT video that teaches this game']
+    coverId INTEGER [ref: < Asset.id]
+    minPlayerAge INTEGER [default: 1]
+    suggestedPlayerAge INTEGER [default: 1]
+    minPlayers INTEGER [default: 1]
+    maxPlayers INTEGER [default: 1]
+    suggestedPlayers INTEGER [default: 1]
+    minPlayTime INTEGER [default: 1]
+    maxPlayTime INTEGER [default: 1]
+    playTime INTEGER [default: 1]
+    Note: 'A representation of a unique game'
+}
+
+Table GameAsset {
+  id INTEGER [unique, increment, pk]
+  assetId INTEGER [not null, ref: - Asset.id]
+  gameId INTEGER [not null, ref: < Game.id]
+
+  Note: 'Associate specific assets to a particular game'
+}
+
+Table Designer {
+  id INTEGER [unique, increment, pk]
+  slug TEXT [unique, not null]
+  name VARCHAR [not null]
+
+  Note: 'A record of a specific and unique designer'
+}
+
+Table Artist {
+  id INTEGER [unique, increment, pk]
+  slug TEXT [unique, not null]
+  name VARCHAR [not null]
+
+  Note: 'A record of a specific and unique artist'
+}
+
+Table Publisher {
+  id INTEGER [unique, increment, pk]
+  slug TEXT [unique, not null]
+  name VARCHAR [not null]
+
+  Note: 'A record of a specific and unique publisher'
+}
+
+Table Category {
+  id INTEGER [unique, increment, pk]
+  slug TEXT [unique, not null]
+  name VARCHAR [not null]
+
+  Note: 'A record of a specific and unique category'
+}
+
+Table Mechanic {
+  id INTEGER [unique, increment, pk]
+  slug TEXT [unique, not null]
+  name VARCHAR [not null]
+
+  Note: 'A record of a specific and unique mechanic'
+}
+
+Table GameName {
+  id INTEGER [unique, increment, pk]
+  gameId INTEGER [not null, ref: > Game.id]
+  name VARCHAR [not null]
+  primary BOOLEAN [default: false, note: 'The primary is the name this is best known by']
+
+  Note: 'Associates alternate game names with game IDs'
+}
+
+Table DesignerPlacement {
+  id INTEGER [unique, increment, pk]
+  gameId INTEGER [not null, ref: > Game.id]
+  designerId INTEGER [not null, ref: > Designer.id]
+
+  Note: 'Associates a specific designer with a specific game'
+}
+
+Table PublisherPlacement {
+  id INTEGER [unique, increment, pk]
+  gameId INTEGER [not null, ref: > Game.id]
+  publisherId INTEGER [not null, ref: > Publisher.id]
+
+  Note: 'Associates a specific publisher with a specific game'
+}
+
+Table ArtistPlacement {
+  id INTEGER [unique, increment, pk]
+  gameId INTEGER [not null, ref: > Game.id]
+  artistId INTEGER [not null, ref: > Artist.id]
+
+  Note: 'Associates a specific artist with a specific game'
+
+}
+
+Table CategoryPlacement {
+  id INTEGER [unique, increment, pk]
+  gameId INTEGER [not null, ref: > Game.id]
+  categoryId INTEGER [not null, ref: > Category.id]
+
+  Note: 'Associates a specific category with a specific game'
+}
+
+Table MechanicPlacement {
+  id INTEGER [unique, increment, pk]
+  gameId INTEGER [not null, ref: > Game.id]
+  mechanicId INTEGER [not null, ref: > Mechanic.id]
+
+  Note: 'Associates a specific mechanic with a specific game'
+}
+
+
+Table SessionReport {
+  id INTEGER [unique, increment, pk]
+  gameID INTEGER [not null, ref: > Game.id]
+  loggingPlayerId INTEGER [not null, ref: > User.userId]
+  sessionDate TIME [default: 'now()']
+  sessionDuration INTEGER [default: 1]
+  isDetailed BOOLEAN [default: false, note: 'Detailed session reports also include a textual body']
+
+  Note: 'An entry for a specific session report'
+}
+
+Table SessionReportEntry {
+  id INTEGER [unique, increment, pk]
+  sessionID INTEGER [not null, ref: - SessionReport.id]
+  playerID INTEGER [not null, ref: < User.userId]
+  score INTEGER [default: 0]
+  winner BOOLEAN [default: false]
+
+  Note: 'Tracks a specific player in a specific session report entry'
+}
+
+Table SessionReportContents {
+  sessionID INTEGER [unique, pk, ref: - SessionReport.id]
+  contents VARCHAR
+
+  Note: 'Contains the textual content of a detailed session report'
+}
+
+
+Table Household {
+  id INTEGER [unique, increment, pk]
+  name VARCHAR [not null]
+
+  Note: 'Users can exist in one or more households; a household tracks who owns games'
+}
+
+Table UserHousehold {
+  id INTEGER [unique, increment, pk]
+
+  userId INTEGER [not null, ref: < User.userId]
+  householdId INTEGER [not null, ref: < Household.id]
+
+  Note: 'Register that a specific user resides in a specific household'
+}
+
+Table GameOwners {
+  id INTEGER [unique, increment, pk]
+
+  householdId INTEGER [not NULL, ref: < Household.id]
+  gameId INTEGER [not NULL, ref: < Game.id]
+  gameName VARCHAR [not NULL, note: 'The name of the game this household owns; may not be the primary name']
+
+  loanedTo INTEGER [ref: < Household.id]
+
+  Note: 'Game ownership is tracked by household; games can be loaned to other households'
+}
+
+Table GameWishlist {
+  id INTEGER [unique, increment, pk]
+
+  householdId INTEGER [not NULL, ref: < Household.id]
+  gameId INTEGER [not NULL, ref: < Game.id]
+
+  addedByUserId INTEGER [ref: < User.userId]
+
+  Note: 'Game wishlist is tracked by household; the wishing user is stored'
+}

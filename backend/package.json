@@ -10,6 +10,7 @@
     "wrangler": "^3.0.0"
   },
   "dependencies": {
+    "@axel669/sanic-xml": "^0.1.2",
     "hono": "^3.10.0"
   }
 }
