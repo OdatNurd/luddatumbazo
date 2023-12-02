@@ -1,0 +1,19 @@
+{
+  "name": "luddatumbazo",
+  "version": "0.0.0",
+  "description": "A home grown tool for tracking board game ownership and plays",
+  "repository": "https://github.com/OdatNurd/devember-2023",
+  "author": {
+    "name": "OdatNurd",
+    "email": "odatnurd@gmail.com",
+    "url": "https://odatnurd.net"
+  },
+  "private": true,
+  "scripts": {
+    "client": "wrangler pages dev --compatibility-date=2023-12-01 --port=3000 client/",
+    "backend": "cd backend && wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
