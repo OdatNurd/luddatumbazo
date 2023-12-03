@@ -17,6 +17,7 @@ Table ConfigInfo {
 
 Table Log {
   logID INTEGER [unique, increment, pk]
+
   message TEXT [not null]
   ip TEXT [not null]
   userID INTEGER [ref: < User.userId]
@@ -33,6 +34,7 @@ enum AssetType {
 
 Table Asset {
   id INTEGER [unique, increment, pk]
+
   mimetype STRING [not null, note: 'The mime type of the asset being stored']
   filename STRING [not null, note: 'The original name of the file when it was uploaded']
   storage AssetType [not null, note: 'The storage location for this asset (e.g. R2)']
@@ -44,6 +46,7 @@ Table Asset {
 Table User {
   userId INTEGER [unique, increment, pk, note: 'internal identifier for this user']
   externalId TEXT [unique, note: 'unique identifier based on the external auth being used']
+
   profileImage INTEGER [ref: > Asset.id]
   firstName TEXT [not null]
   lastName TEXT [not null]
@@ -111,12 +114,13 @@ Table UserPermissions {
 
 Table Game {
     id INTEGER [unique, increment, pk]
+    bggId INTEGER [not null]
+
     slug TEXT [unique, not null]
     publishDate INTEGER [not null]
     primaryName TEXT [not null, note: 'Games may have many names; others are linked elsewhere']
     expandsGameId INTEGER [note: 'denotes if this game is an expansion of some other game']
     description TEXT [not null]
-    bggId INTEGER [not null]
     officialURL TEXT [default: '']
     teachingURL TEXT [default: '', note: 'Link to a YT video that teaches this game']
     coverId INTEGER [ref: < Asset.id]
@@ -133,6 +137,7 @@ Table Game {
 
 Table GameAsset {
   id INTEGER [unique, increment, pk]
+
   assetId INTEGER [not null, ref: - Asset.id]
   gameId INTEGER [not null, ref: < Game.id]
 
@@ -141,6 +146,8 @@ Table GameAsset {
 
 Table Designer {
   id INTEGER [unique, increment, pk]
+  bggId INTEGER [not null]
+
   slug TEXT [unique, not null]
   name VARCHAR [not null]
 
@@ -149,6 +156,8 @@ Table Designer {
 
 Table Artist {
   id INTEGER [unique, increment, pk]
+  bggId INTEGER [not null]
+
   slug TEXT [unique, not null]
   name VARCHAR [not null]
 
@@ -157,6 +166,8 @@ Table Artist {
 
 Table Publisher {
   id INTEGER [unique, increment, pk]
+  bggId INTEGER [not null]
+
   slug TEXT [unique, not null]
   name VARCHAR [not null]
 
@@ -165,6 +176,8 @@ Table Publisher {
 
 Table Category {
   id INTEGER [unique, increment, pk]
+  bggId INTEGER [not null]
+
   slug TEXT [unique, not null]
   name VARCHAR [not null]
 
@@ -173,6 +186,8 @@ Table Category {
 
 Table Mechanic {
   id INTEGER [unique, increment, pk]
+  bggId INTEGER [not null]
+
   slug TEXT [unique, not null]
   name VARCHAR [not null]
 
@@ -182,6 +197,7 @@ Table Mechanic {
 Table GameName {
   id INTEGER [unique, increment, pk]
   gameId INTEGER [not null, ref: > Game.id]
+
   name VARCHAR [not null]
   primary BOOLEAN [default: false, note: 'The primary is the name this is best known by']
 
@@ -230,10 +246,14 @@ Table MechanicPlacement {
 }
 
 
+// Session reports need to have potentially multiple game ID's associated with
+// them; the primary game, and then a list of all expansions (if any) that were
+// a part of the play.
 Table SessionReport {
   id INTEGER [unique, increment, pk]
   gameID INTEGER [not null, ref: > Game.id]
   loggingPlayerId INTEGER [not null, ref: > User.userId]
+
   sessionDate TIME [default: 'now()']
   sessionDuration INTEGER [default: 1]
   isDetailed BOOLEAN [default: false, note: 'Detailed session reports also include a textual body']
@@ -245,6 +265,7 @@ Table SessionReportEntry {
   id INTEGER [unique, increment, pk]
   sessionID INTEGER [not null, ref: - SessionReport.id]
   playerID INTEGER [not null, ref: < User.userId]
+
   score INTEGER [default: 0]
   winner BOOLEAN [default: false]
 
@@ -277,11 +298,10 @@ Table UserHousehold {
 
 Table GameOwners {
   id INTEGER [unique, increment, pk]
-
   householdId INTEGER [not NULL, ref: < Household.id]
   gameId INTEGER [not NULL, ref: < Game.id]
-  gameName VARCHAR [not NULL, note: 'The name of the game this household owns; may not be the primary name']
 
+  gameName VARCHAR [not NULL, note: 'The name of the game this household owns; may not be the primary name']
   loanedTo INTEGER [ref: < Household.id]
 
   Note: 'Game ownership is tracked by household; games can be loaned to other households'
@@ -289,10 +309,8 @@ Table GameOwners {
 
 Table GameWishlist {
   id INTEGER [unique, increment, pk]
-
   householdId INTEGER [not NULL, ref: < Household.id]
   gameId INTEGER [not NULL, ref: < Game.id]
-
   addedByUserId INTEGER [ref: < User.userId]
 
   Note: 'Game wishlist is tracked by household; the wishing user is stored'
