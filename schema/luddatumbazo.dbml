@@ -115,66 +115,40 @@ Table UserPermissions {
 Table Game {
     id INTEGER [unique, increment, pk]
     bggId INTEGER [not null]
-
-    slug TEXT [unique, not null]
-    publishDate INTEGER [not null]
-    primaryName TEXT [not null, note: 'Games may have many names; others are linked elsewhere']
     expandsGameId INTEGER [note: 'denotes if this game is an expansion of some other game']
-    description TEXT [not null]
-    officialURL TEXT [default: '']
-    teachingURL TEXT [default: '', note: 'Link to a YT video that teaches this game']
-    coverId INTEGER [ref: < Asset.id]
-    minPlayerAge INTEGER [default: 1]
+
+    slug TEXT [unique, not null, note: 'the slug is based on the primary name of the game at the time it was added']
+
+    publishedIn INTEGER [not null]
     minPlayers INTEGER [default: 1]
     maxPlayers INTEGER [default: 1]
+    minPlayerAge INTEGER [default: 1]
+    playTime INTEGER [default: 1]
     minPlayTime INTEGER [default: 1]
     maxPlayTime INTEGER [default: 1]
-    playTime INTEGER [default: 1]
+    description TEXT [not null]
+    complexity DECIMAL [default: 1]
+
+    // coverId INTEGER [ref: < Asset.id]
+    officialURL TEXT [default: '']
+    teachingURL TEXT [default: '', note: 'Link to a YT video that teaches this game']
+
     Note: 'A representation of a unique game'
 }
 
-Table GameAsset {
+Table GameName {
   id INTEGER [unique, increment, pk]
+  gameId INTEGER [not null, ref: > Game.id]
 
-  assetId INTEGER [not null, ref: - Asset.id]
-  gameId INTEGER [not null, ref: < Game.id]
-
-  Note: 'Associate specific assets to a particular game'
-}
-
-Table Designer {
-  id INTEGER [unique, increment, pk]
-  bggId INTEGER [not null]
-
-  slug TEXT [unique, not null]
   name VARCHAR [not null]
+  isPrimary BOOLEAN [default: false, note: 'The primary is the name this is best known by']
 
-  Note: 'A record of a specific and unique designer'
-}
-
-Table Artist {
-  id INTEGER [unique, increment, pk]
-  bggId INTEGER [not null]
-
-  slug TEXT [unique, not null]
-  name VARCHAR [not null]
-
-  Note: 'A record of a specific and unique artist'
-}
-
-Table Publisher {
-  id INTEGER [unique, increment, pk]
-  bggId INTEGER [not null]
-
-  slug TEXT [unique, not null]
-  name VARCHAR [not null]
-
-  Note: 'A record of a specific and unique publisher'
+  Note: 'Associates alternate game names with game IDs'
 }
 
 Table Category {
   id INTEGER [unique, increment, pk]
-  bggId INTEGER [not null]
+  bggId INTEGER [default: 0]
 
   slug TEXT [unique, not null]
   name VARCHAR [not null]
@@ -184,7 +158,7 @@ Table Category {
 
 Table Mechanic {
   id INTEGER [unique, increment, pk]
-  bggId INTEGER [not null]
+  bggId INTEGER [default: 0]
 
   slug TEXT [unique, not null]
   name VARCHAR [not null]
@@ -192,39 +166,34 @@ Table Mechanic {
   Note: 'A record of a specific and unique mechanic'
 }
 
-Table GameName {
+Table Designer {
   id INTEGER [unique, increment, pk]
-  gameId INTEGER [not null, ref: > Game.id]
+  bggId INTEGER [default: 0]
 
+  slug TEXT [unique, not null]
   name VARCHAR [not null]
-  primary BOOLEAN [default: false, note: 'The primary is the name this is best known by']
 
-  Note: 'Associates alternate game names with game IDs'
+  Note: 'A record of a specific and unique designer'
 }
 
-Table DesignerPlacement {
+Table Artist {
   id INTEGER [unique, increment, pk]
-  gameId INTEGER [not null, ref: > Game.id]
-  designerId INTEGER [not null, ref: > Designer.id]
+  bggId INTEGER [default: 0]
 
-  Note: 'Associates a specific designer with a specific game'
+  slug TEXT [unique, not null]
+  name VARCHAR [not null]
+
+  Note: 'A record of a specific and unique artist'
 }
 
-Table PublisherPlacement {
+Table Publisher {
   id INTEGER [unique, increment, pk]
-  gameId INTEGER [not null, ref: > Game.id]
-  publisherId INTEGER [not null, ref: > Publisher.id]
+  bggId INTEGER [default: 0]
 
-  Note: 'Associates a specific publisher with a specific game'
-}
+  slug TEXT [unique, not null]
+  name VARCHAR [not null]
 
-Table ArtistPlacement {
-  id INTEGER [unique, increment, pk]
-  gameId INTEGER [not null, ref: > Game.id]
-  artistId INTEGER [not null, ref: > Artist.id]
-
-  Note: 'Associates a specific artist with a specific game'
-
+  Note: 'A record of a specific and unique publisher'
 }
 
 Table CategoryPlacement {
@@ -243,6 +212,38 @@ Table MechanicPlacement {
   Note: 'Associates a specific mechanic with a specific game'
 }
 
+Table DesignerPlacement {
+  id INTEGER [unique, increment, pk]
+  gameId INTEGER [not null, ref: > Game.id]
+  designerId INTEGER [not null, ref: > Designer.id]
+
+  Note: 'Associates a specific designer with a specific game'
+}
+
+Table ArtistPlacement {
+  id INTEGER [unique, increment, pk]
+  gameId INTEGER [not null, ref: > Game.id]
+  artistId INTEGER [not null, ref: > Artist.id]
+
+  Note: 'Associates a specific artist with a specific game'
+}
+
+Table PublisherPlacement {
+  id INTEGER [unique, increment, pk]
+  gameId INTEGER [not null, ref: > Game.id]
+  publisherId INTEGER [not null, ref: > Publisher.id]
+
+  Note: 'Associates a specific publisher with a specific game'
+}
+
+Table GameAsset {
+  id INTEGER [unique, increment, pk]
+
+  assetId INTEGER [not null, ref: - Asset.id]
+  gameId INTEGER [not null, ref: < Game.id]
+
+  Note: 'Associate specific assets to a particular game'
+}
 
 // Session reports need to have potentially multiple game ID's associated with
 // them; the primary game, and then a list of all expansions (if any) that were
