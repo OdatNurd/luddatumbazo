@@ -3,7 +3,6 @@
 
 import parseXML from "@axel669/sanic-xml/parse";
 import { decodeHTML } from "entities";
-import slug from "slug";
 
 
 /******************************************************************************/
@@ -125,16 +124,6 @@ const getGameNames = input => getChildrenNamed(input, 'name').sort((left, right)
  * response for a specific board game entry, convert it into a normalized JSON
  * form and return the value back. */
 function mapBoardgame(gameEntry, gameId) {
-  // The BGG API returns a list of top level board game tags in case the request
-  // made is for more than one game; we only ever ask for one though.
-  //
-  // So, pluck the first tag out, which will be the entry for the boardgame
-  // itself.
-  if (gameEntry.length !== 1) {
-    return null;
-  }
-  const input = getChildNamed(gameEntry[0], 'boardgame');
-
   // Start preparing our output structure by including the BoardGameGeek ID for
   // this game in it.
   const output = { "gameId": gameId };
@@ -142,46 +131,46 @@ function mapBoardgame(gameEntry, gameId) {
   // This record tells us if a game either has an expansion or IS an expansion;
   // when this IS an expansion (inbound is an attribute), store a record of
   // this.
-  const expansion = getChildNamed(input, 'boardgameexpansion');
-  if (expansion !== null && expansion.attr?.inbound !== undefined) {
+  const expansion = getChildNamed(gameEntry, 'boardgameexpansion');
+  if (expansion !== undefined && expansion.attr?.inbound !== undefined) {
     output.expandsGame = parseInt(expansion.attr.objectid);
   }
 
   // The statistics node will us the average game weight, presuming that the
   // incoming request asked for it. If so, pull it out.
-  const statistics = getChildNamed(input, 'statistics');
-  const ratings = (statistics === null) ? null : getChildNamed(statistics, 'ratings');
+  const statistics = getChildNamed(gameEntry, 'statistics');
+  const ratings = (statistics === undefined) ? undefined : getChildNamed(statistics, 'ratings');
 
   // Grab all of the name nodes, and sort them by text, bringing the primary
   // item to the top of the list.
-  output.name = getGameNames(input);
+  output.name = getGameNames(gameEntry);
 
   // Get the core game details.
-  output.published = getIntOf(input, 'yearpublished');
-  output.minPlayers = getIntOf(input, 'minplayers');
-  output.maxPlayers = getIntOf(input, 'maxplayers');
-  output.minPlayerAge = getIntOf(input, 'age');
+  output.published = getIntOf(gameEntry, 'yearpublished');
+  output.minPlayers = getIntOf(gameEntry, 'minplayers');
+  output.maxPlayers = getIntOf(gameEntry, 'maxplayers');
+  output.minPlayerAge = getIntOf(gameEntry, 'age');
 
-  output.playTime = getIntOf(input, 'playingtime');
-  output.minPlayTime = getIntOf(input, 'minplaytime');
-  output.maxPlayTime = getIntOf(input, 'maxplaytime');
+  output.playTime = getIntOf(gameEntry, 'playingtime');
+  output.minPlayTime = getIntOf(gameEntry, 'minplaytime');
+  output.maxPlayTime = getIntOf(gameEntry, 'maxplaytime');
 
-  output.description = decodeHTML(getTextOf(input, 'description'));
-  output.thumbnail = getTextOf(input, 'thumbnail');
-  output.image = getTextOf(input, 'image');
+  output.description = decodeHTML(getTextOf(gameEntry, 'description'));
+  output.thumbnail = getTextOf(gameEntry, 'thumbnail');
+  output.image = getTextOf(gameEntry, 'image');
 
-  if (ratings !== null) {
+  if (ratings !== undefined) {
     output.complexity = getFloatOf(ratings, 'averageweight');
   }
 
   // Get a list of all of the extended game attributes; each is a list of items
   // that can appear in more than one game and tie games together by some common
   // factor.
-  output.category = getAllItemsOf(input, 'boardgamecategory');
-  output.mechanic = getAllItemsOf(input, 'boardgamemechanic');
-  output.designer = getAllItemsOf(input, 'boardgamedesigner');
-  output.artist = getAllItemsOf(input, 'boardgameartist');
-  output.publisher = getAllItemsOf(input, 'boardgamepublisher');
+  output.category = getAllItemsOf(gameEntry, 'boardgamecategory');
+  output.mechanic = getAllItemsOf(gameEntry, 'boardgamemechanic');
+  output.designer = getAllItemsOf(gameEntry, 'boardgamedesigner');
+  output.artist = getAllItemsOf(gameEntry, 'boardgameartist');
+  output.publisher = getAllItemsOf(gameEntry, 'boardgamepublisher');
 
   return output;
 }
@@ -190,7 +179,7 @@ function mapBoardgame(gameEntry, gameId) {
 
 
 /* Input:
- *   gameId as a request path parameter which represents a BGG Game ID
+ *   bggGameId as a request path parameter which represents a BGG Game ID
  *
  * This will look up the board game in the BoardGameGeek API for the game ID
  * that is given, and will return back a JSON encoded version of the data for
@@ -199,19 +188,44 @@ function mapBoardgame(gameEntry, gameId) {
  * This includes the core information on the game, as well as additional info
  * such as the list of designers, artists, and so on. */
 export async function lookupBGGGameInfo(ctx) {
-  const { gameId } = ctx.req.param();
-  const URI = `${BGG_API_URL}/boardgame/${gameId}?stats=1`;
+  const { bggGameId } = ctx.req.param();
+  const URI = `${BGG_API_URL}/boardgame/${bggGameId}?stats=1`;
 
-  const res = await fetch(URI, {
-    method: "GET",
-  });
-
+  // Request data from BoardGameGeek; if this request fails, then we can just
+  // immediately return the same error.
+  const res = await fetch(URI, { method: "GET" });
   if (!res.ok) {
     return error(ctx, res.status, `error while looking up BGG Game Info: ${res.statusText}`)
   }
 
-  const data = parseXML(await res.text());
-  return ctx.json(mapBoardgame(data, parseInt(gameId)));
+  try {
+    // The BGG API returns XML; load the content and parse it into an object;
+    // this will always return a list, even if the input is not XML, because
+    // that's how sanic-xml rolls.
+    const data = parseXML(await res.text());
+
+    // Try to find the game entry in the result; the result will be an array of
+    // games, but we only ever ask for one. However, the result might be
+    // malformed and thus empty.
+    const gameEntry = (data.length === 1) ? getChildNamed(data[0], 'boardgame') : undefined;
+    if (gameEntry === undefined) {
+      return error(ctx, 502, "BGG response was empty or malformed");
+    }
+
+    // We have a game entry; if it has an error tag, it means that there was
+    // some issue looking up the data, so return that. For us we're going to
+    // assume that the game just doesn't exist, since there is no way to know
+    // what other errors might be.
+    if (getChildNamed(gameEntry, 'error')) {
+      return error(ctx, 404, `BGG has no record of game with ID ${bggGameId}`);
+    }
+
+    // The record seems valid, so parse it out and return back the result.
+    return ctx.json(mapBoardgame(gameEntry, parseInt(bggGameId)));
+  }
+  catch (err) {
+    return error(ctx, 502, "error message goes here, but it was probably bad")
+  }
 }
 
 

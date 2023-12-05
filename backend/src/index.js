@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors'
 
-import { lookupBGGGameInfo } from './bgg/bridge.js';
+import { lookupBGGGameInfo } from './db/bgg_bridge.js';
 
 
 /******************************************************************************/
@@ -16,7 +16,7 @@ app.use('/api/*', cors())
 /* Wrap the BoardGameGeek XML API and return a converted version of the matching
  * record, in JSON format. This contains only the fields we know or care about
  * for our purposes. */
-app.get(`${APIV1}/bgg/boardgame/:gameId`, lookupBGGGameInfo)
+app.get(`${APIV1}/bgg/boardgame/:bggGmeId`, lookupBGGGameInfo);
 
 
 /******************************************************************************/
