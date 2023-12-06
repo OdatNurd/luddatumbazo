@@ -70,11 +70,18 @@ CREATE TABLE Game (
     expandsGameId INTEGER DEFAULT(0),
 
     slug TEXT UNIQUE NOT NULL,
+    description TEXT UNIQUE NOT NULL,
     publishedIn INTEGER NOT NULL,
 
     minPlayers INTEGER DEFAULT(1),
     maxPlayers INTEGER DEFAULT(1),
-    description TEXT NOT NULL,
+
+    minPlayerAge INTEGER DEFAULT(1),
+
+    playtime INTEGER DEFAULT(1),
+    minPlaytime INTEGER DEFAULT(1),
+    maxPlaytime INTEGER DEFAULT(1),
+
     complexity REAL DEFAULT(1.0),
 
     officialURL TEXT DEFAULT(''),

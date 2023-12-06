@@ -118,15 +118,15 @@ Table Game {
     expandsGameId INTEGER [note: 'denotes if this game is an expansion of some other game']
 
     slug TEXT [unique, not null, note: 'the slug is based on the primary name of the game at the time it was added']
-
+    description TEXT [not null]
     publishedIn INTEGER [not null]
+
     minPlayers INTEGER [default: 1]
     maxPlayers INTEGER [default: 1]
     minPlayerAge INTEGER [default: 1]
     playTime INTEGER [default: 1]
     minPlayTime INTEGER [default: 1]
     maxPlayTime INTEGER [default: 1]
-    description TEXT [not null]
     complexity DECIMAL [default: 1]
 
     // coverId INTEGER [ref: < Asset.id]
