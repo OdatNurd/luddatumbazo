@@ -17,6 +17,26 @@ const metadataTableMap = {
 };
 
 
+/* When we get a request to add a new game, these fields represent the fields
+ * that are optional; if they're not specified, their values are set with the
+ * values that are seen here. */
+const defaultGameFields = {
+  "bggID": 0,
+  "expandsGameId": 0,
+  "minPlayers": 1,
+  "maxPlayers": 1,
+  "minPlayerAge": 1,
+  "playTime": 1,
+  "minPlayTime": 1,
+  "maxPlayTime": 1,
+  "complexity": 1.0,
+  "category": [],
+  "mechanic": [],
+  "designer": [],
+  "artist": [],
+  "publisher": []
+}
+
 /******************************************************************************/
 
 
@@ -46,10 +66,26 @@ const prepareMetadata = data => data.map(el => {
 /******************************************************************************/
 
 
+/* Given an object and an array of keys, ensure that each of the keys in the
+ * list appear in the object.
+ *
+ * The return value is false if any keys are missing and true if all are
+ * present. */
+const ensureData = (obj, keys) => {
+  for (const key of keys) {
+    if (Object.keys(obj).indexOf(key) === -1) {
+      return false
+    }
+  }
+  return true;
+}
+
+
+/******************************************************************************/
 /* Input:
  *   A JSON object of the form:
  *     {
- *       "bggID": 9216,
+ *       "bggId": 9216,
  *       "expandsGameId": 0,
  *       "name": [],
  *       "slug",
@@ -78,31 +114,53 @@ export async function insertGame(ctx) {
     // expect it to have.
     const gameData = await ctx.req.json();
 
+    // The incoming data strictly requires the following fields to be present;
+    // if they are not there, we will kick out an error.
+    if (ensureData(gameData, ["name", "slug", "published", "description"]) == false ||
+                   gameData.name.length == 0) {
+      return fail(ctx, `required fields are missing from the input`);
+    }
+
+    // Combine together the defaults with the provided game record in order to
+    // come up with the final list of things to insert.
+    const details = { ...defaultGameFields, ...gameData }
+
     // 0. For each of category, mechanic, designer, artist and publisher, update
     // 1. Insert the raw data for this game into the database
     // 2. Determine the new gameID and then insert the names for this game
     // 3. Update placements for all items in 0
     const stmt = ctx.env.DB.prepare(`INSERT INTO Game
-              (bggID, expandsGameId, slug, description, publishedIn, minPlayers,
+              (bggId, expandsGameId, slug, description, publishedIn, minPlayers,
                maxPlayers, minPlayerAge, playtime, minPlaytime, maxPlaytime,
                complexity)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
-      gameData?.bggId,
-      gameData?.expandsGameId || 0,
-      slug(gameData?.name[0]),
-      gameData?.description,
-      gameData?.published,
-      gameData?.minPlayers,
-      gameData?.maxPlayers,
-      gameData?.minPlayerAge,
-      gameData?.playTime,
-      gameData?.minPlayTime,
-      gameData?.maxPlayTime,
-      gameData?.complexity
+      details.bggId,
+      details.expandsGameId,
+      details.slug,
+      details.description,
+      details.published,
+      details.minPlayers,
+      details.maxPlayers,
+      details.minPlayerAge,
+      details.playTime,
+      details.minPlayTime,
+      details.maxPlayTime,
+      details.complexity
     );
 
-    console.log(stmt);
-    return ctx.json(await stmt.run());
+    // Grab the result that falls out of the DB; this must be a success because
+    // if it fails, it will jump to the catch.
+    //
+    // The last row ID in the metadata is the SQLite return for the last
+    // inserted rowID, which is the ID of the item we just inserted.
+    const result = await stmt.run();
+    const id = result.meta.last_row_id;
+
+    return success(ctx, `added game ${id}`, {
+      id,
+      bggId: details.bggId,
+      slug: details.slug
+    });
   }
   catch (err) {
     if (err instanceof SyntaxError) {

@@ -66,11 +66,11 @@ CREATE TABLE Publisher (
 DROP TABLE IF EXISTS Game;
 CREATE TABLE Game (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    bggID INTEGER NOT NULL,
+    bggId INTEGER DEFAULT(0),
     expandsGameId INTEGER DEFAULT(0),
 
     slug TEXT UNIQUE NOT NULL,
-    description TEXT UNIQUE NOT NULL,
+    description TEXT NOT NULL,
     publishedIn INTEGER NOT NULL,
 
     minPlayers INTEGER DEFAULT(1),
