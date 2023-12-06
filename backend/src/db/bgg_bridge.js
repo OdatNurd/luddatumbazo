@@ -4,6 +4,8 @@
 import parseXML from "@axel669/sanic-xml/parse";
 import { decodeHTML } from "entities";
 
+import { success, fail } from "./common.js";
+
 
 /******************************************************************************/
 
@@ -12,14 +14,6 @@ const BGG_API_URL = 'https://boardgamegeek.com/xmlapi'
 
 
 /******************************************************************************/
-
-
-/* This is a simple helper method that can be used to transmit back an error
- * message in a known format. */
-const error = (ctx, status, reason) => {
-  ctx.status(status);
-  return ctx.json({ success: false, reason });
-}
 
 
 /* Given a particular array of input nodes, return back the first tag found
@@ -195,7 +189,7 @@ export async function lookupBGGGameInfo(ctx) {
   // immediately return the same error.
   const res = await fetch(URI, { method: "GET" });
   if (!res.ok) {
-    return error(ctx, res.status, `error while looking up BGG Game Info: ${res.statusText}`)
+    return fail(ctx, `error while looking up BGG Game Info: ${res.statusText}`, res.status)
   }
 
   try {
@@ -209,7 +203,7 @@ export async function lookupBGGGameInfo(ctx) {
     // malformed and thus empty.
     const gameEntry = (data.length === 1) ? getChildNamed(data[0], 'boardgame') : undefined;
     if (gameEntry === undefined) {
-      return error(ctx, 502, "BGG response was empty or malformed");
+      return fail(ctx, "BGG response was empty or malformed", 502);
     }
 
     // We have a game entry; if it has an error tag, it means that there was
@@ -217,14 +211,14 @@ export async function lookupBGGGameInfo(ctx) {
     // assume that the game just doesn't exist, since there is no way to know
     // what other errors might be.
     if (getChildNamed(gameEntry, 'error')) {
-      return error(ctx, 404, `BGG has no record of game with ID ${bggGameId}`);
+      return fail(ctx, `BGG has no record of game with ID ${bggGameId}`, 404);
     }
 
     // The record seems valid, so parse it out and return back the result.
-    return ctx.json(mapBoardgame(gameEntry, parseInt(bggGameId)));
+    return success(ctx, `information on BGG game ${bggGameId}`, mapBoardgame(gameEntry, parseInt(bggGameId)))
   }
   catch (err) {
-    return error(ctx, 502, "error message goes here, but it was probably bad")
+    return fail(ctx, "error message goes here, but it was probably bad", 502);
   }
 }
 

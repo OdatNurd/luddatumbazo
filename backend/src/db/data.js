@@ -3,6 +3,8 @@
 
 import slug from "slug";
 
+import { success, fail } from "./common.js";
+
 
 /* This is a mapping between the types of metadata that we understand and the
  * underlying table in which those metadata records live. */
@@ -43,16 +45,6 @@ const prepareMetadata = data => data.map(el => {
 
 /******************************************************************************/
 
-
-/* This is a simple helper method that can be used to transmit back an error
- * message in a known format. */
-const error = (ctx, status, reason) => {
-  ctx.status(status);
-  return ctx.json({ success: false, reason });
-}
-
-
-/******************************************************************************/
 
 /* Input:
  *   A JSON object of the form:
@@ -114,10 +106,10 @@ export async function insertGame(ctx) {
   }
   catch (err) {
     if (err instanceof SyntaxError) {
-      return error(ctx, 400, `invalid JSON; ${err.message}`)
+      return fail(ctx, `invalid JSON; ${err.message}`, 400);
     }
 
-    return error(ctx, 500, err.message)
+    return fail(ctx, err.message, 500);
   }
 }
 
@@ -156,7 +148,7 @@ export async function gameMetadataUpdate(ctx, metaType) {
   try {
     const table = metadataTableMap[metaType];
     if (table === undefined) {
-      return error(ctx, 500, `unknown metadata type ${metaType}`);
+      return fail(ctx, `unknown metadata type ${metaType}`, 500);
     }
 
     // Suck in the metadata and ensure that it has all of the fields that we
@@ -181,14 +173,14 @@ export async function gameMetadataUpdate(ctx, metaType) {
     // Send the results out to the database
     const result = await ctx.env.DB.batch(batch);
 
-    return ctx.json(result);
+    return success(ctx, `updated some ${metaType} records` , result);
   }
   catch (err) {
     if (err instanceof SyntaxError) {
-      return error(ctx, 400, `invalid JSON; ${err.message}`)
+      return fail(ctx, `invalid JSON; ${err.message}`, 400);
     }
 
-    return error(ctx, 500, err.message)
+    return fail(ctx, err.message, 500);
   }
 }
 
