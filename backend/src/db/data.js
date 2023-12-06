@@ -217,6 +217,15 @@ export async function insertGame(ctx) {
     // come up with the final list of things to insert.
     const details = { ...defaultGameFields, ...gameData }
 
+    // Ensure that all of the metadata that we need is available. This does not
+    // run in a transaction, so if we bail later, these items will still be in
+    // the database; we can look into making that smarter later.
+    details.category  = await doRawMetadataUpdate(ctx, details.category,  'category');
+    details.mechanic  = await doRawMetadataUpdate(ctx, details.mechanic,  'mechanic');
+    details.designer  = await doRawMetadataUpdate(ctx, details.designer,  'designer');
+    details.artist    = await doRawMetadataUpdate(ctx, details.artist,    'artist');
+    details.publisher = await doRawMetadataUpdate(ctx, details.publisher, 'publisher');
+
     // 0. For each of category, mechanic, designer, artist and publisher, update
     // 1. Insert the raw data for this game into the database
     // 2. Determine the new gameID and then insert the names for this game
@@ -247,6 +256,38 @@ export async function insertGame(ctx) {
     // inserted rowID, which is the ID of the item we just inserted.
     const result = await stmt.run();
     const id = result.meta.last_row_id;
+
+    // For each of the available metadata items, we need to add items into the
+    // appropriate placement table to record that this game utilizes those
+    // items.
+    //
+    // Build that up as a batch
+    const batch = [];
+    for (const metatype of Object.keys(metadataTableMap)) {
+      const update = ctx.env.DB.prepare(`
+        INSERT INTO ${metadataTableMap[metatype]}Placement
+        VALUES (NULL, ?, ?)
+      `);
+
+      for (const item of details[metatype]) {
+        batch.push(update.bind(id, item.id) )
+      }
+    }
+
+    // Add to the batch a list of items that will insert the names for this
+    // game into the list.
+    const addName = ctx.env.DB.prepare(`
+      INSERT INTO GameName
+      VALUES (NULL, ?, ?, ?)
+    `);
+    for (const idx in details.name) {
+      // This is dumb because I'm dumb, D1 is Dumb, and JavaScript is dumb.
+      // WHY SO DUMB?!
+      batch.push(addName.bind(id, details.name[idx], idx === '0' ? 1 : 0))
+    }
+
+    // Trigger the batch; we don't need to see the results of this.
+    await ctx.env.DB.batch(batch);
 
     return success(ctx, `added game ${id}`, {
       id,
