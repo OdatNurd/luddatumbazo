@@ -3,7 +3,13 @@
 
 import slug from "slug";
 
+import { BGGLookupError } from './exceptions.js';
 import { success, fail } from "./common.js";
+
+import { lookupBGGGame } from "./bgg.js";
+
+
+/******************************************************************************/
 
 
 /* This is a mapping between the types of metadata that we understand and the
@@ -21,7 +27,7 @@ const metadataTableMap = {
  * that are optional; if they're not specified, their values are set with the
  * values that are seen here. */
 const defaultGameFields = {
-  "bggID": 0,
+  "bggId": 0,
   "expandsGameId": 0,
   "minPlayers": 1,
   "maxPlayers": 1,
@@ -36,6 +42,7 @@ const defaultGameFields = {
   "artist": [],
   "publisher": []
 }
+
 
 /******************************************************************************/
 
@@ -83,9 +90,9 @@ const prepareMetadata = data => data.map(el => {
  *
  * The return value is false if any keys are missing and true if all are
  * present. */
-const ensureData = (obj, keys) => {
+const ensureRequiredKeys = (obj, keys) => {
   for (const key of keys) {
-    if (Object.keys(obj).indexOf(key) === -1) {
+    if (obj[key] === undefined) {
       return false
     }
   }
@@ -174,6 +181,123 @@ export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
 /******************************************************************************/
 
 
+/* This takes as input a raw object that represents the data to be used to
+ * insert a game into the database, and performs the insertion if possible.
+ *
+ * The incoming data will be validated to ensure that it has the required
+ * minimum fields.
+ *
+ * The return value is details on the game that was inserted. If any error
+ * occurs during the insertion, such as database errors or data validation
+ * errors, an exception is thrown.
+ *
+ * In the event that the game is not inserted, it is possible that a metadata
+ * update of core data in this record might still be applied to the database
+ * because D1 doesn't have the concept of transactions in code paths that
+ * require code between DB accesses. */
+export async function doRawGameInsert(ctx, gameData) {
+  // The incoming data strictly requires the following fields to be present;
+  // if they are not there, we will kick out an error.
+  if (ensureRequiredKeys(gameData, ["name", "slug", "published", "description"]) == false ||
+                         gameData.name.length == 0) {
+    throw Error(`required fields are missing from the input data`);
+  }
+
+  // Combine together the defaults with the provided game record in order to
+  // come up with the final list of things to insert.
+  const details = { ...defaultGameFields };
+  for (const [key, value] of Object.entries(gameData)) {
+    if (value !== undefined) {
+      details[key] = value;
+    }
+  }
+
+  // Ensure that all of the metadata that we need is available. This does not
+  // run in a transaction, so if we bail later, these items will still be in
+  // the database; we can look into making that smarter later.
+  details.category  = await doRawMetadataUpdate(ctx, details.category,  'category');
+  details.mechanic  = await doRawMetadataUpdate(ctx, details.mechanic,  'mechanic');
+  details.designer  = await doRawMetadataUpdate(ctx, details.designer,  'designer');
+  details.artist    = await doRawMetadataUpdate(ctx, details.artist,    'artist');
+  details.publisher = await doRawMetadataUpdate(ctx, details.publisher, 'publisher');
+
+  // 0. For each of category, mechanic, designer, artist and publisher, update
+  // 1. Insert the raw data for this game into the database
+  // 2. Determine the new gameID and then insert the names for this game
+  // 3. Update placements for all items in 0
+  const stmt = ctx.env.DB.prepare(`INSERT INTO Game
+            (bggId, expandsGameId, slug, description, publishedIn, minPlayers,
+             maxPlayers, minPlayerAge, playtime, minPlaytime, maxPlaytime,
+             complexity)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
+    details.bggId,
+    details.expandsGameId,
+    details.slug,
+    details.description,
+    details.published,
+    details.minPlayers,
+    details.maxPlayers,
+    details.minPlayerAge,
+    details.playTime,
+    details.minPlayTime,
+    details.maxPlayTime,
+    details.complexity
+  );
+
+  // Grab the result that falls out of the DB; this must be a success because
+  // if it fails, it will jump to the catch.
+  //
+  // The last row ID in the metadata is the SQLite return for the last
+  // inserted rowID, which is the ID of the item we just inserted.
+  const result = await stmt.run();
+  const id = result.meta.last_row_id;
+
+  // For each of the available metadata items, we need to add items into the
+  // appropriate placement table to record that this game utilizes those
+  // items.
+  //
+  // Build that up as a batch
+  const batch = [];
+  for (const metatype of Object.keys(metadataTableMap)) {
+    const update = ctx.env.DB.prepare(`
+      INSERT INTO ${metadataTableMap[metatype]}Placement
+      VALUES (NULL, ?, ?)
+    `);
+
+    for (const item of details[metatype]) {
+      batch.push(update.bind(id, item.id) )
+    }
+  }
+
+  // Add to the batch a list of items that will insert the names for this
+  // game into the list.
+  const addName = ctx.env.DB.prepare(`
+    INSERT INTO GameName
+    VALUES (NULL, ?, ?, ?)
+  `);
+  for (const idx in details.name) {
+    // This is dumb because I'm dumb, D1 is Dumb, and JavaScript is dumb.
+    // WHY SO DUMB?!
+    batch.push(addName.bind(id, details.name[idx], idx === '0' ? 1 : 0))
+  }
+
+  // Trigger the batch; we don't need to see the results of this since it is
+  // all insert operations on bound metadata.
+  await ctx.env.DB.batch(batch);
+
+  // The operation succeeded; return back information on the record that was
+  // added.
+  return {
+    id,
+    bggId: details.bggId,
+    slug: details.slug
+  }
+}
+
+
+/******************************************************************************/
+
+
 /* Input:
  *   A JSON object of the form:
  *     {
@@ -199,101 +323,20 @@ export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
  *       "publisher": []
  *     }
  *
- * This will insert a new game record into the database. */
+ * This will insert a new game record into the database based on the passed in
+ * data, including adding name records, adding in any of the metadata fields
+ * that are not already present, and updating the placement of those items so
+ * that the full game record is available. */
 export async function insertGame(ctx) {
   try {
-    // Suck in the metadata and ensure that it has all of the fields that we
-    // expect it to have.
+    // Suck in the new game data and use it to do the insert; the helper
+    // function does all of the validation, and will throw on error or return
+    // details of the new game on success.
     const gameData = await ctx.req.json();
+    const newGameInfo = await doRawGameInsert(ctx, gameData);
 
-    // The incoming data strictly requires the following fields to be present;
-    // if they are not there, we will kick out an error.
-    if (ensureData(gameData, ["name", "slug", "published", "description"]) == false ||
-                   gameData.name.length == 0) {
-      return fail(ctx, `required fields are missing from the input`);
-    }
-
-    // Combine together the defaults with the provided game record in order to
-    // come up with the final list of things to insert.
-    const details = { ...defaultGameFields, ...gameData }
-
-    // Ensure that all of the metadata that we need is available. This does not
-    // run in a transaction, so if we bail later, these items will still be in
-    // the database; we can look into making that smarter later.
-    details.category  = await doRawMetadataUpdate(ctx, details.category,  'category');
-    details.mechanic  = await doRawMetadataUpdate(ctx, details.mechanic,  'mechanic');
-    details.designer  = await doRawMetadataUpdate(ctx, details.designer,  'designer');
-    details.artist    = await doRawMetadataUpdate(ctx, details.artist,    'artist');
-    details.publisher = await doRawMetadataUpdate(ctx, details.publisher, 'publisher');
-
-    // 0. For each of category, mechanic, designer, artist and publisher, update
-    // 1. Insert the raw data for this game into the database
-    // 2. Determine the new gameID and then insert the names for this game
-    // 3. Update placements for all items in 0
-    const stmt = ctx.env.DB.prepare(`INSERT INTO Game
-              (bggId, expandsGameId, slug, description, publishedIn, minPlayers,
-               maxPlayers, minPlayerAge, playtime, minPlaytime, maxPlaytime,
-               complexity)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
-      details.bggId,
-      details.expandsGameId,
-      details.slug,
-      details.description,
-      details.published,
-      details.minPlayers,
-      details.maxPlayers,
-      details.minPlayerAge,
-      details.playTime,
-      details.minPlayTime,
-      details.maxPlayTime,
-      details.complexity
-    );
-
-    // Grab the result that falls out of the DB; this must be a success because
-    // if it fails, it will jump to the catch.
-    //
-    // The last row ID in the metadata is the SQLite return for the last
-    // inserted rowID, which is the ID of the item we just inserted.
-    const result = await stmt.run();
-    const id = result.meta.last_row_id;
-
-    // For each of the available metadata items, we need to add items into the
-    // appropriate placement table to record that this game utilizes those
-    // items.
-    //
-    // Build that up as a batch
-    const batch = [];
-    for (const metatype of Object.keys(metadataTableMap)) {
-      const update = ctx.env.DB.prepare(`
-        INSERT INTO ${metadataTableMap[metatype]}Placement
-        VALUES (NULL, ?, ?)
-      `);
-
-      for (const item of details[metatype]) {
-        batch.push(update.bind(id, item.id) )
-      }
-    }
-
-    // Add to the batch a list of items that will insert the names for this
-    // game into the list.
-    const addName = ctx.env.DB.prepare(`
-      INSERT INTO GameName
-      VALUES (NULL, ?, ?, ?)
-    `);
-    for (const idx in details.name) {
-      // This is dumb because I'm dumb, D1 is Dumb, and JavaScript is dumb.
-      // WHY SO DUMB?!
-      batch.push(addName.bind(id, details.name[idx], idx === '0' ? 1 : 0))
-    }
-
-    // Trigger the batch; we don't need to see the results of this.
-    await ctx.env.DB.batch(batch);
-
-    return success(ctx, `added game ${id}`, {
-      id,
-      bggId: details.bggId,
-      slug: details.slug
-    });
+    // Return success back.
+    return success(ctx, `added game ${newGameInfo.id}`, newGameInfo);
   }
   catch (err) {
     if (err instanceof SyntaxError) {
@@ -302,6 +345,60 @@ export async function insertGame(ctx) {
 
     return fail(ctx, err.message, 500);
   }
+}
+
+
+/******************************************************************************/
+
+
+/* Input: a bggGameId in the URL that represents the ID of a game from
+ * BoardGameGeek that we want to insert.
+ *
+ * This will look up the data for the game and use it to perform the insertion
+ * directly.
+ *
+ * The result of this query is the same as adding a game by providing an
+ * explicit body. */
+export async function insertBGGGame(ctx) {
+  const { bggGameId } = ctx.req.param();
+
+  try {
+    // Look up the game in BoardGameGeek to get it's details.
+    const gameInfo = await lookupBGGGame(bggGameId);
+    if (gameInfo === null) {
+      return fail(ctx, `BGG has no record of game with ID ${bggGameId}`, 404);
+    }
+
+    console.log(JSON.stringify(gameInfo, null, 2));
+
+    // Try to find a game that has either this slug or this bggId; if we find
+    // one, then this game already exists and we can't do this insert because
+    // it would collide.
+    const existing = await ctx.env.DB.prepare(`
+      SELECT id FROM Game
+      WHERE bggId = ? or slug = ?;
+    `).bind(gameInfo.bggId, gameInfo.slug).all();
+
+    // If we found anything, this game can't be added because it already exists.
+    if (existing.results.length !== 0) {
+      return fail(ctx, `cannot add bggId ${bggGameId}: this game or its slug already exist`, 409);
+    }
+
+    // Try to insert the game record now
+    const newGameInfo = await doRawGameInsert(ctx, gameInfo);
+
+    // Return success back.
+    return success(ctx, `added game ${newGameInfo.id}`, newGameInfo);
+  }
+  catch (err) {
+    // Handle BGG Lookup Errors specially.
+    if (err instanceof BGGLookupError) {
+      return fail(ctx, err.message, err.status);
+    }
+
+    return fail(ctx, err.message, 500);
+  }
+
 }
 
 

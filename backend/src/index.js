@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors'
 
 import { lookupBGGGameInfo } from './db/bgg.js';
-import { insertGame, gameMetadataUpdate } from './db/data.js'
+import { insertGame, insertBGGGame, gameMetadataUpdate } from './db/data.js'
 
 
 /******************************************************************************/
@@ -14,29 +14,47 @@ const APIV1 = '/api/v1'
 /* Ensure that the application can talk to the API. */
 app.use('/api/*', cors())
 
-/* Wrap the BoardGameGeek XML API and return a converted version of the matching
- * record, in JSON format. This contains only the fields we know or care about
- * for our purposes. */
+
+/*******************************************************************************
+ * BGG Wrapper API
+ *******************************************************************************
+ * Items in this section act as a proxy to BoardGameGeek and allow you to hit
+ * an endpoint in Luddatumbazo that will gather the data from the BGG API and
+ * convert it to JSON to make handling of it easier.
+ ******************************************************************************/
+
+// Collect information about a BoardGameGeek board game entry.
 app.get(`${APIV1}/bgg/boardgame/:bggGameId`, lookupBGGGameInfo);
 
-// This one would add a core entry for a game; this takes as input something
-// that looks just like the output of the BGG API above and adds an entry for
-// the game.
+
+/*******************************************************************************
+ * Core Game Data API
+ *******************************************************************************
+ * Items in this section are for creating, querying, updating and deleting core
+ * game information. This includes the core information about games as well as
+ * the metadata that is associated with games.
+ ******************************************************************************/
+
+// Add a game using the details provided in the body of the request; the format
+// looks like that which comes out of the BGG wrapper API for board games.
 app.put(`${APIV1}/game/data/details/add`, insertGame);
 
-// These would bulk insert new records into each of the given metadata
-// categories, given an input list. They would skip over any items with a bggID
-// that already exist in the table, and return back an updated list of the
-// items, providing details on which were added and which were skipped.
+// Add a game by looking up the details of a BoardGameGeek game ID and then
+// using that to add the actual game.
+app.put(`${APIV1}/game/data/details/bgg/add/:bggGameId`, insertBGGGame)
+
+// Perform an update on the core metadata fields that can associate with games;
+// these all take a list of objects that represent metadata in the given format
+// and will ensure that all of them exist in the database, adding any that are
+// missing and skipping over any that already exist.
+//
+// They all return back the database records for all such items, so that a
+// single call can update the list and also obtain the details for future use.
 app.put(`${APIV1}/game/meta/category/update`, ctx => gameMetadataUpdate(ctx, 'category'));
 app.put(`${APIV1}/game/meta/mechanic/update`, ctx => gameMetadataUpdate(ctx, 'mechanic'));
 app.put(`${APIV1}/game/meta/designer/update`, ctx => gameMetadataUpdate(ctx, 'designer'));
 app.put(`${APIV1}/game/meta/artist/update`, ctx => gameMetadataUpdate(ctx, 'artist'));
 app.put(`${APIV1}/game/meta/publisher/update`, ctx => gameMetadataUpdate(ctx, 'publisher'));
-
-// // This one would take a list of names for a game and associate them in.
-// app.put(`${APIV1}/game/data/names/add/:gameId`, thing);
-
 
 
 /******************************************************************************/
