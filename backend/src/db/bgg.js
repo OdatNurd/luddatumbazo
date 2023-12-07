@@ -3,14 +3,17 @@
 
 import parseXML from "@axel669/sanic-xml/parse";
 import { decodeHTML } from "entities";
+import slug from "slug";
 
+import { BGGLookupError } from './exceptions.js';
 import { success, fail } from "./common.js";
 
 
 /******************************************************************************/
 
 
-const BGG_API_URL = 'https://boardgamegeek.com/xmlapi'
+// The root API that we use to talk to BoardGameGeek in order to gather data.
+const BGG_API_URL = 'https://boardgamegeek.com/xmlapi';
 
 
 /******************************************************************************/
@@ -117,10 +120,10 @@ const getGameNames = input => getChildrenNamed(input, 'name').sort((left, right)
 /* Given a sanic-xml JSON representation of a BoardGameGeek BoardGame API
  * response for a specific board game entry, convert it into a normalized JSON
  * form and return the value back. */
-function mapBoardgame(gameEntry, gameId) {
+function makeBggGameData(gameEntry, gameId) {
   // Start preparing our output structure by including the BoardGameGeek ID for
   // this game in it.
-  const output = { "gameId": gameId };
+  const output = { "bggId": gameId };
 
   // This record tells us if a game either has an expansion or IS an expansion;
   // when this IS an expansion (inbound is an attribute), store a record of
@@ -136,23 +139,28 @@ function mapBoardgame(gameEntry, gameId) {
   const ratings = (statistics === undefined) ? undefined : getChildNamed(statistics, 'ratings');
 
   // Grab all of the name nodes, and sort them by text, bringing the primary
-  // item to the top of the list.
+  // item to the top of the list. We will also generate an interim slug based on
+  // the official name of the game.
   output.name = getGameNames(gameEntry);
+  if (output.name.length > 0) {
+    output.slug = slug(output.name[0]);
+  }
+
+  // Pull in the basic information about the game
+  output.description = decodeHTML(getTextOf(gameEntry, 'description'));
+  output.thumbnail = getTextOf(gameEntry, 'thumbnail');
+  output.image = getTextOf(gameEntry, 'image');
 
   // Get the core game details.
   output.published = getIntOf(gameEntry, 'yearpublished');
   output.minPlayers = getIntOf(gameEntry, 'minplayers');
   output.maxPlayers = getIntOf(gameEntry, 'maxplayers');
   output.minPlayerAge = getIntOf(gameEntry, 'age');
-
   output.playTime = getIntOf(gameEntry, 'playingtime');
   output.minPlayTime = getIntOf(gameEntry, 'minplaytime');
   output.maxPlayTime = getIntOf(gameEntry, 'maxplaytime');
 
-  output.description = decodeHTML(getTextOf(gameEntry, 'description'));
-  output.thumbnail = getTextOf(gameEntry, 'thumbnail');
-  output.image = getTextOf(gameEntry, 'image');
-
+  // If we got the list of ratings, include the average weight in the extract.
   if (ratings !== undefined) {
     output.complexity = getFloatOf(ratings, 'averageweight');
   }
@@ -169,6 +177,60 @@ function mapBoardgame(gameEntry, gameId) {
   return output;
 }
 
+
+/******************************************************************************/
+
+
+/* Given a BoardGameGeek game ID value, make a query to the BGG XML API to
+ * fetch information about that game. Once collected, the XML data will be
+ * converted and mapped into the form of our internal objects, gathering just
+ * the data we need and discarding the rest.
+ *
+ * The return value of this will be an object that represents the contents of
+ * the game that was looked up; if there is no such game with this ID, then the
+ * return value is null.
+ *
+ * In case of any errors during this operation, we will raise an Exception that
+ * allows the calling code to capture the error that occured. */
+export async function lookupBGGGame(bggGameId) {
+  // Construct the URI that we want to talk to; we need to ask for stats to get
+  // extra information, and also note that there can be no trailing slash after
+  // the game ID, or the API freaks out.
+  const URI = `${BGG_API_URL}/boardgame/${bggGameId}?stats=1`;
+
+  // Request data from BoardGameGeek; if this request fails, then we can just
+  // immediately return the same error.
+  const res = await fetch(URI, { method: "GET" });
+  if (!res.ok) {
+    throw BGGLookupError(`error looking up BGG game record: ${res.statusText}`, res.status);
+  }
+
+  // The BGG API returns XML; load the content and parse it into an object;
+  // this will always return a list, even if the input is not XML, because
+  // that's how sanic-xml rolls.
+  const data = parseXML(await res.text());
+
+  // Try to find the game entry in the result; the result will be an array of
+  // games, but we only ever ask for one. However, the result might be
+  // malformed and thus empty.
+  const gameEntry = (data.length === 1) ? getChildNamed(data[0], 'boardgame') : undefined;
+  if (gameEntry === undefined) {
+    throw BGGLookupError('BGG game response was empty or malformed', 502);
+  }
+
+  // We have a game entry; if it has an error tag, it means that there was
+  // some issue looking up the data, so return that. For us we're going to
+  // assume that the game just doesn't exist, since there is no way to know
+  // what other errors might be.
+  if (getChildNamed(gameEntry, 'error')) {
+    return null;
+  }
+
+  // Map the data and return it back; this will always return an object.
+  return makeBggGameData(gameEntry, parseInt(bggGameId));
+}
+
+
 /******************************************************************************/
 
 
@@ -183,45 +245,28 @@ function mapBoardgame(gameEntry, gameId) {
  * such as the list of designers, artists, and so on. */
 export async function lookupBGGGameInfo(ctx) {
   const { bggGameId } = ctx.req.param();
-  const URI = `${BGG_API_URL}/boardgame/${bggGameId}?stats=1`;
-
-  // Request data from BoardGameGeek; if this request fails, then we can just
-  // immediately return the same error.
-  const res = await fetch(URI, { method: "GET" });
-  if (!res.ok) {
-    return fail(ctx, `error while looking up BGG Game Info: ${res.statusText}`, res.status)
-  }
 
   try {
-    // The BGG API returns XML; load the content and parse it into an object;
-    // this will always return a list, even if the input is not XML, because
-    // that's how sanic-xml rolls.
-    const data = parseXML(await res.text());
-
-    // Try to find the game entry in the result; the result will be an array of
-    // games, but we only ever ask for one. However, the result might be
-    // malformed and thus empty.
-    const gameEntry = (data.length === 1) ? getChildNamed(data[0], 'boardgame') : undefined;
-    if (gameEntry === undefined) {
-      return fail(ctx, "BGG response was empty or malformed", 502);
-    }
-
-    // We have a game entry; if it has an error tag, it means that there was
-    // some issue looking up the data, so return that. For us we're going to
-    // assume that the game just doesn't exist, since there is no way to know
-    // what other errors might be.
-    if (getChildNamed(gameEntry, 'error')) {
+    // Try to get the game data; if this returns NULL it means that there is no
+    // such game (or BGG has some other error but they use human readable text
+    // for those, so we just assume they're all the same error).
+    const gameInfo = await lookupBGGGame(bggGameId);
+    if (gameInfo === null) {
       return fail(ctx, `BGG has no record of game with ID ${bggGameId}`, 404);
     }
 
     // The record seems valid, so parse it out and return back the result.
-    return success(ctx, `information on BGG game ${bggGameId}`, mapBoardgame(gameEntry, parseInt(bggGameId)))
+    return success(ctx, `information on BGG game ${bggGameId}`, gameInfo);
   }
   catch (err) {
-    return fail(ctx, "error message goes here, but it was probably bad", 502);
+    // Handle BGG Lookup Errors specially.
+    if (err instanceof BGGLookupError) {
+      return fail(ctx, err.message, err.status);
+    }
+
+    return fail(ctx, "unknown error while looking up BGG game info", 502);
   }
 }
-
 
 
 /******************************************************************************/
