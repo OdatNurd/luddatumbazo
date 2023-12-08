@@ -140,9 +140,9 @@ export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
   // Query the database to see which of the included slugs already have entries
   // in the table; we don't want to try to insert those.
   const lookupExisting = ctx.env.DB.prepare(`
-    SELECT id, bggId, name, slug from ${table}
-    WHERE slug in (SELECT value from json_each('${JSON.stringify(slugs)}'))
-  `);
+    SELECT id, bggId, name, slug from GameMetadata
+    WHERE metatype = ? AND slug in (SELECT value from json_each('${JSON.stringify(slugs)}'))
+  `).bind(metaType);
   const existing = (await lookupExisting.all()).results;
 
   // If the result that came back has the same length as the list of slugs,
@@ -163,8 +163,8 @@ export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
 
   // Construct an insert statement that we can use to insert a new record when
   // needed.
-  const insertNew = ctx.env.DB.prepare(`INSERT INTO ${table} VALUES(NULL, ?1, ?2, ?3)`);
-  const insertBatch = insertMetadata.map(el => insertNew.bind(el.bggId, el.slug, el.name));
+  const insertNew = ctx.env.DB.prepare(`INSERT INTO GameMetadata VALUES(NULL, ?1, ?2, ?3, ?4)`);
+  const insertBatch = insertMetadata.map(el => insertNew.bind(metaType, el.bggId, el.slug, el.name));
 
   // If the batch is not empty, then we can execute to insert the new ones.
   if (insertBatch.length > 0) {
@@ -260,12 +260,12 @@ export async function doRawGameInsert(ctx, gameData) {
   const batch = [];
   for (const metatype of Object.keys(metadataTableMap)) {
     const update = ctx.env.DB.prepare(`
-      INSERT INTO ${metadataTableMap[metatype]}Placement
-      VALUES (NULL, ?, ?)
+      INSERT INTO GameMetadataPlacement
+      VALUES (NULL, ?1, ?2, ?3)
     `);
 
     for (const item of details[metatype]) {
-      batch.push(update.bind(id, item.id) )
+      batch.push(update.bind(id, metatype, item.id) )
     }
   }
 
@@ -273,7 +273,7 @@ export async function doRawGameInsert(ctx, gameData) {
   // game into the list.
   const addName = ctx.env.DB.prepare(`
     INSERT INTO GameName
-    VALUES (NULL, ?, ?, ?)
+    VALUES (NULL, ?1, ?2, ?3)
   `);
   for (const idx in details.name) {
     // This is dumb because I'm dumb, D1 is Dumb, and JavaScript is dumb.

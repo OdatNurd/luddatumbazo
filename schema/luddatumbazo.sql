@@ -8,99 +8,29 @@
 --------------------------------------------------------------------------------
 
 
--- Games can exist in one or more of the full list of category, mechanic,
--- designer and so on. These tables provide the association that allows us to
--- determine which items are which.
-DROP TABLE IF EXISTS CategoryPlacement;
-CREATE TABLE CategoryPlacement (
+DROP TABLE IF EXISTS GameMetadataPlacement;
+CREATE TABLE GameMetadataPlacement (
     id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
     gameID INTEGER NOT NULL REFERENCES Game(id),
-    categoryId INTEGER NOT NULL REFERENCES Category(id)
+
+    metatype VARCHAR CHECK(metatype in ("designer", "artist", "publisher", "mechanic", "category")),
+    itemId INTEGER REFERENCES GameMetadata(id)
 );
+CREATE INDEX idx_metadata_place_map ON GameMetadataPlacement(metatype, itemId);
 
 
-DROP TABLE IF EXISTS MechanicPlacement;
-CREATE TABLE MechanicPlacement (
-    id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
-    gameID INTEGER NOT NULL REFERENCES Game(id),
-    mechanicId INTEGER NOT NULL REFERENCES Mechanic(id)
-);
-
-
-DROP TABLE IF EXISTS DesignerPlacement;
-CREATE TABLE DesignerPlacement (
-    id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
-    gameID INTEGER NOT NULL REFERENCES Game(id),
-    designerId INTEGER NOT NULL REFERENCES Designer(id)
-);
-
-
-DROP TABLE IF EXISTS ArtistPlacement;
-CREATE TABLE ArtistPlacement (
-    id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
-    gameID INTEGER NOT NULL REFERENCES Game(id),
-    artistId INTEGER NOT NULL REFERENCES Artist(id)
-);
-
-
-DROP TABLE IF EXISTS PublisherPlacement;
-CREATE TABLE PublisherPlacement (
-    id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
-    gameID INTEGER NOT NULL REFERENCES Game(id),
-    publisherId INTEGER NOT NULL REFERENCES Publisher(id)
-);
-
-
--- These tables contain the actual data for the various types of metadata that
--- the placement tables above deal in.
-DROP TABLE IF EXISTS Category;
-CREATE TABLE Category (
+DROP TABLE IF EXISTS GameMetadata;
+CREATE TABLE GameMetadata (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    metatype VARCHAR CHECK(metatype in ("designer", "artist", "publisher", "mechanic", "category")),
     bggId INTEGER DEFAULT(0),
 
     slug TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL
 );
-
-
-DROP TABLE IF EXISTS Mechanic;
-CREATE TABLE Mechanic (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    bggId INTEGER DEFAULT(0),
-
-    slug TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL
-);
-
-
-DROP TABLE IF EXISTS Designer;
-CREATE TABLE Designer (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    bggId INTEGER DEFAULT(0),
-
-    slug TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL
-);
-
-
-DROP TABLE IF EXISTS Artist;
-CREATE TABLE Artist (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    bggId INTEGER DEFAULT(0),
-
-    slug TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL
-);
-
-
-DROP TABLE IF EXISTS Publisher;
-CREATE TABLE Publisher (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    bggId INTEGER DEFAULT(0),
-
-    slug TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL
-);
+CREATE INDEX idx_metadata_type_map ON GameMetadata(metatype, bggId);
+CREATE INDEX idx_metadata_slug_map ON GameMetadata(slug);
 
 
 -- Games can have many names associates with them, such as for different
@@ -148,7 +78,3 @@ CREATE TABLE Game (
     teachingURL TEXT DEFAULT('')
 );
 CREATE INDEX idx_game_slug ON Game(slug);
-
-
-
-
