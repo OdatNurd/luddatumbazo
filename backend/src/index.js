@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors'
 
 import { lookupBGGGameInfo } from './db/bgg.js';
-import { insertGame, insertBGGGame, gameMetadataUpdate } from './db/data.js'
+import { insertGame, insertBGGGame, insertBGGGameList, gameMetadataUpdate } from './db/data.js'
 
 
 /******************************************************************************/
@@ -41,7 +41,8 @@ app.put(`${APIV1}/game/data/details/add`, insertGame);
 
 // Add a game by looking up the details of a BoardGameGeek game ID and then
 // using that to add the actual game.
-app.put(`${APIV1}/game/data/details/bgg/add/:bggGameId`, insertBGGGame)
+app.put(`${APIV1}/game/data/details/bgg/add/:bggGameId{[0-9]+}`, insertBGGGame)
+app.put(`${APIV1}/game/data/details/bgg/add/list`, insertBGGGameList)
 
 // Perform an update on the core metadata fields that can associate with games;
 // these all take a list of objects that represent metadata in the given format

@@ -25,11 +25,12 @@ CREATE TABLE GameMetadata (
 
     metatype VARCHAR CHECK(metatype in ("designer", "artist", "publisher", "mechanic", "category")),
     bggId INTEGER DEFAULT(0),
+    slug TEXT NOT NULL,
 
-    slug TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL
 );
 CREATE INDEX idx_metadata_type_map ON GameMetadata(metatype, bggId);
+CREATE UNIQUE INDEX idx_metadata_metaslug_map ON GameMetadata(metatype, slug);
 CREATE INDEX idx_metadata_slug_map ON GameMetadata(slug);
 
 

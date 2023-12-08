@@ -202,7 +202,7 @@ export async function lookupBGGGame(bggGameId) {
   // immediately return the same error.
   const res = await fetch(URI, { method: "GET" });
   if (!res.ok) {
-    throw BGGLookupError(`error looking up BGG game record: ${res.statusText}`, res.status);
+    throw new BGGLookupError(`error looking up BGG game record: ${res.statusText}`, res.status);
   }
 
   // The BGG API returns XML; load the content and parse it into an object;
@@ -215,7 +215,7 @@ export async function lookupBGGGame(bggGameId) {
   // malformed and thus empty.
   const gameEntry = (data.length === 1) ? getChildNamed(data[0], 'boardgame') : undefined;
   if (gameEntry === undefined) {
-    throw BGGLookupError('BGG game response was empty or malformed', 502);
+    throw new BGGLookupError('BGG game response was empty or malformed', 502);
   }
 
   // We have a game entry; if it has an error tag, it means that there was

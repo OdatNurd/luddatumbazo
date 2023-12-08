@@ -290,8 +290,52 @@ export async function doRawGameInsert(ctx, gameData) {
   return {
     id,
     bggId: details.bggId,
+    name: details.name[0],
     slug: details.slug
   }
+}
+
+
+/******************************************************************************/
+
+
+/* Perform a raw insert of a game that is associated with a BoardGameGeek ID.
+ *
+ * This will perform the lookup to try and find the information on the game,
+ * and if found, will insert it, returning back some details on the game that
+ * was added.
+ *
+ * On success (the game is found and inserted), an object detailing the new
+ * game is returned.
+ *
+ * If the game can't be found, null is returned instead.
+ *
+ * An exception will be raised if there is any problem gathering the game data
+ * from the BGG Endpoint, or if the game can't be inserted because it already
+ * exists. */
+export async function doRawBGGGameInsert(ctx, bggGameId) {
+  // Look up the game in BoardGameGeek to get it's details; if the game is not
+  // found, we can return NULL back.
+  const gameInfo = await lookupBGGGame(bggGameId);
+  if (gameInfo === null) {
+    return null;
+  }
+
+  // Try to find a game that has either this slug or this bggId; if we find
+  // one, then this game already exists and we can't do this insert because
+  // it would collide.
+  const existing = await ctx.env.DB.prepare(`
+    SELECT id FROM Game
+    WHERE bggId = ? or slug = ?;
+  `).bind(gameInfo.bggId, gameInfo.slug).all();
+
+  // If we found anything, this game can't be added because it already exists.
+  if (existing.results.length !== 0) {
+    throw new BGGLookupError(`cannot add bggId ${bggGameId}: this game or its slug already exist`, 409);
+  }
+
+  // Try to insert the game record now, and tell the caller
+  return await doRawGameInsert(ctx, gameInfo);
 }
 
 
@@ -363,29 +407,10 @@ export async function insertBGGGame(ctx) {
   const { bggGameId } = ctx.req.param();
 
   try {
-    // Look up the game in BoardGameGeek to get it's details.
-    const gameInfo = await lookupBGGGame(bggGameId);
-    if (gameInfo === null) {
+    const newGameInfo = await doRawBGGGameInsert(ctx, bggGameId);
+    if (newGameInfo === null) {
       return fail(ctx, `BGG has no record of game with ID ${bggGameId}`, 404);
     }
-
-    console.log(JSON.stringify(gameInfo, null, 2));
-
-    // Try to find a game that has either this slug or this bggId; if we find
-    // one, then this game already exists and we can't do this insert because
-    // it would collide.
-    const existing = await ctx.env.DB.prepare(`
-      SELECT id FROM Game
-      WHERE bggId = ? or slug = ?;
-    `).bind(gameInfo.bggId, gameInfo.slug).all();
-
-    // If we found anything, this game can't be added because it already exists.
-    if (existing.results.length !== 0) {
-      return fail(ctx, `cannot add bggId ${bggGameId}: this game or its slug already exist`, 409);
-    }
-
-    // Try to insert the game record now
-    const newGameInfo = await doRawGameInsert(ctx, gameInfo);
 
     // Return success back.
     return success(ctx, `added game ${newGameInfo.id}`, newGameInfo);
@@ -398,7 +423,68 @@ export async function insertBGGGame(ctx) {
 
     return fail(ctx, err.message, 500);
   }
+}
 
+
+/******************************************************************************/
+
+
+/* Input: a bggGameId in the URL that represents the ID of a game from
+ * BoardGameGeek that we want to insert.
+ *
+ * This will look up the data for the game and use it to perform the insertion
+ * directly.
+ *
+ * The result of this query is the same as adding a game by providing an
+ * explicit body. */
+export async function insertBGGGameList(ctx) {
+  try {
+    // Suck in the new game data and use it to do the insert; the helper
+    // function does all of the validation, and will throw on error or return
+    // details of the new game on success.
+    const gameList = await ctx.req.json();
+
+    // Track which of the games we loop over was added and which was inserted.
+    const inserted = [];
+    const skipped = []
+    const result = { inserted, skipped };
+
+    // Loop over all of the BGG id's in the game list and try to insert them.
+    for (const bggGameId of gameList) {
+      try {
+        // Try to lookup and insert this game; the result is either null if
+        // there was a failure, or information on the inserted game.
+        const newGameInfo = await doRawBGGGameInsert(ctx, bggGameId);
+        if (newGameInfo === null) {
+          skipped.push({ "bggId": bggGameId, status: 404, reason: "not found" });
+        } else {
+          inserted.push(newGameInfo);
+        }
+      }
+
+      // If the insert threw any errors, handle them. If they are BGG lookup
+      // failures, we can eat them and just skip this. Otherwise, we need to
+      // re-throw so the outer handler can handle the problem for us.
+      catch (err) {
+        if (err instanceof BGGLookupError) {
+          skipped.push({ "bggId": bggGameId, status: err.status, reason: "ID or slug already exists" });
+          continue;
+        }
+
+        throw err;
+      }
+    }
+
+    // Return success back.
+    return success(ctx, `inserted ${inserted.length} games of ${gameList.length}`, result);
+  }
+  catch (err) {
+    if (err instanceof SyntaxError) {
+      return fail(ctx, `invalid JSON; ${err.message}`, 400);
+    }
+
+    return fail(ctx, err.message, 500);
+  }
 }
 
 
