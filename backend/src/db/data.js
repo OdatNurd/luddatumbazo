@@ -186,6 +186,60 @@ export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
 /******************************************************************************/
 
 
+/* Query for information on a given metadata type according to either it's
+ * slug or it's unique identifier.
+ *
+ * The result will be null if there is no such metadata record found, or the
+ * details of that metadata item on success.
+ *
+ * If includeGames is true, a second query is done to try and find all of the
+ * games that are currently tied to this piece of metadata. That list will be
+ * empty if there are no such records.
+ *
+ * This may raise exceptions if there are issues talking to the database, or if
+ * the metaType is not valid. */
+export async function doRawGameMetadataQuery(ctx, metaType, idOrSlug, includeGames) {
+  // Make sure that the metadata type we got is correct.
+  if (isValidMetadataType(metaType) === false) {
+    throw Error(`unknown metadata type ${metaType}`);
+  }
+
+  // Try to find a metadata item of this type.
+  const metadata = await ctx.env.DB.prepare(`
+    SELECT id, bggId, slug, name, metatype FROM GameMetadata
+    WHERE metatype == ?1
+      AND (slug == ?2 or id == ?2)
+  `).bind(metaType, idOrSlug).all();
+
+  // If we didn't find anything, we can signal an error back.
+  if (metadata.results.length === 0) {
+    return null;
+  }
+
+  // The return value is ostensibly information about this particular
+  // metadata.
+  const record = metadata.results[0];
+
+  // If we were asked to, also try to find information on all of the games
+  // that reference this metadata.
+  if (includeGames === true) {
+    // Try to find all such records, if any.
+    const gameData = await ctx.env.DB.prepare(`
+      SELECT C.gameId, A.bggId, B.name, A.slug
+        FROM Game as A, GameName as B, GameMetadataPlacement as C
+      WHERE A.id == B.gameId and B.isPrimary = 1
+        AND C.gameID = A.id
+        AND C.itemId = ?
+    `).bind(record.id).all();
+    record.games = gameData.results;
+  }
+
+  return record;
+}
+
+/******************************************************************************/
+
+
 /* This takes as input a raw object that represents the data to be used to
  * insert a game into the database, and performs the insertion if possible.
  *
@@ -534,6 +588,40 @@ export async function gameMetadataUpdate(ctx, metaType) {
       return fail(ctx, `invalid JSON; ${err.message}`, 400);
     }
 
+    return fail(ctx, err.message, 500);
+  }
+}
+
+
+/******************************************************************************/
+
+
+/* Take as input a value that is one of:
+ *   - an internal ID of the given type of metadata
+ *   - a slug that represents an item
+ *
+ * The return value is information on that item (if any). Optionally, the query
+ * can include a "games" directive to also return information on the games that
+ * reference this data. */
+export async function gameMetadataQuery(ctx, metaType) {
+  // Can be either an item ID or a slug for the given metadata item
+  const { idOrSlug } = ctx.req.param();
+
+  // If this field exists in the query (regardless of the value), then we will
+  // also gather game information.
+  const includeGames = (ctx.req.query("games") !== undefined);
+
+  try {
+    // Try to look up the data; if we didn't find anything we can signal an
+    // error back.
+    const record = await doRawGameMetadataQuery(ctx, metaType, idOrSlug, includeGames)
+    if (record === null) {
+      return fail(ctx, `no such ${metaType} ${idOrSlug}`, 404);
+    }
+
+    return success(ctx, `information on ${metaType} ${idOrSlug}`, record);
+  }
+  catch (err) {
     return fail(ctx, err.message, 500);
   }
 }
