@@ -51,11 +51,11 @@ app.put(`${APIV1}/game/data/details/bgg/add/list`, insertBGGGameList)
 //
 // They all return back the database records for all such items, so that a
 // single call can update the list and also obtain the details for future use.
-app.put(`${APIV1}/game/meta/category/update`, ctx => gameMetadataUpdate(ctx, 'category'));
-app.put(`${APIV1}/game/meta/mechanic/update`, ctx => gameMetadataUpdate(ctx, 'mechanic'));
 app.put(`${APIV1}/game/meta/designer/update`, ctx => gameMetadataUpdate(ctx, 'designer'));
 app.put(`${APIV1}/game/meta/artist/update`, ctx => gameMetadataUpdate(ctx, 'artist'));
 app.put(`${APIV1}/game/meta/publisher/update`, ctx => gameMetadataUpdate(ctx, 'publisher'));
+app.put(`${APIV1}/game/meta/category/update`, ctx => gameMetadataUpdate(ctx, 'category'));
+app.put(`${APIV1}/game/meta/mechanic/update`, ctx => gameMetadataUpdate(ctx, 'mechanic'));
 
 
 /******************************************************************************/

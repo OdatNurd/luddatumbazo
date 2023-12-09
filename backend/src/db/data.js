@@ -12,15 +12,16 @@ import { lookupBGGGame } from "./bgg.js";
 /******************************************************************************/
 
 
-/* This is a mapping between the types of metadata that we understand and the
- * underlying table in which those metadata records live. */
-const metadataTableMap = {
-  "category": "Category",
-  "mechanic": "Mechanic",
-  "designer": "Designer",
-  "artist": "Artist",
-  "publisher": "Publisher",
-};
+/* This array lists all of the different types of game metadata that we
+ * currently support.
+ *
+ * This is used:
+ *   - in internal objects to name the fields that carry lists of metadata so
+ *     that the type of metadata is known
+ *   - in the metadata table itself to flag what kind of data each row is
+ *   - in generic calls to metadata functions to flag what kind of metadata
+ *     to operation on.*/
+const validMetadataTypes = ["designer", "artist", "publisher"  , "category", "mechanic", ];
 
 
 /* When we get a request to add a new game, these fields represent the fields
@@ -42,6 +43,11 @@ const defaultGameFields = {
   "artist": [],
   "publisher": []
 }
+
+
+/* A simple helper for metadata validation; returns true or false to indicate
+ * if the passed in metadata type is one of the valid, known types or not. */
+const isValidMetadataType = metatype => validMetadataTypes.indexOf(metatype) !== -1;
 
 
 /******************************************************************************/
@@ -121,8 +127,7 @@ const ensureRequiredKeys = (obj, keys) => {
  * ID's, or they could be the result of that data always having been there. */
 export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
   // Make sure that the metadata type we got is correct.
-  const table = metadataTableMap[metaType];
-  if (table === undefined) {
+  if (isValidMetadataType(metaType) === false) {
     throw Error(`unknown metadata type ${metaType}`);
   }
 
@@ -258,12 +263,11 @@ export async function doRawGameInsert(ctx, gameData) {
   //
   // Build that up as a batch
   const batch = [];
-  for (const metatype of Object.keys(metadataTableMap)) {
-    const update = ctx.env.DB.prepare(`
-      INSERT INTO GameMetadataPlacement
-      VALUES (NULL, ?1, ?2, ?3)
-    `);
-
+  const update = ctx.env.DB.prepare(`
+    INSERT INTO GameMetadataPlacement
+    VALUES (NULL, ?1, ?2, ?3)
+  `);
+  for (const metatype of validMetadataTypes) {
     for (const item of details[metatype]) {
       batch.push(update.bind(id, metatype, item.id) )
     }
