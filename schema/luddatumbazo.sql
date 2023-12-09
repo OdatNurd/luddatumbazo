@@ -1,13 +1,3 @@
---------------------------------------------------------------------------------
--- Core Tables
---
--- Sections here carry metadata about a specific game. All of these work in a
--- similar way and provide a mapping between the name of a thing, a slug that
--- will identify it uniquely, our internal ID, and any applicable BGG ID, which
--- is used during imports only.
---------------------------------------------------------------------------------
-
-
 DROP TABLE IF EXISTS GameMetadataPlacement;
 CREATE TABLE GameMetadataPlacement (
     id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
@@ -34,10 +24,6 @@ CREATE UNIQUE INDEX idx_metadata_metaslug_map ON GameMetadata(metatype, slug);
 CREATE INDEX idx_metadata_slug_map ON GameMetadata(slug);
 
 
--- Games can have many names associates with them, such as for different
--- languages or when a reprint happens; this table tracks all the names a game
--- can be known by, and marks one as the name that the game is primarily known
--- by as well.
 DROP TABLE IF EXISTS GameName;
 CREATE TABLE GameName (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,11 +35,6 @@ CREATE TABLE GameName (
 CREATE INDEX idx_gamename_id ON GameName(gameId);
 
 
--- The main table that stores the core information about any specific game.
---
--- We key these on our own internal game ID but we also have an associated
--- BoardGameGeek ID so that we can cross associate; this is not required since
--- some games may be home grown and not stored there.
 DROP TABLE IF EXISTS Game;
 CREATE TABLE Game (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
