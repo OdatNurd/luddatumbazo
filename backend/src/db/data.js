@@ -266,6 +266,76 @@ export async function getRawGameMetadataList(ctx, metaType) {
 /******************************************************************************/
 
 
+/* Get a list of all of the games known to the database, including their slug
+ * and the primary name associated with each of them. */
+export async function getRawGameList(ctx) {
+  // Try to find all metadata item of this type.
+  const gameList = await ctx.env.DB.prepare(`
+    SELECT A.id, A.bggId, A.slug, B.name
+      FROM Game as A, GameName as B
+     WHERE A.id == B.gameId and B.isPrimary = 1
+  `).all();
+
+  return gameList.results;
+}
+
+
+/******************************************************************************/
+
+
+/* Get the full details on the game with either the ID or slug provided. The
+ * return will be null if there is no such game, otherwise the return is an
+ * object that contains the full details on the game, including all of its
+ * metadata. */
+export async function getRawGameDetails(ctx, idOrSlug) {
+  // Try to find the game with the value has that been provided; we check to see
+  // if the provided ID is either a slug or an actual ID.
+  const lookup = await ctx.env.DB.prepare(`
+    SELECT * FROM Game
+     WHERE (id == ?1 or slug == ?1)
+  `).bind(idOrSlug).all();
+
+  // If there was no result found, then return null back to signal that.
+  if (lookup.results.length === 0) {
+    return null;
+  }
+
+  // Set up the game ID
+  const gameData = lookup.results[0];
+
+  // Gather the list of all of the names that this game is known by; much like
+  // when we do the insert, the primary name is brought to the top of the list.
+  const names = await ctx.env.DB.prepare(`
+    SELECT name from GameName
+     WHERE gameId = ?
+     ORDER BY isPrimary DESC;
+  `).bind(gameData.id).all();
+  gameData.names = names.results.map(el => el.name);
+
+  // Gather the list of all of the metadata that's associated with this game.
+  const metadata = await ctx.env.DB.prepare(`
+    SELECT A.metatype, B.id, B.bggId, B.slug, B.name
+      FROM GameMetadataPlacement as A,
+           GameMetadata as B
+     WHERE A.gameId = ?
+       AND A.itemId = B.id
+     ORDER BY A.metatype;
+  `).bind(gameData.id).all();
+
+
+  // Map the records into the returned gameData; the metatype field is used to
+  // set the field in the main object where this data will go, but we don't
+  // want the metatype field to appear in the resulting object.
+  validMetadataTypes.forEach(type => gameData[type] = []);
+  metadata.results.forEach(item => gameData[item.metatype].push({ ...item, metatype: undefined }) );
+
+  return gameData;
+}
+
+
+/******************************************************************************/
+
+
 /* This takes as input a raw object that represents the data to be used to
  * insert a game into the database, and performs the insertion if possible.
  *
@@ -673,3 +743,47 @@ export async function gameMetadataList(ctx, metaType) {
 
 
 /******************************************************************************/
+
+
+/* Return back a list of all of the metadata items of the given type; this may
+ * be an empty list. */
+export async function gameList(ctx) {
+  try {
+    const result = await getRawGameList(ctx);
+
+    return success(ctx, `found ${result.length} games`, result);
+  }
+  catch (err) {
+    return fail(ctx, err.message, 500);
+  }
+}
+
+
+/******************************************************************************/
+
+
+/* Return back a list of all of the metadata items of the given type; this may
+ * be an empty list. */
+export async function gameDetails(ctx) {
+  // Can be either an game ID or a slug to represent a game
+  const { idOrSlug } = ctx.req.param();
+
+  try {
+    // Look up the game; if we don't find anything by that value, then this does
+    // not exist.
+    const result = await getRawGameDetails(ctx, idOrSlug);
+    if (result === null) {
+      return fail(ctx, `no such game ${idOrSlug}`, 404)
+    }
+
+    return success(ctx, `information on game ${idOrSlug}`, result);
+  }
+  catch (err) {
+    return fail(ctx, err.message, 500);
+  }
+}
+
+
+/******************************************************************************/
+
+

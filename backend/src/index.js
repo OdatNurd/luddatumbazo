@@ -3,7 +3,8 @@ import { cors } from 'hono/cors'
 
 import { lookupBGGGameInfo } from './db/bgg.js';
 import { insertGame, insertBGGGame, insertBGGGameList,
-         gameMetadataUpdate, gameMetadataQuery, gameMetadataList } from './db/data.js'
+         gameMetadataUpdate, gameMetadataQuery, gameMetadataList,
+         gameList, gameDetails } from './db/data.js'
 
 
 /******************************************************************************/
@@ -44,6 +45,10 @@ app.put(`${APIV1}/game/data/details/add`, insertGame);
 // using that to add the actual game.
 app.put(`${APIV1}/game/data/details/bgg/add/:bggGameId{[0-9]+}`, insertBGGGame)
 app.put(`${APIV1}/game/data/details/bgg/add/list`, insertBGGGameList)
+
+// Get a list of all known games, and get the details of a specific game.
+app.get(`${APIV1}/game/list`, ctx => gameList(ctx));
+app.get(`${APIV1}/game/:idOrSlug`, ctx => gameDetails(ctx));
 
 // Perform an update on the core metadata fields that can associate with games;
 // these all take a list of objects that represent metadata in the given format
