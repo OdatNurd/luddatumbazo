@@ -109,6 +109,73 @@ const ensureRequiredKeys = (obj, keys) => {
 /******************************************************************************/
 
 
+/* Given some information on where and what database action is taken, what the
+ * result was, and whether or not it is a batch, display a log that displays
+ * details of the operation. */
+const displayDBResultLog = (where, action, result, isBatch) => {
+  // The locus that this operation happened at.
+  const locus = `${where}:${action}`;
+
+  // Alias the result meta section for easier access
+  const m = result.meta;
+
+  // When the log is the result of a batch, we want a bit of a visual separation
+  // in the output to show that.
+  const sep = isBatch ? '  =>' : '';
+
+  // Gather the duration of the operation, whether or not i was a success, and
+  // some information on the underlying data.
+  //
+  // Since Cloudflare are dicks, the result set doesn't match the docs when you
+  // do local dev, so we need to patch that in so that stuff doesn't blow up in
+  // our faces.
+  const duration = `[${m.duration}ms]`;
+  const status = `${result.success ? 'success' : 'failure'}`;
+  const stats = `last_row_id=${m.last_row_id}, reads=${m.rows_read ?? '?'}, writes=${m.rows_written ?? '?'}`
+
+  // Gather the size of the result set; this can be null, in which case report
+  // that instead.
+  const count = `, resultSize=${result.results !== null ? result.results.length : 'null'}`
+  console.log(`${duration} ${sep} ${locus} : ${m.served_by}(${status}) : ${stats}${count}`);
+}
+
+
+/******************************************************************************/
+
+
+/* This helper plucks the results out of a D1 result set and returns them while
+ * also making a log entry on the number of reads and writes to the database,
+ * as well as whether the operation succeeded or failed and how long it took.
+ *
+ * The results parameter is the result of calling one of:
+ *   run(), all() or batch()
+ *
+ * This call will detect if the results passed in is an array or not; if it is,
+ * then it's assumed this is being used to report the output of a batched call,
+ * in which case the returned result is a mapped version that provides an array
+ * of results. */
+const getDBResult = (where, action, resultSet) => {
+  // If the result set is an array, then this is a batch operation, so we need
+  // to generate a log once for each item in the batch, and then adjust the
+  // result set so that it's an array of results and not an array of D1 info
+  if (Array.isArray(resultSet)) {
+    for (const item of resultSet) {
+      displayDBResultLog(where, action, item, true);
+    }
+
+    // Unfold the results on return
+    return resultSet.map(item => item.results);
+  }
+
+  // Just a single result set, so log it and return the inner results back.
+  displayDBResultLog(where, action, resultSet, false);
+  return resultSet.results;
+}
+
+
+/******************************************************************************/
+
+
 /* This takes an array of metadata records (which may be partial) and a specific
  * metadata type that appears in the metadataTableMap.
  *
@@ -148,7 +215,7 @@ export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
     SELECT id, bggId, name, slug from GameMetadata
     WHERE metatype = ? AND slug in (SELECT value from json_each('${JSON.stringify(slugs)}'))
   `).bind(metaType);
-  const existing = (await lookupExisting.all()).results;
+  const existing = getDBResult('doRawMetadataUpdate', 'find_existing', await lookupExisting.all());
 
   // If the result that came back has the same length as the list of slugs,
   // then all of the items are already in the database, so there's no reason to
@@ -159,7 +226,7 @@ export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
 
   // Not all of the items exist; get the list of existing slugs so that we can
   // see what needs to be added.
-  const existingSlugs = (await lookupExisting.all()).results.map(el => el.slug);
+  const existingSlugs = existing.map(el => el.slug);
 
   // Gather from the input metadata all of the records whose slugs don't appear
   // in the list of existing slugs; those are the items that we need to insert
@@ -172,14 +239,20 @@ export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
   const insertBatch = insertMetadata.map(el => insertNew.bind(metaType, el.bggId, el.slug, el.name));
 
   // If the batch is not empty, then we can execute to insert the new ones.
+  // The batch returns an array of results, one per item in the input, but none
+  // of them have any details since they are insert statements.
   if (insertBatch.length > 0) {
-    await ctx.env.DB.batch(insertBatch);
+    const batched = await ctx.env.DB.batch(insertBatch);
+    getDBResult('doRawMetadataUpdate', 'insert_meta', batched);
   }
 
   // Now look up all of the existing records based on the slugs we were given;
   // this will now be all of them.
-  const result = await lookupExisting.all();
-  return result.results;
+  // TODO:
+  //   To be more resource friendly, this could look up only those items whose
+  //   slugs are in the insertMetadata list, and then combine them with the
+  //   initial results, rather than re-scanning for items we already found.
+  return getDBResult('doRawMetadataUpdate', 'final_lookup', await lookupExisting.all())
 }
 
 
@@ -210,15 +283,16 @@ export async function doRawGameMetadataQuery(ctx, metaType, idOrSlug, includeGam
     WHERE metatype == ?1
       AND (slug == ?2 or id == ?2)
   `).bind(metaType, idOrSlug).all();
+  const result = getDBResult('doRawGameMetadataQuery', 'find_existing', metadata);
 
   // If we didn't find anything, we can signal an error back.
-  if (metadata.results.length === 0) {
+  if (result.length === 0) {
     return null;
   }
 
   // The return value is ostensibly information about this particular
   // metadata.
-  const record = metadata.results[0];
+  const record = result[0];
 
   // If we were asked to, also try to find information on all of the games
   // that reference this metadata.
@@ -231,7 +305,7 @@ export async function doRawGameMetadataQuery(ctx, metaType, idOrSlug, includeGam
         AND C.gameID = A.id
         AND C.itemId = ?
     `).bind(record.id).all();
-    record.games = gameData.results;
+    record.games = getDBResult('doRawGameMetadataQuery', 'find_games', gameData);
   }
 
   return record;
@@ -259,7 +333,7 @@ export async function getRawGameMetadataList(ctx, metaType) {
      WHERE metatype = ?
   `).bind(metaType).all();
 
-  return metadata.results;
+  return getDBResult('getRawGameMetadataList', 'find_meta', metadata);
 }
 
 
@@ -276,7 +350,7 @@ export async function getRawGameList(ctx) {
      WHERE A.id == B.gameId and B.isPrimary = 1
   `).all();
 
-  return gameList.results;
+  return getDBResult('getRawGameList', 'find_games', gameList);
 }
 
 
@@ -294,14 +368,15 @@ export async function getRawGameDetails(ctx, idOrSlug) {
     SELECT * FROM Game
      WHERE (id == ?1 or slug == ?1)
   `).bind(idOrSlug).all();
+  const result = getDBResult('getRawGameDetails', 'find_game', lookup);
 
   // If there was no result found, then return null back to signal that.
-  if (lookup.results.length === 0) {
+  if (result.length === 0) {
     return null;
   }
 
   // Set up the game ID
-  const gameData = lookup.results[0];
+  const gameData = result[0];
 
   // Gather the list of all of the names that this game is known by; much like
   // when we do the insert, the primary name is brought to the top of the list.
@@ -310,7 +385,7 @@ export async function getRawGameDetails(ctx, idOrSlug) {
      WHERE gameId = ?
      ORDER BY isPrimary DESC;
   `).bind(gameData.id).all();
-  gameData.names = names.results.map(el => el.name);
+  gameData.names = getDBResult('getRawGameDetails', 'find_names', names).map(el => el.name);
 
   // Gather the list of all of the metadata that's associated with this game.
   const metadata = await ctx.env.DB.prepare(`
@@ -322,12 +397,11 @@ export async function getRawGameDetails(ctx, idOrSlug) {
      ORDER BY A.metatype;
   `).bind(gameData.id).all();
 
-
   // Map the records into the returned gameData; the metatype field is used to
   // set the field in the main object where this data will go, but we don't
   // want the metatype field to appear in the resulting object.
   validMetadataTypes.forEach(type => gameData[type] = []);
-  metadata.results.forEach(item => gameData[item.metatype].push({ ...item, metatype: undefined }) );
+  getDBResult('getRawGameDetails', 'find_meta', metadata).forEach(item => gameData[item.metatype].push({ ...item, metatype: undefined }) );
 
   return gameData;
 }
@@ -405,6 +479,7 @@ export async function doRawGameInsert(ctx, gameData) {
   // The last row ID in the metadata is the SQLite return for the last
   // inserted rowID, which is the ID of the item we just inserted.
   const result = await stmt.run();
+  getDBResult('doRawGameInsert', 'insert_game', result);
   const id = result.meta.last_row_id;
 
   // For each of the available metadata items, we need to add items into the
@@ -437,7 +512,8 @@ export async function doRawGameInsert(ctx, gameData) {
 
   // Trigger the batch; we don't need to see the results of this since it is
   // all insert operations on bound metadata.
-  await ctx.env.DB.batch(batch);
+  const insert = await ctx.env.DB.batch(batch);
+  getDBResult('doRawGameInsert', 'insert_details', insert);
 
   // The operation succeeded; return back information on the record that was
   // added.
@@ -482,9 +558,10 @@ export async function doRawBGGGameInsert(ctx, bggGameId) {
     SELECT id FROM Game
     WHERE bggId = ? or slug = ?;
   `).bind(gameInfo.bggId, gameInfo.slug).all();
+  const result = getDBResult('doRawBGGGameInsert', 'find_existing', existing);
 
   // If we found anything, this game can't be added because it already exists.
-  if (existing.results.length !== 0) {
+  if (result.length !== 0) {
     throw new BGGLookupError(`cannot add bggId ${bggGameId}: this game or its slug already exist`, 409);
   }
 
