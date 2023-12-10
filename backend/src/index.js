@@ -3,7 +3,7 @@ import { cors } from 'hono/cors'
 
 import { lookupBGGGameInfo } from './db/bgg.js';
 import { insertGame, insertBGGGame, insertBGGGameList,
-         gameMetadataUpdate, gameMetadataQuery } from './db/data.js'
+         gameMetadataUpdate, gameMetadataQuery, gameMetadataList } from './db/data.js'
 
 
 /******************************************************************************/
@@ -60,11 +60,20 @@ app.put(`${APIV1}/game/meta/mechanic/update`, ctx => gameMetadataUpdate(ctx, 'me
 
 // Gather information about the specific metadata, which includes the name,
 // slug, and (optionally) the list of games that reference that metadata.
+app.get(`${APIV1}/game/meta/designer/list`, ctx => gameMetadataList(ctx, 'designer'));
+app.get(`${APIV1}/game/meta/artist/list`, ctx => gameMetadataList(ctx, 'artist'));
+app.get(`${APIV1}/game/meta/publisher/list`, ctx => gameMetadataList(ctx, 'publisher'));
+app.get(`${APIV1}/game/meta/category/list`, ctx => gameMetadataList(ctx, 'category'));
+app.get(`${APIV1}/game/meta/mechanic/list`, ctx => gameMetadataList(ctx, 'mechanic'));
+
+// Gather information about the specific metadata, which includes the name,
+// slug, and (optionally) the list of games that reference that metadata.
 app.get(`${APIV1}/game/meta/designer/:idOrSlug`, ctx => gameMetadataQuery(ctx, 'designer'));
 app.get(`${APIV1}/game/meta/artist/:idOrSlug`, ctx => gameMetadataQuery(ctx, 'artist'));
 app.get(`${APIV1}/game/meta/publisher/:idOrSlug`, ctx => gameMetadataQuery(ctx, 'publisher'));
 app.get(`${APIV1}/game/meta/category/:idOrSlug`, ctx => gameMetadataQuery(ctx, 'category'));
 app.get(`${APIV1}/game/meta/mechanic/:idOrSlug`, ctx => gameMetadataQuery(ctx, 'mechanic'));
+
 
 
 /******************************************************************************/

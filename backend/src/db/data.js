@@ -237,6 +237,32 @@ export async function doRawGameMetadataQuery(ctx, metaType, idOrSlug, includeGam
   return record;
 }
 
+
+/******************************************************************************/
+
+
+/* Query for the complete list of items of the given metadata type.
+ *
+ * This always results in a list of items, though that list may be empty.
+ *
+ * This may raise exceptions if there are issues talking to the database, or if
+ * the metaType is not valid. */
+export async function getRawGameMetadataList(ctx, metaType) {
+  // Make sure that the metadata type we got is correct.
+  if (isValidMetadataType(metaType) === false) {
+    throw Error(`unknown metadata type ${metaType}`);
+  }
+
+  // Try to find all metadata item of this type.
+  const metadata = await ctx.env.DB.prepare(`
+    SELECT id, bggId, slug, name from GameMetadata
+     WHERE metatype = ?
+  `).bind(metaType).all();
+
+  return metadata.results;
+}
+
+
 /******************************************************************************/
 
 
@@ -620,6 +646,25 @@ export async function gameMetadataQuery(ctx, metaType) {
     }
 
     return success(ctx, `information on ${metaType} ${idOrSlug}`, record);
+  }
+  catch (err) {
+    return fail(ctx, err.message, 500);
+  }
+}
+
+
+/******************************************************************************/
+
+
+/* Return back a list of all of the metadata items of the given type; this may
+ * be an empty list. */
+export async function gameMetadataList(ctx, metaType) {
+  try {
+    // Try to look up the data; if we didn't find anything we can signal an
+    // error back.
+    const result = await getRawGameMetadataList(ctx, metaType);
+
+    return success(ctx, `found ${result.length} ${metaType} records`, result);
   }
   catch (err) {
     return fail(ctx, err.message, 500);
