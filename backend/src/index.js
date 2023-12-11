@@ -1,10 +1,10 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors'
 
-import { lookupBGGGameInfo } from './db/bgg.js';
+import { lookupBGGGameInfo } from './requests/bgg.js';
 import { insertGame, insertBGGGame, insertBGGGameList,
          gameMetadataUpdate, gameMetadataQuery, gameMetadataList,
-         gameList, gameDetails } from './db/data.js'
+         gameList, gameDetails } from './requests/data.js'
 
 
 /******************************************************************************/
