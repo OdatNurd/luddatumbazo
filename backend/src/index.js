@@ -2,9 +2,9 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors'
 
 import { lookupBGGGameInfo } from './requests/bgg.js';
-import { insertGame, insertBGGGame, insertBGGGameList,
-         gameMetadataUpdate, gameMetadataQuery, gameMetadataList,
-         gameList, gameDetails } from './requests/data.js'
+import { insertGameReq, insertBGGGameReq, insertBGGGameListReq,
+         gameMetadataUpdateReq, gameMetadataQueryReq, gameMetadataListReq,
+         gameListReq, gameDetailsReq } from './requests/data.js'
 
 
 /******************************************************************************/
@@ -39,16 +39,16 @@ app.get(`${APIV1}/bgg/boardgame/:bggGameId`, lookupBGGGameInfo);
 
 // Add a game using the details provided in the body of the request; the format
 // looks like that which comes out of the BGG wrapper API for board games.
-app.put(`${APIV1}/game/data/details/add`, insertGame);
+app.put(`${APIV1}/game/data/details/add`, insertGameReq);
 
 // Add a game by looking up the details of a BoardGameGeek game ID and then
 // using that to add the actual game.
-app.put(`${APIV1}/game/data/details/bgg/add/:bggGameId{[0-9]+}`, insertBGGGame)
-app.put(`${APIV1}/game/data/details/bgg/add/list`, insertBGGGameList)
+app.put(`${APIV1}/game/data/details/bgg/add/:bggGameId{[0-9]+}`, insertBGGGameReq)
+app.put(`${APIV1}/game/data/details/bgg/add/list`, insertBGGGameListReq)
 
 // Get a list of all known games, and get the details of a specific game.
-app.get(`${APIV1}/game/list`, ctx => gameList(ctx));
-app.get(`${APIV1}/game/:idOrSlug`, ctx => gameDetails(ctx));
+app.get(`${APIV1}/game/list`, ctx => gameListReq(ctx));
+app.get(`${APIV1}/game/:idOrSlug`, ctx => gameDetailsReq(ctx));
 
 // Perform an update on the core metadata fields that can associate with games;
 // these all take a list of objects that represent metadata in the given format
@@ -57,27 +57,27 @@ app.get(`${APIV1}/game/:idOrSlug`, ctx => gameDetails(ctx));
 //
 // They all return back the database records for all such items, so that a
 // single call can update the list and also obtain the details for future use.
-app.put(`${APIV1}/game/meta/designer/update`, ctx => gameMetadataUpdate(ctx, 'designer'));
-app.put(`${APIV1}/game/meta/artist/update`, ctx => gameMetadataUpdate(ctx, 'artist'));
-app.put(`${APIV1}/game/meta/publisher/update`, ctx => gameMetadataUpdate(ctx, 'publisher'));
-app.put(`${APIV1}/game/meta/category/update`, ctx => gameMetadataUpdate(ctx, 'category'));
-app.put(`${APIV1}/game/meta/mechanic/update`, ctx => gameMetadataUpdate(ctx, 'mechanic'));
+app.put(`${APIV1}/game/meta/designer/update`, ctx => gameMetadataUpdateReq(ctx, 'designer'));
+app.put(`${APIV1}/game/meta/artist/update`, ctx => gameMetadataUpdateReq(ctx, 'artist'));
+app.put(`${APIV1}/game/meta/publisher/update`, ctx => gameMetadataUpdateReq(ctx, 'publisher'));
+app.put(`${APIV1}/game/meta/category/update`, ctx => gameMetadataUpdateReq(ctx, 'category'));
+app.put(`${APIV1}/game/meta/mechanic/update`, ctx => gameMetadataUpdateReq(ctx, 'mechanic'));
 
 // Gather information about the specific metadata, which includes the name,
 // slug, and (optionally) the list of games that reference that metadata.
-app.get(`${APIV1}/game/meta/designer/list`, ctx => gameMetadataList(ctx, 'designer'));
-app.get(`${APIV1}/game/meta/artist/list`, ctx => gameMetadataList(ctx, 'artist'));
-app.get(`${APIV1}/game/meta/publisher/list`, ctx => gameMetadataList(ctx, 'publisher'));
-app.get(`${APIV1}/game/meta/category/list`, ctx => gameMetadataList(ctx, 'category'));
-app.get(`${APIV1}/game/meta/mechanic/list`, ctx => gameMetadataList(ctx, 'mechanic'));
+app.get(`${APIV1}/game/meta/designer/list`, ctx => gameMetadataListReq(ctx, 'designer'));
+app.get(`${APIV1}/game/meta/artist/list`, ctx => gameMetadataListReq(ctx, 'artist'));
+app.get(`${APIV1}/game/meta/publisher/list`, ctx => gameMetadataListReq(ctx, 'publisher'));
+app.get(`${APIV1}/game/meta/category/list`, ctx => gameMetadataListReq(ctx, 'category'));
+app.get(`${APIV1}/game/meta/mechanic/list`, ctx => gameMetadataListReq(ctx, 'mechanic'));
 
 // Gather information about the specific metadata, which includes the name,
 // slug, and (optionally) the list of games that reference that metadata.
-app.get(`${APIV1}/game/meta/designer/:idOrSlug`, ctx => gameMetadataQuery(ctx, 'designer'));
-app.get(`${APIV1}/game/meta/artist/:idOrSlug`, ctx => gameMetadataQuery(ctx, 'artist'));
-app.get(`${APIV1}/game/meta/publisher/:idOrSlug`, ctx => gameMetadataQuery(ctx, 'publisher'));
-app.get(`${APIV1}/game/meta/category/:idOrSlug`, ctx => gameMetadataQuery(ctx, 'category'));
-app.get(`${APIV1}/game/meta/mechanic/:idOrSlug`, ctx => gameMetadataQuery(ctx, 'mechanic'));
+app.get(`${APIV1}/game/meta/designer/:idOrSlug`, ctx => gameMetadataQueryReq(ctx, 'designer'));
+app.get(`${APIV1}/game/meta/artist/:idOrSlug`, ctx => gameMetadataQueryReq(ctx, 'artist'));
+app.get(`${APIV1}/game/meta/publisher/:idOrSlug`, ctx => gameMetadataQueryReq(ctx, 'publisher'));
+app.get(`${APIV1}/game/meta/category/:idOrSlug`, ctx => gameMetadataQueryReq(ctx, 'category'));
+app.get(`${APIV1}/game/meta/mechanic/:idOrSlug`, ctx => gameMetadataQueryReq(ctx, 'mechanic'));
 
 
 

@@ -18,12 +18,12 @@ import { getDBResult } from './common.js';
  *   - in the metadata table itself to flag what kind of data each row is
  *   - in generic calls to metadata functions to flag what kind of metadata
  *     to operation on.*/
-export const validMetadataTypes = ["designer", "artist", "publisher"  , "category", "mechanic", ];
+export const metadataTypeList = ["designer", "artist", "publisher"  , "category", "mechanic", ];
 
 
 /* A simple helper for metadata validation; returns true or false to indicate
  * if the passed in metadata type is one of the valid, known types or not. */
-const isValidMetadataType = metatype => validMetadataTypes.indexOf(metatype) !== -1;
+const isValidMetadataType = metatype => metadataTypeList.indexOf(metatype) !== -1;
 
 
 /******************************************************************************/
@@ -83,7 +83,7 @@ const prepareMetadata = data => data.map(el => {
  * The returned value is a list of dictionaries much like the input, but with
  * the internal ID's of the items associated returned back. These could be new
  * ID's, or they could be the result of that data always having been there. */
-export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
+export async function updateMetadata(ctx, inputMetadata, metaType) {
   // Make sure that the metadata type we got is correct.
   if (isValidMetadataType(metaType) === false) {
     throw Error(`unknown metadata type ${metaType}`);
@@ -106,7 +106,7 @@ export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
     SELECT id, bggId, name, slug from GameMetadata
     WHERE metatype = ? AND slug in (SELECT value from json_each('${JSON.stringify(slugs)}'))
   `).bind(metaType);
-  const existing = getDBResult('doRawMetadataUpdate', 'find_existing', await lookupExisting.all());
+  const existing = getDBResult('updateMetadata', 'find_existing', await lookupExisting.all());
 
   // If the result that came back has the same length as the list of slugs,
   // then all of the items are already in the database, so there's no reason to
@@ -134,7 +134,7 @@ export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
   // of them have any details since they are insert statements.
   if (insertBatch.length > 0) {
     const batched = await ctx.env.DB.batch(insertBatch);
-    getDBResult('doRawMetadataUpdate', 'insert_meta', batched);
+    getDBResult('updateMetadata', 'insert_meta', batched);
   }
 
   // Now look up all of the existing records based on the slugs we were given;
@@ -143,7 +143,7 @@ export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
   //   To be more resource friendly, this could look up only those items whose
   //   slugs are in the insertMetadata list, and then combine them with the
   //   initial results, rather than re-scanning for items we already found.
-  return getDBResult('doRawMetadataUpdate', 'final_lookup', await lookupExisting.all())
+  return getDBResult('updateMetadata', 'final_lookup', await lookupExisting.all())
 }
 
 
@@ -162,7 +162,7 @@ export async function doRawMetadataUpdate(ctx, inputMetadata, metaType) {
  *
  * This may raise exceptions if there are issues talking to the database, or if
  * the metaType is not valid. */
-export async function doRawGameMetadataQuery(ctx, metaType, idOrSlug, includeGames) {
+export async function getMetadataDetails(ctx, metaType, idOrSlug, includeGames) {
   // Make sure that the metadata type we got is correct.
   if (isValidMetadataType(metaType) === false) {
     throw Error(`unknown metadata type ${metaType}`);
@@ -174,7 +174,7 @@ export async function doRawGameMetadataQuery(ctx, metaType, idOrSlug, includeGam
     WHERE metatype == ?1
       AND (slug == ?2 or id == ?2)
   `).bind(metaType, idOrSlug).all();
-  const result = getDBResult('doRawGameMetadataQuery', 'find_existing', metadata);
+  const result = getDBResult('getMetadataDetails', 'find_existing', metadata);
 
   // If we didn't find anything, we can signal an error back.
   if (result.length === 0) {
@@ -196,7 +196,7 @@ export async function doRawGameMetadataQuery(ctx, metaType, idOrSlug, includeGam
         AND C.gameID = A.id
         AND C.itemId = ?
     `).bind(record.id).all();
-    record.games = getDBResult('doRawGameMetadataQuery', 'find_games', gameData);
+    record.games = getDBResult('getMetadataDetails', 'find_games', gameData);
   }
 
   return record;
@@ -212,7 +212,7 @@ export async function doRawGameMetadataQuery(ctx, metaType, idOrSlug, includeGam
  *
  * This may raise exceptions if there are issues talking to the database, or if
  * the metaType is not valid. */
-export async function getRawGameMetadataList(ctx, metaType) {
+export async function getMetadataList(ctx, metaType) {
   // Make sure that the metadata type we got is correct.
   if (isValidMetadataType(metaType) === false) {
     throw Error(`unknown metadata type ${metaType}`);
@@ -224,7 +224,7 @@ export async function getRawGameMetadataList(ctx, metaType) {
      WHERE metatype = ?
   `).bind(metaType).all();
 
-  return getDBResult('getRawGameMetadataList', 'find_meta', metadata);
+  return getDBResult('getMetadataList', 'find_meta', metadata);
 }
 
 

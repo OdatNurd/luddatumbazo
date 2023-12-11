@@ -6,8 +6,8 @@ import slug from "slug";
 import { BGGLookupError } from '../db/exceptions.js';
 import { success, fail } from "./common.js";
 
-import { doRawGameInsert, doRawBGGGameInsert, getRawGameList, getRawGameDetails } from '../db/game.js';
-import { doRawMetadataUpdate, doRawGameMetadataQuery, getRawGameMetadataList } from '../db/metadata.js';
+import { insertGame, insertBGGGame, getGameList, getGameDetails } from '../db/game.js';
+import { updateMetadata, getMetadataDetails, getMetadataList } from '../db/metadata.js';
 
 
 /******************************************************************************/
@@ -42,13 +42,13 @@ import { doRawMetadataUpdate, doRawGameMetadataQuery, getRawGameMetadataList } f
  * data, including adding name records, adding in any of the metadata fields
  * that are not already present, and updating the placement of those items so
  * that the full game record is available. */
-export async function insertGame(ctx) {
+export async function insertGameReq(ctx) {
   try {
     // Suck in the new game data and use it to do the insert; the helper
     // function does all of the validation, and will throw on error or return
     // details of the new game on success.
     const gameData = await ctx.req.json();
-    const newGameInfo = await doRawGameInsert(ctx, gameData);
+    const newGameInfo = await insertGame(ctx, gameData);
 
     // Return success back.
     return success(ctx, `added game ${newGameInfo.id}`, newGameInfo);
@@ -74,11 +74,11 @@ export async function insertGame(ctx) {
  *
  * The result of this query is the same as adding a game by providing an
  * explicit body. */
-export async function insertBGGGame(ctx) {
+export async function insertBGGGameReq(ctx) {
   const { bggGameId } = ctx.req.param();
 
   try {
-    const newGameInfo = await doRawBGGGameInsert(ctx, bggGameId);
+    const newGameInfo = await insertBGGGame(ctx, bggGameId);
     if (newGameInfo === null) {
       return fail(ctx, `BGG has no record of game with ID ${bggGameId}`, 404);
     }
@@ -108,7 +108,7 @@ export async function insertBGGGame(ctx) {
  *
  * The result of this query is the same as adding a game by providing an
  * explicit body. */
-export async function insertBGGGameList(ctx) {
+export async function insertBGGGameListReq(ctx) {
   try {
     // Suck in the new game data and use it to do the insert; the helper
     // function does all of the validation, and will throw on error or return
@@ -125,7 +125,7 @@ export async function insertBGGGameList(ctx) {
       try {
         // Try to lookup and insert this game; the result is either null if
         // there was a failure, or information on the inserted game.
-        const newGameInfo = await doRawBGGGameInsert(ctx, bggGameId);
+        const newGameInfo = await insertBGGGame(ctx, bggGameId);
         if (newGameInfo === null) {
           skipped.push({ "bggId": bggGameId, status: 404, reason: "not found" });
         } else {
@@ -189,10 +189,10 @@ export async function insertBGGGameList(ctx) {
  * skip over all items that are BGG related which have previously been imported.
  *
  * The result is currently the native D1 result of the query. */
-export async function gameMetadataUpdate(ctx, metaType) {
+export async function gameMetadataUpdateReq(ctx, metaType) {
   try {
     // Prepare the Metadata update and execute it
-    const result = await doRawMetadataUpdate(ctx, await ctx.req.json(), metaType);
+    const result = await updateMetadata(ctx, await ctx.req.json(), metaType);
 
     return success(ctx, `updated some ${metaType} records` , result);
   }
@@ -216,7 +216,7 @@ export async function gameMetadataUpdate(ctx, metaType) {
  * The return value is information on that item (if any). Optionally, the query
  * can include a "games" directive to also return information on the games that
  * reference this data. */
-export async function gameMetadataQuery(ctx, metaType) {
+export async function gameMetadataQueryReq(ctx, metaType) {
   // Can be either an item ID or a slug for the given metadata item
   const { idOrSlug } = ctx.req.param();
 
@@ -227,7 +227,7 @@ export async function gameMetadataQuery(ctx, metaType) {
   try {
     // Try to look up the data; if we didn't find anything we can signal an
     // error back.
-    const record = await doRawGameMetadataQuery(ctx, metaType, idOrSlug, includeGames)
+    const record = await getMetadataDetails(ctx, metaType, idOrSlug, includeGames)
     if (record === null) {
       return fail(ctx, `no such ${metaType} ${idOrSlug}`, 404);
     }
@@ -245,11 +245,11 @@ export async function gameMetadataQuery(ctx, metaType) {
 
 /* Return back a list of all of the metadata items of the given type; this may
  * be an empty list. */
-export async function gameMetadataList(ctx, metaType) {
+export async function gameMetadataListReq(ctx, metaType) {
   try {
     // Try to look up the data; if we didn't find anything we can signal an
     // error back.
-    const result = await getRawGameMetadataList(ctx, metaType);
+    const result = await getMetadataList(ctx, metaType);
 
     return success(ctx, `found ${result.length} ${metaType} records`, result);
   }
@@ -264,9 +264,9 @@ export async function gameMetadataList(ctx, metaType) {
 
 /* Return back a list of all of the metadata items of the given type; this may
  * be an empty list. */
-export async function gameList(ctx) {
+export async function gameListReq(ctx) {
   try {
-    const result = await getRawGameList(ctx);
+    const result = await getGameList(ctx);
 
     return success(ctx, `found ${result.length} games`, result);
   }
@@ -281,14 +281,14 @@ export async function gameList(ctx) {
 
 /* Return back a list of all of the metadata items of the given type; this may
  * be an empty list. */
-export async function gameDetails(ctx) {
+export async function gameDetailsReq(ctx) {
   // Can be either an game ID or a slug to represent a game
   const { idOrSlug } = ctx.req.param();
 
   try {
     // Look up the game; if we don't find anything by that value, then this does
     // not exist.
-    const result = await getRawGameDetails(ctx, idOrSlug);
+    const result = await getGameDetails(ctx, idOrSlug);
     if (result === null) {
       return fail(ctx, `no such game ${idOrSlug}`, 404)
     }

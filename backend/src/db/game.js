@@ -4,7 +4,7 @@
 import { BGGLookupError } from './exceptions.js';
 
 import { getDBResult } from './common.js';
-import { validMetadataTypes, doRawMetadataUpdate } from './metadata.js';
+import { metadataTypeList, updateMetadata } from './metadata.js';
 import { lookupBGGGame } from "./bgg.js";
 
 
@@ -55,7 +55,7 @@ const ensureRequiredKeys = (obj, keys) => {
 
 /* Get a list of all of the games known to the database, including their slug
  * and the primary name associated with each of them. */
-export async function getRawGameList(ctx) {
+export async function getGameList(ctx) {
   // Try to find all metadata item of this type.
   const gameList = await ctx.env.DB.prepare(`
     SELECT A.id, A.bggId, A.slug, B.name
@@ -63,7 +63,7 @@ export async function getRawGameList(ctx) {
      WHERE A.id == B.gameId and B.isPrimary = 1
   `).all();
 
-  return getDBResult('getRawGameList', 'find_games', gameList);
+  return getDBResult('getGameList', 'find_games', gameList);
 }
 
 
@@ -74,14 +74,14 @@ export async function getRawGameList(ctx) {
  * return will be null if there is no such game, otherwise the return is an
  * object that contains the full details on the game, including all of its
  * metadata. */
-export async function getRawGameDetails(ctx, idOrSlug) {
+export async function getGameDetails(ctx, idOrSlug) {
   // Try to find the game with the value has that been provided; we check to see
   // if the provided ID is either a slug or an actual ID.
   const lookup = await ctx.env.DB.prepare(`
     SELECT * FROM Game
      WHERE (id == ?1 or slug == ?1)
   `).bind(idOrSlug).all();
-  const result = getDBResult('getRawGameDetails', 'find_game', lookup);
+  const result = getDBResult('getGameDetails', 'find_game', lookup);
 
   // If there was no result found, then return null back to signal that.
   if (result.length === 0) {
@@ -98,7 +98,7 @@ export async function getRawGameDetails(ctx, idOrSlug) {
      WHERE gameId = ?
      ORDER BY isPrimary DESC;
   `).bind(gameData.id).all();
-  gameData.names = getDBResult('getRawGameDetails', 'find_names', names).map(el => el.name);
+  gameData.names = getDBResult('getGameDetails', 'find_names', names).map(el => el.name);
 
   // Gather the list of all of the metadata that's associated with this game.
   const metadata = await ctx.env.DB.prepare(`
@@ -113,8 +113,8 @@ export async function getRawGameDetails(ctx, idOrSlug) {
   // Map the records into the returned gameData; the metatype field is used to
   // set the field in the main object where this data will go, but we don't
   // want the metatype field to appear in the resulting object.
-  validMetadataTypes.forEach(type => gameData[type] = []);
-  getDBResult('getRawGameDetails', 'find_meta', metadata).forEach(item => gameData[item.metatype].push({ ...item, metatype: undefined }) );
+  metadataTypeList.forEach(type => gameData[type] = []);
+  getDBResult('getGameDetails', 'find_meta', metadata).forEach(item => gameData[item.metatype].push({ ...item, metatype: undefined }) );
 
   return gameData;
 }
@@ -137,7 +137,7 @@ export async function getRawGameDetails(ctx, idOrSlug) {
  * update of core data in this record might still be applied to the database
  * because D1 doesn't have the concept of transactions in code paths that
  * require code between DB accesses. */
-export async function doRawGameInsert(ctx, gameData) {
+export async function insertGame(ctx, gameData) {
   // The incoming data strictly requires the following fields to be present;
   // if they are not there, we will kick out an error.
   if (ensureRequiredKeys(gameData, ["name", "slug", "published", "description"]) == false ||
@@ -157,11 +157,11 @@ export async function doRawGameInsert(ctx, gameData) {
   // Ensure that all of the metadata that we need is available. This does not
   // run in a transaction, so if we bail later, these items will still be in
   // the database; we can look into making that smarter later.
-  details.category  = await doRawMetadataUpdate(ctx, details.category,  'category');
-  details.mechanic  = await doRawMetadataUpdate(ctx, details.mechanic,  'mechanic');
-  details.designer  = await doRawMetadataUpdate(ctx, details.designer,  'designer');
-  details.artist    = await doRawMetadataUpdate(ctx, details.artist,    'artist');
-  details.publisher = await doRawMetadataUpdate(ctx, details.publisher, 'publisher');
+  details.category  = await updateMetadata(ctx, details.category,  'category');
+  details.mechanic  = await updateMetadata(ctx, details.mechanic,  'mechanic');
+  details.designer  = await updateMetadata(ctx, details.designer,  'designer');
+  details.artist    = await updateMetadata(ctx, details.artist,    'artist');
+  details.publisher = await updateMetadata(ctx, details.publisher, 'publisher');
 
   // 0. For each of category, mechanic, designer, artist and publisher, update
   // 1. Insert the raw data for this game into the database
@@ -192,7 +192,7 @@ export async function doRawGameInsert(ctx, gameData) {
   // The last row ID in the metadata is the SQLite return for the last
   // inserted rowID, which is the ID of the item we just inserted.
   const result = await stmt.run();
-  getDBResult('doRawGameInsert', 'insert_game', result);
+  getDBResult('insertGame', 'insert_game', result);
   const id = result.meta.last_row_id;
 
   // For each of the available metadata items, we need to add items into the
@@ -205,7 +205,7 @@ export async function doRawGameInsert(ctx, gameData) {
     INSERT INTO GameMetadataPlacement
     VALUES (NULL, ?1, ?2, ?3)
   `);
-  for (const metatype of validMetadataTypes) {
+  for (const metatype of metadataTypeList) {
     for (const item of details[metatype]) {
       batch.push(update.bind(id, metatype, item.id) )
     }
@@ -226,7 +226,7 @@ export async function doRawGameInsert(ctx, gameData) {
   // Trigger the batch; we don't need to see the results of this since it is
   // all insert operations on bound metadata.
   const insert = await ctx.env.DB.batch(batch);
-  getDBResult('doRawGameInsert', 'insert_details', insert);
+  getDBResult('insertGame', 'insert_details', insert);
 
   // The operation succeeded; return back information on the record that was
   // added.
@@ -256,7 +256,7 @@ export async function doRawGameInsert(ctx, gameData) {
  * An exception will be raised if there is any problem gathering the game data
  * from the BGG Endpoint, or if the game can't be inserted because it already
  * exists. */
-export async function doRawBGGGameInsert(ctx, bggGameId) {
+export async function insertBGGGame(ctx, bggGameId) {
   // Look up the game in BoardGameGeek to get it's details; if the game is not
   // found, we can return NULL back.
   const gameInfo = await lookupBGGGame(bggGameId);
@@ -271,7 +271,7 @@ export async function doRawBGGGameInsert(ctx, bggGameId) {
     SELECT id FROM Game
     WHERE bggId = ? or slug = ?;
   `).bind(gameInfo.bggId, gameInfo.slug).all();
-  const result = getDBResult('doRawBGGGameInsert', 'find_existing', existing);
+  const result = getDBResult('insertBGGGame', 'find_existing', existing);
 
   // If we found anything, this game can't be added because it already exists.
   if (result.length !== 0) {
@@ -279,7 +279,7 @@ export async function doRawBGGGameInsert(ctx, bggGameId) {
   }
 
   // Try to insert the game record now, and tell the caller
-  return await doRawGameInsert(ctx, gameInfo);
+  return await insertGame(ctx, gameInfo);
 }
 
 
