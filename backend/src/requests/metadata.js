@@ -40,19 +40,10 @@ import { updateMetadata, getMetadataDetails, getMetadataList } from '../db/metad
 export async function metadataUpdateReq(ctx) {
   const { metaType } = ctx.req.param();
 
-  try {
-    // Prepare the Metadata update and execute it
-    const result = await updateMetadata(ctx, await ctx.req.json(), metaType);
+  // Prepare the Metadata update and execute it
+  const result = await updateMetadata(ctx, await ctx.req.json(), metaType);
 
-    return success(ctx, `updated some ${metaType} records` , result);
-  }
-  catch (err) {
-    if (err instanceof SyntaxError) {
-      return fail(ctx, `invalid JSON; ${err.message}`, 400);
-    }
-
-    return fail(ctx, err.message, 500);
-  }
+  return success(ctx, `updated some ${metaType} records` , result);
 }
 
 
@@ -74,19 +65,14 @@ export async function metadataQueryReq(ctx) {
   // also gather game information.
   const includeGames = (ctx.req.query("games") !== undefined);
 
-  try {
-    // Try to look up the data; if we didn't find anything we can signal an
-    // error back.
-    const record = await getMetadataDetails(ctx, metaType, idOrSlug, includeGames)
-    if (record === null) {
-      return fail(ctx, `no such ${metaType} ${idOrSlug}`, 404);
-    }
+  // Try to look up the data; if we didn't find anything we can signal an
+  // error back.
+  const record = await getMetadataDetails(ctx, metaType, idOrSlug, includeGames)
+  if (record === null) {
+    return fail(ctx, `no such ${metaType} ${idOrSlug}`, 404);
+  }
 
-    return success(ctx, `information on ${metaType} ${idOrSlug}`, record);
-  }
-  catch (err) {
-    return fail(ctx, err.message, 500);
-  }
+  return success(ctx, `information on ${metaType} ${idOrSlug}`, record);
 }
 
 
@@ -98,16 +84,11 @@ export async function metadataQueryReq(ctx) {
 export async function metadataListReq(ctx) {
   const { metaType } = ctx.req.param();
 
-  try {
-    // Try to look up the data; if we didn't find anything we can signal an
-    // error back.
-    const result = await getMetadataList(ctx, metaType);
+  // Try to look up the data; if we didn't find anything we can signal an
+  // error back.
+  const result = await getMetadataList(ctx, metaType);
 
-    return success(ctx, `found ${result.length} ${metaType} records`, result);
-  }
-  catch (err) {
-    return fail(ctx, err.message, 500);
-  }
+  return success(ctx, `found ${result.length} ${metaType} records`, result);
 }
 
 

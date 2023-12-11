@@ -40,23 +40,14 @@ import { insertGame, insertBGGGame, getGameList, getGameDetails } from '../db/ga
  * that are not already present, and updating the placement of those items so
  * that the full game record is available. */
 export async function insertGameReq(ctx) {
-  try {
-    // Suck in the new game data and use it to do the insert; the helper
-    // function does all of the validation, and will throw on error or return
-    // details of the new game on success.
-    const gameData = await ctx.req.json();
-    const newGameInfo = await insertGame(ctx, gameData);
+  // Suck in the new game data and use it to do the insert; the helper
+  // function does all of the validation, and will throw on error or return
+  // details of the new game on success.
+  const gameData = await ctx.req.json();
+  const newGameInfo = await insertGame(ctx, gameData);
 
-    // Return success back.
-    return success(ctx, `added game ${newGameInfo.id}`, newGameInfo);
-  }
-  catch (err) {
-    if (err instanceof SyntaxError) {
-      return fail(ctx, `invalid JSON; ${err.message}`, 400);
-    }
-
-    return fail(ctx, err.message, 500);
-  }
+  // Return success back.
+  return success(ctx, `added game ${newGameInfo.id}`, newGameInfo);
 }
 
 
@@ -74,23 +65,13 @@ export async function insertGameReq(ctx) {
 export async function insertBGGGameReq(ctx) {
   const { bggGameId } = ctx.req.param();
 
-  try {
-    const newGameInfo = await insertBGGGame(ctx, bggGameId);
-    if (newGameInfo === null) {
-      return fail(ctx, `BGG has no record of game with ID ${bggGameId}`, 404);
-    }
-
-    // Return success back.
-    return success(ctx, `added game ${newGameInfo.id}`, newGameInfo);
+  const newGameInfo = await insertBGGGame(ctx, bggGameId);
+  if (newGameInfo === null) {
+    return fail(ctx, `BGG has no record of game with ID ${bggGameId}`, 404);
   }
-  catch (err) {
-    // Handle BGG Lookup Errors specially.
-    if (err instanceof BGGLookupError) {
-      return fail(ctx, err.message, err.status);
-    }
 
-    return fail(ctx, err.message, 500);
-  }
+  // Return success back.
+  return success(ctx, `added game ${newGameInfo.id}`, newGameInfo);
 }
 
 
@@ -106,53 +87,44 @@ export async function insertBGGGameReq(ctx) {
  * The result of this query is the same as adding a game by providing an
  * explicit body. */
 export async function insertBGGGameListReq(ctx) {
-  try {
-    // Suck in the new game data and use it to do the insert; the helper
-    // function does all of the validation, and will throw on error or return
-    // details of the new game on success.
-    const gameList = await ctx.req.json();
+  // Suck in the new game data and use it to do the insert; the helper
+  // function does all of the validation, and will throw on error or return
+  // details of the new game on success.
+  const gameList = await ctx.req.json();
 
-    // Track which of the games we loop over was added and which was inserted.
-    const inserted = [];
-    const skipped = []
-    const result = { inserted, skipped };
+  // Track which of the games we loop over was added and which was inserted.
+  const inserted = [];
+  const skipped = []
+  const result = { inserted, skipped };
 
-    // Loop over all of the BGG id's in the game list and try to insert them.
-    for (const bggGameId of gameList) {
-      try {
-        // Try to lookup and insert this game; the result is either null if
-        // there was a failure, or information on the inserted game.
-        const newGameInfo = await insertBGGGame(ctx, bggGameId);
-        if (newGameInfo === null) {
-          skipped.push({ "bggId": bggGameId, status: 404, reason: "not found" });
-        } else {
-          inserted.push(newGameInfo);
-        }
-      }
-
-      // If the insert threw any errors, handle them. If they are BGG lookup
-      // failures, we can eat them and just skip this. Otherwise, we need to
-      // re-throw so the outer handler can handle the problem for us.
-      catch (err) {
-        if (err instanceof BGGLookupError) {
-          skipped.push({ "bggId": bggGameId, status: err.status, reason: "ID or slug already exists" });
-          continue;
-        }
-
-        throw err;
+  // Loop over all of the BGG id's in the game list and try to insert them.
+  for (const bggGameId of gameList) {
+    try {
+      // Try to lookup and insert this game; the result is either null if
+      // there was a failure, or information on the inserted game.
+      const newGameInfo = await insertBGGGame(ctx, bggGameId);
+      if (newGameInfo === null) {
+        skipped.push({ "bggId": bggGameId, status: 404, reason: "not found" });
+      } else {
+        inserted.push(newGameInfo);
       }
     }
 
-    // Return success back.
-    return success(ctx, `inserted ${inserted.length} games of ${gameList.length}`, result);
-  }
-  catch (err) {
-    if (err instanceof SyntaxError) {
-      return fail(ctx, `invalid JSON; ${err.message}`, 400);
-    }
+    // If the insert threw any errors, handle them. If they are BGG lookup
+    // failures, we can eat them and just skip this. Otherwise, we need to
+    // re-throw so the outer handler can handle the problem for us.
+    catch (err) {
+      if (err instanceof BGGLookupError) {
+        skipped.push({ "bggId": bggGameId, status: err.status, reason: "ID or slug already exists" });
+        continue;
+      }
 
-    return fail(ctx, err.message, 500);
+      throw err;
+    }
   }
+
+  // Return success back.
+  return success(ctx, `inserted ${inserted.length} games of ${gameList.length}`, result);
 }
 
 
@@ -162,14 +134,9 @@ export async function insertBGGGameListReq(ctx) {
 /* Return back a list of all of the metadata items of the given type; this may
  * be an empty list. */
 export async function gameListReq(ctx) {
-  try {
-    const result = await getGameList(ctx);
+  const result = await getGameList(ctx);
 
-    return success(ctx, `found ${result.length} games`, result);
-  }
-  catch (err) {
-    return fail(ctx, err.message, 500);
-  }
+  return success(ctx, `found ${result.length} games`, result);
 }
 
 
@@ -182,19 +149,14 @@ export async function gameDetailsReq(ctx) {
   // Can be either an game ID or a slug to represent a game
   const { idOrSlug } = ctx.req.param();
 
-  try {
-    // Look up the game; if we don't find anything by that value, then this does
-    // not exist.
-    const result = await getGameDetails(ctx, idOrSlug);
-    if (result === null) {
-      return fail(ctx, `no such game ${idOrSlug}`, 404)
-    }
+  // Look up the game; if we don't find anything by that value, then this does
+  // not exist.
+  const result = await getGameDetails(ctx, idOrSlug);
+  if (result === null) {
+    return fail(ctx, `no such game ${idOrSlug}`, 404)
+  }
 
-    return success(ctx, `information on game ${idOrSlug}`, result);
-  }
-  catch (err) {
-    return fail(ctx, err.message, 500);
-  }
+  return success(ctx, `information on game ${idOrSlug}`, result);
 }
 
 

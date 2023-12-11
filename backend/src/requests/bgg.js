@@ -22,26 +22,16 @@ import { lookupBGGGame } from '../db/bgg.js';
 export async function lookupBGGGameInfo(ctx) {
   const { bggGameId } = ctx.req.param();
 
-  try {
-    // Try to get the game data; if this returns NULL it means that there is no
-    // such game (or BGG has some other error but they use human readable text
-    // for those, so we just assume they're all the same error).
-    const gameInfo = await lookupBGGGame(bggGameId);
-    if (gameInfo === null) {
-      return fail(ctx, `BGG has no record of game with ID ${bggGameId}`, 404);
-    }
-
-    // The record seems valid, so parse it out and return back the result.
-    return success(ctx, `information on BGG game ${bggGameId}`, gameInfo);
+  // Try to get the game data; if this returns NULL it means that there is no
+  // such game (or BGG has some other error but they use human readable text
+  // for those, so we just assume they're all the same error).
+  const gameInfo = await lookupBGGGame(bggGameId);
+  if (gameInfo === null) {
+    return fail(ctx, `BGG has no record of game with ID ${bggGameId}`, 404);
   }
-  catch (err) {
-    // Handle BGG Lookup Errors specially.
-    if (err instanceof BGGLookupError) {
-      return fail(ctx, err.message, err.status);
-    }
 
-    return fail(ctx, "unknown error while looking up BGG game info", 502);
-  }
+  // The record seems valid, so parse it out and return back the result.
+  return success(ctx, `information on BGG game ${bggGameId}`, gameInfo);
 }
 
 
