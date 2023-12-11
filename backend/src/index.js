@@ -26,7 +26,9 @@ app.use('/api/*', cors())
  * convert it to JSON to make handling of it easier.
  ******************************************************************************/
 
-// Collect information about a BoardGameGeek board game entry.
+// Given a BoardGameGeek game ID, access the BGG API and return back and object
+// that describes that game. The object is in the same form as that used by
+// inserts or queries from our internal game API's.
 app.get(`${APIV1}/bgg/boardgame/:bggGameId`, lookupBGGGameInfo);
 
 
@@ -38,48 +40,32 @@ app.get(`${APIV1}/bgg/boardgame/:bggGameId`, lookupBGGGameInfo);
  * the metadata that is associated with games.
  ******************************************************************************/
 
-// Add a game using the details provided in the body of the request; the format
-// looks like that which comes out of the BGG wrapper API for board games.
-app.put(`${APIV1}/game/data/details/add`, insertGameReq);
+// Given a list of metadata objects, try to insert any that are not currently in
+// the database, and then return back a complete list of our internal records
+// for all of the specified items.
+app.put(`${APIV1}/game/meta/:metaType/update`, metadataUpdateReq);
 
-// Add a game by looking up the details of a BoardGameGeek game ID and then
-// using that to add the actual game.
+// Get the complete list of records for a specific type of metadata. T
+app.get(`${APIV1}/game/meta/:metaType/list`, metadataListReq);
+
+// Gather information about a specific metadata type, which includes the name
+// and slug. This takes an optional "game" query argument, which will cause it to
+// return details on each game that associates with that metadata item.
+app.get(`${APIV1}/game/meta/:metaType/:idOrSlug`, metadataQueryReq);
+
+// Add a game or games to the database.
+//
+// The first of these takes an object that describes the game, the second looks
+// up a game on BoardGameGeek and inserts the game based on that data, and the
+// third takes a list of BGG game ID's and inserts them all.
+app.put(`${APIV1}/game/data/details/add`, insertGameReq);
 app.put(`${APIV1}/game/data/details/bgg/add/:bggGameId{[0-9]+}`, insertBGGGameReq)
 app.put(`${APIV1}/game/data/details/bgg/add/list`, insertBGGGameListReq)
 
-// Get a list of all known games, and get the details of a specific game.
-app.get(`${APIV1}/game/list`, ctx => gameListReq(ctx));
-app.get(`${APIV1}/game/:idOrSlug`, ctx => gameDetailsReq(ctx));
-
-// Perform an update on the core metadata fields that can associate with games;
-// these all take a list of objects that represent metadata in the given format
-// and will ensure that all of them exist in the database, adding any that are
-// missing and skipping over any that already exist.
-//
-// They all return back the database records for all such items, so that a
-// single call can update the list and also obtain the details for future use.
-app.put(`${APIV1}/game/meta/designer/update`, ctx => metadataUpdateReq(ctx, 'designer'));
-app.put(`${APIV1}/game/meta/artist/update`, ctx => metadataUpdateReq(ctx, 'artist'));
-app.put(`${APIV1}/game/meta/publisher/update`, ctx => metadataUpdateReq(ctx, 'publisher'));
-app.put(`${APIV1}/game/meta/category/update`, ctx => metadataUpdateReq(ctx, 'category'));
-app.put(`${APIV1}/game/meta/mechanic/update`, ctx => metadataUpdateReq(ctx, 'mechanic'));
-
-// Gather information about the specific metadata, which includes the name,
-// slug, and (optionally) the list of games that reference that metadata.
-app.get(`${APIV1}/game/meta/designer/list`, ctx => metadataListReq(ctx, 'designer'));
-app.get(`${APIV1}/game/meta/artist/list`, ctx => metadataListReq(ctx, 'artist'));
-app.get(`${APIV1}/game/meta/publisher/list`, ctx => metadataListReq(ctx, 'publisher'));
-app.get(`${APIV1}/game/meta/category/list`, ctx => metadataListReq(ctx, 'category'));
-app.get(`${APIV1}/game/meta/mechanic/list`, ctx => metadataListReq(ctx, 'mechanic'));
-
-// Gather information about the specific metadata, which includes the name,
-// slug, and (optionally) the list of games that reference that metadata.
-app.get(`${APIV1}/game/meta/designer/:idOrSlug`, ctx => metadataQueryReq(ctx, 'designer'));
-app.get(`${APIV1}/game/meta/artist/:idOrSlug`, ctx => metadataQueryReq(ctx, 'artist'));
-app.get(`${APIV1}/game/meta/publisher/:idOrSlug`, ctx => metadataQueryReq(ctx, 'publisher'));
-app.get(`${APIV1}/game/meta/category/:idOrSlug`, ctx => metadataQueryReq(ctx, 'category'));
-app.get(`${APIV1}/game/meta/mechanic/:idOrSlug`, ctx => metadataQueryReq(ctx, 'mechanic'));
-
+// Get a list of all games known to the system, or the details of a specific
+// game that the system knows about.
+app.get(`${APIV1}/game/list`, gameListReq);
+app.get(`${APIV1}/game/:idOrSlug`, gameDetailsReq);
 
 
 /******************************************************************************/

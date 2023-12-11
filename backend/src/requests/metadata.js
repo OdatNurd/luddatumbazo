@@ -37,7 +37,9 @@ import { updateMetadata, getMetadataDetails, getMetadataList } from '../db/metad
  * skip over all items that are BGG related which have previously been imported.
  *
  * The result is currently the native D1 result of the query. */
-export async function metadataUpdateReq(ctx, metaType) {
+export async function metadataUpdateReq(ctx) {
+  const { metaType } = ctx.req.param();
+
   try {
     // Prepare the Metadata update and execute it
     const result = await updateMetadata(ctx, await ctx.req.json(), metaType);
@@ -64,9 +66,9 @@ export async function metadataUpdateReq(ctx, metaType) {
  * The return value is information on that item (if any). Optionally, the query
  * can include a "games" directive to also return information on the games that
  * reference this data. */
-export async function metadataQueryReq(ctx, metaType) {
+export async function metadataQueryReq(ctx) {
   // Can be either an item ID or a slug for the given metadata item
-  const { idOrSlug } = ctx.req.param();
+  const { idOrSlug, metaType } = ctx.req.param();
 
   // If this field exists in the query (regardless of the value), then we will
   // also gather game information.
@@ -93,7 +95,9 @@ export async function metadataQueryReq(ctx, metaType) {
 
 /* Return back a list of all of the metadata items of the given type; this may
  * be an empty list. */
-export async function metadataListReq(ctx, metaType) {
+export async function metadataListReq(ctx) {
+  const { metaType } = ctx.req.param();
+
   try {
     // Try to look up the data; if we didn't find anything we can signal an
     // error back.
