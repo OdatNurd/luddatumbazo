@@ -59,4 +59,72 @@ CREATE TABLE Game (
     officialURL TEXT DEFAULT(''),
     teachingURL TEXT DEFAULT('')
 );
-CREATE INDEX idx_game_slug ON Game(slug);
+
+
+DROP TABLE IF EXISTS User;
+CREATE TABLE User (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    externalId TEXT UNIQUE NOT NULL,
+
+    firstName TEXT NOT NULL,
+    lastName TEXT NOT NULL,
+    emailAddress TEXT NOT NULL
+);
+CREATE INDEX idx_user_ext ON User(externalId);
+
+
+DROP TABLE IF EXISTS Household;
+CREATE TABLE Household (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    name TEXT UNIQUE NOT NULL,
+    slug TEXT UNIQUE NOT NULL
+);
+CREATE INDEX idx_household_slug ON Household(slug);
+
+
+DROP TABLE IF EXISTS UserHousehold;
+CREATE TABLE UserHousehold (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    userId INTEGER NOT NULL REFERENCES User(id),
+    householdId INTEGER NOT NULL REFERENCES Household(id)
+);
+CREATE UNIQUE INDEX idx_user_household ON UserHousehold(userId, householdId);
+
+
+DROP TABLE IF EXISTS GameOwners;
+CREATE TABLE GameOwners (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    householdId INTEGER NOT NULL REFERENCES Household(id),
+    gameId INTEGER NOT NULL REFERENCES Game(id),
+
+    gameName INTEGER NOT NULL REFERENCES GameName(id),
+    gamePublisher INTEGER NOT NULL REFERENCES GameMetadata(id)
+);
+
+
+-- We could also add a table to track loan history, which would include when the loan happened
+DROP TABLE IF EXISTS GameLoans;
+CREATE TABLE GameLoans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    gameId INTEGER NOT NULL REFERENCES GameOwners(id),
+
+    loanedTo INTEGER NOT NULL REFERENCES Household(id),
+    loanTime DATE NOT NULL
+);
+
+
+DROP TABLE IF EXISTS Wishlist;
+CREATE TABLE Wishlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    householdId INTEGER NOT NULL REFERENCES Household(id),
+    gameId INTEGER NOT NULL REFERENCES Game(id),
+    gameName INTEGER NOT NULL REFERENCES GameName(id),
+
+    addedByUserId INTEGER NOT NULL REFERENCES User(id)
+);
+
