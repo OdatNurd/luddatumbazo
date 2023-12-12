@@ -4,4 +4,6 @@
 .wrangler/
 .dev.vars
 node_modules/
-dist/
+
+# The Svelte build output goes here
+client/public/

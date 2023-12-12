@@ -11,7 +11,7 @@ export default [
   {
     input: 'src/index.js',
     output: {
-      file: `../dist/app.js`,
+      file: `public/app.js`,
       format: 'iife',
       name: 'app',
     },
