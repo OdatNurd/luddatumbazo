@@ -1,5 +1,6 @@
 *.sublime-*
 
+.env
 .wrangler/
 .dev.vars
 node_modules/

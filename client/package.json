@@ -1,0 +1,24 @@
+{
+  "name": "luddatumbazo-ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "watch": "rollup -c -w",
+    "build": "rollup -c"
+  },
+  "devDependencies": {
+    "@axel669/rollup-copy-static": "^0.1.2",
+    "@axel669/rollup-dollar-path": "^0.1.0",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^5.0.5",
+    "rollup": "^4.8.0",
+    "rollup-plugin-svelte": "^7.1.6"
+  },
+  "dependencies": {
+    "@axel669/zephyr": "^0.2.0-beta.1",
+    "dotenv": "^16.3.1",
+    "svelte": "^4.2.8"
+  }
+}
