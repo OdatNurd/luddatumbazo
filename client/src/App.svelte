@@ -5,17 +5,17 @@
   console.log(`Game API URI: ${process.env.GAME_API_ROOT_URI}`);
 </script>
 
-<svelte:body use:wsx={{"$theme": 'dark', "$app": true, "p": "8px"}} />
+<svelte:body use:wsx={{ "$theme": 'dark', "$app": true, "p": "8px" }} />
 
 <Screen>
   <Paper>
     <Titlebar slot="header">
-      <Text slot="title" title>
-        Luddatumbazo!
+      <Flex p="0px" gap="0px" slot="title">
+        <Text title> Luddatumbazo! </Text>
         <Text subtitle>Exactly like BoardGameGeek except not</Text>
-      </Text>
+      </Flex>
 
-      <Link button flat slot="action" href="/cdn-cgi/access/logout">
+      <Link button outline slot="action" t.dec="none" href="/cdn-cgi/access/logout">
         <Icon name="logout"></Icon>
       </Link>
     </Titlebar>
