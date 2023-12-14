@@ -24,13 +24,18 @@
   // keys: ['id', 'bggId', 'slug', 'name']
   export let query = '/game/list';
 
+  // After making the query, this function is invoked on the dataset that is
+  // returned in order to filter the data set into the list of items that should
+  // be displayed in the list.
+  export let filter = result => result.data;
+
   // ---------------------------------------------------------------------------
 
   // Using the props that we were given, generate out the kinds of links that
   // the table needs to generate both internal and external links to the data
   // that it contains.
   const slugLink = slug => baseLink.replaceAll(':slug', slug);
-  const bggLink = bggId => `https://boardgamegeek.com/${bggType}/${bggId}/`
+  const bggLink = bggId => `https://boardgamegeek.com/${bggType}/${bggId}/`;
 
   // ---------------------------------------------------------------------------
 
@@ -39,14 +44,16 @@
   const loadData = async () => {
     const dataURI = `${API}${query}`;
 
-    const res = await fetch(dataURI);
-    return await res.json();
+    const response = await fetch(dataURI);
+    const result = await response.json();
+
+    return filter(result);
   };
 </script>
 
 
 <LoadZone source={loadData()} let:result>
-  <DataTable data={result.data} pageSize={20} color="primary">
+  <DataTable data={result} pageSize={20} color="primary">
     <svelte:fragment slot="header">
       <Th w="64px" sort={sorts.natural("id")}>ID</Th>
       <Th filter={filters.text("name")} sort={sorts.natural("name")}>Name</Th>
