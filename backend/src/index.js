@@ -52,7 +52,7 @@ app.get(`${APIV1}/game/meta/:metaType/list`, ctx => _(ctx, metadataListReq));
 // Gather information about a specific metadata type, which includes the name
 // and slug. This takes an optional "game" query argument, which will cause it to
 // return details on each game that associates with that metadata item.
-app.get(`${APIV1}/game/meta/:metaType/:idOrSlug`, ctx => _(ctx, metadataQueryReq));
+app.get(`${APIV1}/game/meta/:metaType/:slug`, ctx => _(ctx, metadataQueryReq));
 
 // Add a game or games to the database.
 //
