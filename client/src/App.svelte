@@ -4,31 +4,29 @@
 
   import Router from 'svelte-spa-router';
   import { location, push } from 'svelte-spa-router'
+  import { wrap } from 'svelte-spa-router/wrap'
 
   import GameList from '$pages/games/List.svelte';
   import GameDetails from '$pages/games/Details.svelte';
 
-  import CategoryList from '$pages/metadata/CategoryList.svelte';
-  import MechanicList from '$pages/metadata/MechanicList.svelte';
-  import DesignerList from '$pages/metadata/DesignerList.svelte';
-  import ArtistList from '$pages/metadata/ArtistList.svelte';
-  import Publisherst from '$pages/metadata/PublisherList.svelte';
+  import MetaList from '$pages/metadata/List.svelte';
   import MetaDetails from '$pages/metadata/Details.svelte';
 
   const routes = {
     '/games': GameList,
-    '/categories': CategoryList,
-    '/mechanics': MechanicList,
-    '/designers': DesignerList,
-    '/artists': ArtistList,
-    '/publishers': Publisherst,
 
-    '/games/:slug': GameDetails,
-    '/categories/:slug': MetaDetails,
-    '/mechanics/:slug': MetaDetails,
-    '/designers/:slug': MetaDetails,
-    '/artists/:slug': MetaDetails,
-    '/publishers/:slug': MetaDetails,
+    '/categories': wrap({ component: MetaList, props: { metaType: 'category'  } }),
+    '/mechanics':  wrap({ component: MetaList, props: { metaType: 'mechanic'  } }),
+    '/designers':  wrap({ component: MetaList, props: { metaType: 'designer'  } }),
+    '/artists':    wrap({ component: MetaList, props: { metaType: 'artist'    } }),
+    '/publishers': wrap({ component: MetaList, props: { metaType: 'publisher' } }),
+
+    '/game/:slug': GameDetails,
+    '/category/:slug': MetaDetails,
+    '/mechanic/:slug': MetaDetails,
+    '/designer/:slug': MetaDetails,
+    '/artist/:slug': MetaDetails,
+    '/publisher/:slug': MetaDetails,
   };
 
   const navLinks = [

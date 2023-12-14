@@ -21,6 +21,7 @@ export default [
           root: ".",
           paths: {
             $pages: "src/pages",
+            $components: "src/components",
           },
           extensions: [".js", ".mjs", ".svelte", ".jsx"]
       }),
