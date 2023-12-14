@@ -18,18 +18,35 @@
   // named slug.
   const slug = $location.split('/').at(-1);
 
+  // Default the name on the page to the slug that was used to load it, until
+  // the data is fully loaded. This could also be smarter and just not display
+  // anything there to start with.
+  let name = slug;
+
   // The result of the query gives us the game details in a sub key instead of
   // at the top level, and the field that represents the game is named
   // differently to make it more obvious what it is. So we need to filter the
   // data down so the slug list can ingest it.
-  const gameFilter = result => result.data.games.map(game => {
-    game.id = game.gameId;
-    return game;
-  });
+  const gameFilter = result => {
+    // Set the name field so the page updates.
+    name = result.data.name;
+
+    // The records to display are in the games list, where we need to adjust the
+    // ID field to match what the slug list wants.
+    return result.data.games.map(game => {
+      game.id = game.gameId;
+      return game;
+    });
+  }
 </script>
 
-I am details of a metadata {metaType} for slug '{slug}'
-
+<h3>{metaType}: {name}</h3>
 <SlugList bggType='boardgame' baseLink='#/game/:slug'
           query='/game/meta/{metaType}/{slug}?games'
           filter={gameFilter} />
+
+<style>
+  h3 {
+    text-transform: capitalize;
+  }
+</style>

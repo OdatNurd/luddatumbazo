@@ -16,7 +16,9 @@ export default [
       name: 'app',
     },
     plugins: [
-      svelte({}),
+      svelte({
+        emitCss: false
+      }),
       $path({
           root: ".",
           paths: {

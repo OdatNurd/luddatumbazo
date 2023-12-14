@@ -10,4 +10,11 @@
   export let metaType = 'artist';
 </script>
 
+<h3>{metaType} List</h3>
 <SlugList bggType='boardgame{metaType}' baseLink='#/{metaType}/:slug' query='/game/meta/{metaType}/list' />
+
+<style>
+  h3 {
+    text-transform: capitalize;
+  }
+</style>
