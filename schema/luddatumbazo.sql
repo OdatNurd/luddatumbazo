@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS GameMetadataPlacement;
 CREATE TABLE GameMetadataPlacement (
     id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
-    gameID INTEGER NOT NULL REFERENCES Game(id),
+    gameId INTEGER NOT NULL REFERENCES Game(id),
 
     metatype VARCHAR CHECK(metatype in ("designer", "artist", "publisher", "mechanic", "category")),
     itemId INTEGER REFERENCES GameMetadata(id)

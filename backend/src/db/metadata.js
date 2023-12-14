@@ -193,7 +193,7 @@ export async function getMetadataDetails(ctx, metaType, idOrSlug, includeGames) 
       SELECT C.gameId, A.bggId, B.name, A.slug
         FROM Game as A, GameName as B, GameMetadataPlacement as C
       WHERE A.id == B.gameId and B.isPrimary = 1
-        AND C.gameID = A.id
+        AND C.gameId = A.id
         AND C.itemId = ?
     `).bind(record.id).all();
     record.games = getDBResult('getMetadataDetails', 'find_games', gameData);
