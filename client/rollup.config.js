@@ -19,11 +19,9 @@ export default [
       svelte({}),
       $path({
           root: ".",
-          // paths: {
-          //   $components: "src/client/components/index.js",
-          //   $stores: "src/client/stores/index.js",
-          //   $lib: "src/client/lib",
-          // },
+          paths: {
+            $pages: "src/pages",
+          },
           extensions: [".js", ".mjs", ".svelte", ".jsx"]
       }),
       replace(

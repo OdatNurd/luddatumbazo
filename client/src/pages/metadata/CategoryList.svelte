@@ -28,7 +28,7 @@
     </svelte:fragment>
     <svelte:fragment slot="row" let:row>
       <td>{row.id}</td>
-      <td><a href="/categories/{row.slug}">{row.name}</a></td>
+      <td><a href="#/categories/{row.slug}">{row.name}</a></td>
       <td>
         {#if row.bggId !== 0}
           <Link target="_blank" href="https://boardgamegeek.com/boardgamecategory/{row.bggId}/">
