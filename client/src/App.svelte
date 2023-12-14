@@ -6,13 +6,38 @@
   import { location, push } from 'svelte-spa-router'
   import { wrap } from 'svelte-spa-router/wrap'
 
+  import Home from '$pages/Home.svelte';
   import GameList from '$pages/games/List.svelte';
   import GameDetails from '$pages/games/Details.svelte';
 
   import MetaList from '$pages/metadata/List.svelte';
   import MetaDetails from '$pages/metadata/Details.svelte';
 
+  // The list of tabs that are visible on the main page, and the links that they
+  // correspond to. At any given point, the tab contorl can have a single value,
+  // and that value represents one of the values seen in this table.
+  const tabLinks = [
+    { label: "Games",      value: "/games" },
+    { label: "Categories", value: "/categories" },
+    { label: "Mechanics",  value: "/mechanics" },
+    { label: "Designers",  value: "/designers" },
+    { label: "Artists",    value: "/artists" },
+    { label: "Publishers", value: "/publishers" },
+  ];
+
+  // A value from one of the tabLinks entries, which represents which of the
+  // tabs in the display (if any) are currently selected. A value of undefined
+  // means that no tab is selected.
+  //
+  // This value is automatically changed whenever the user interacts with the
+  // tab.
+  let tabValue = undefined;
+
+  // The list of routes that control what pages in the application exist, and
+  // what page fragments should be rendered when that path is active.
   const routes = {
+    '/': Home,
+
     '/games': GameList,
     '/game/:slug': GameDetails,
 
@@ -22,31 +47,20 @@
     '/artists':    wrap({ component: MetaList, props: { metaType: 'artist'    } }),
     '/publishers': wrap({ component: MetaList, props: { metaType: 'publisher' } }),
 
-    '/category/:slug':  wrap({ component: MetaDetails, props: { metaType: 'category'  } }),
-    '/mechanic/:slug':  wrap({ component: MetaDetails, props: { metaType: 'mechanic'  } }),
-    '/designer/:slug':  wrap({ component: MetaDetails, props: { metaType: 'designer'  } }),
-    '/artist/:slug':    wrap({ component: MetaDetails, props: { metaType: 'artist'    } }),
-    '/publisher/:slug': wrap({ component: MetaDetails, props: { metaType: 'publisher' } }),
+    '/category/:slug':  wrap({ component: MetaDetails, props: { metaType: 'category',  parentLink: '/categories' } }),
+    '/mechanic/:slug':  wrap({ component: MetaDetails, props: { metaType: 'mechanic',  parentLink: '/mechanics' } }),
+    '/designer/:slug':  wrap({ component: MetaDetails, props: { metaType: 'designer',  parentLink: '/designers' } }),
+    '/artist/:slug':    wrap({ component: MetaDetails, props: { metaType: 'artist',    parentLink: '/artists' } }),
+    '/publisher/:slug': wrap({ component: MetaDetails, props: { metaType: 'publisher', parentLink: '/publishers' } }),
   };
 
-  const navLinks = [
-    { label: "Games", value: "/games" },
-    { label: "Categories", value: "/categories" },
-    { label: "Mechanics", value: "/mechanics" },
-    { label: "Designers", value: "/designers" },
-    { label: "Artists", value: "/artists" },
-    { label: "Publishers", value: "/publishers" },
-  ];
-  let value = $location;
-
-  const homer = () => {
-    value = '/';
-  }
+  // Cause the router to jump directly to the root route.
+  const home = () => push('/')
 
   $: {
     // When the value changes, go to the new location.
-    if (value.startsWith('/')) {
-      push(value);
+    if (tabValue && tabValue.startsWith('/')) {
+      push(tabValue);
     }
   }
 </script>
@@ -61,7 +75,7 @@
         <Text subtitle>Exactly like BoardGameGeek except not</Text>
       </Flex>
 
-      <Button outline slot="menu" on:click={homer}>
+      <Button outline slot="menu" on:click={home}>
         <Icon name="home"></Icon>
       </Button>
 
@@ -70,9 +84,9 @@
       </Link>
     </Titlebar>
 
-    <Tabs options={navLinks} bind:value color="primary" />
+    <Tabs options={tabLinks} bind:value={tabValue} color="primary" />
 
-    <Router {routes}/>
+    <Router {routes} />
 
     <Titlebar slot="footer">
       <Text slot="title" title>

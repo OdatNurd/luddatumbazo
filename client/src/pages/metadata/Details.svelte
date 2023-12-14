@@ -1,5 +1,7 @@
 <script>
-  import { location } from 'svelte-spa-router';
+  import { Flex, Button, Icon } from "@axel669/zephyr";
+
+  import { location, push } from 'svelte-spa-router';
 
   import SlugList from '$components/SlugList.svelte';
 
@@ -11,6 +13,11 @@
   // for; this allows us to adjust things like the data query to match the
   // type of meta we're detailing.
   export let metaType;
+
+  // The link to the appropriate parent page for the details this page is
+  // viewing; this allows for going back to the main list of items of the
+  // parent meta type.
+  export let parentLink;
 
   // ---------------------------------------------------------------------------
 
@@ -38,9 +45,16 @@
       return game;
     });
   }
+
+  // Cause the router to jump back to the base
+  const back = () => push(parentLink)
 </script>
 
-<h3>{metaType}: {name}</h3>
+<Flex direction="row">
+  <Button fill color="secondary"  on:click={back}> <Icon name="arrow-left"></Icon> </Button>
+  <h3>{metaType}: {name}</h3>
+</Flex>
+
 <SlugList bggType='boardgame' baseLink='#/game/:slug'
           query='/game/meta/{metaType}/{slug}?games'
           filter={gameFilter} />
