@@ -14,6 +14,7 @@
 
   const routes = {
     '/games': GameList,
+    '/game/:slug': GameDetails,
 
     '/categories': wrap({ component: MetaList, props: { metaType: 'category'  } }),
     '/mechanics':  wrap({ component: MetaList, props: { metaType: 'mechanic'  } }),
@@ -21,12 +22,11 @@
     '/artists':    wrap({ component: MetaList, props: { metaType: 'artist'    } }),
     '/publishers': wrap({ component: MetaList, props: { metaType: 'publisher' } }),
 
-    '/game/:slug': GameDetails,
-    '/category/:slug': MetaDetails,
-    '/mechanic/:slug': MetaDetails,
-    '/designer/:slug': MetaDetails,
-    '/artist/:slug': MetaDetails,
-    '/publisher/:slug': MetaDetails,
+    '/category/:slug':  wrap({ component: MetaDetails, props: { metaType: 'category'  } }),
+    '/mechanic/:slug':  wrap({ component: MetaDetails, props: { metaType: 'mechanic'  } }),
+    '/designer/:slug':  wrap({ component: MetaDetails, props: { metaType: 'designer'  } }),
+    '/artist/:slug':    wrap({ component: MetaDetails, props: { metaType: 'artist'    } }),
+    '/publisher/:slug': wrap({ component: MetaDetails, props: { metaType: 'publisher' } }),
   };
 
   const navLinks = [
