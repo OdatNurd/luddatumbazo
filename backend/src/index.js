@@ -4,9 +4,10 @@ import { cors } from 'hono/cors'
 import { wrappedRequest as _ } from './requests/common.js';
 import { lookupBGGGameInfo } from './requests/bgg.js';
 import { insertGameReq, insertBGGGameReq, insertBGGGameListReq,
-         gameListReq, gameDetailsReq } from './requests/game.js'
+         gameListReq, gameDetailsReq } from './requests/game.js';
 import { metadataUpdateReq, metadataQueryReq,
-         metadataListReq } from './requests/metadata.js'
+         metadataListReq } from './requests/metadata.js';
+import { tempImageDetailsReq } from './requests/image.js';
 
 
 /******************************************************************************/
@@ -67,6 +68,11 @@ app.put(`${APIV1}/game/data/details/bgg/add/list`, ctx => _(ctx, insertBGGGameLi
 // game that the system knows about.
 app.get(`${APIV1}/game/list`, ctx => _(ctx, gameListReq));
 app.get(`${APIV1}/game/:idOrSlug`, ctx => _(ctx, gameDetailsReq));
+
+// As a temporary endpoint on the system, using an internal table that can
+// associate one of our game ID's with a BGG ID and the URL image for such a
+// game, grab and upload the image for that game to our images account.
+app.get(`${APIV1}/images/:bggId?`, ctx => _(ctx, tempImageDetailsReq));
 
 
 /******************************************************************************/
