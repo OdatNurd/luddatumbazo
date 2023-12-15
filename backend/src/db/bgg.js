@@ -127,6 +127,13 @@ function makeBggGameData(gameEntry, gameId) {
   // This record tells us if a game either has an expansion or IS an expansion;
   // when this IS an expansion (inbound is an attribute), store a record of
   // this.
+  //
+  // TODO:
+  //   This doesn't work because:
+  //     - It is giving us the BGG id
+  //     - This entry can appear many times, not just one (so don't do first)
+  //     - An entry might cross link to a game that we don't actually have yet
+  //     - We want it to be OUR game Id, but to do that we need the game first
   const expansion = getChildNamed(gameEntry, 'boardgameexpansion');
   if (expansion !== undefined && expansion.attr?.inbound !== undefined) {
     output.expandsGame = parseInt(expansion.attr.objectid);
