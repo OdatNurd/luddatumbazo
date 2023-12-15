@@ -84,7 +84,7 @@
       </Link>
     </Titlebar>
 
-    <Tabs options={tabLinks} bind:value={tabValue} color="primary" />
+    <Tabs options={tabLinks} solid bind:value={tabValue} color="primary" />
 
     <Router {routes} />
 
