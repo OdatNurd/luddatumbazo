@@ -57,7 +57,8 @@ CREATE TABLE Game (
     complexity REAL DEFAULT(1.0),
 
     officialURL TEXT DEFAULT(''),
-    teachingURL TEXT DEFAULT('')
+    teachingURL TEXT DEFAULT(''),
+    imagePath TEXT DEFAULT('')
 );
 
 
