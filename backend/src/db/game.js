@@ -3,7 +3,7 @@
 
 import { BGGLookupError } from './exceptions.js';
 
-import { mapImageAssets, getImageAssetURL, getDBResult } from './common.js';
+import { cfImagesURLUpload, mapImageAssets, getImageAssetURL, getDBResult } from './common.js';
 import { metadataTypeList, updateMetadata } from './metadata.js';
 import { lookupBGGGame } from "./bgg.js";
 
@@ -196,6 +196,28 @@ export async function insertGame(ctx, gameData) {
   const result = await stmt.run();
   getDBResult('insertGame', 'insert_game', result);
   const id = result.meta.last_row_id;
+
+  // If we were given the URL to an image for this game, then try to upload it
+  // to images so we can add it to our game record.
+  try {
+    if (gameData.image !== undefined && gameData.image !== '') {
+      // Set up a base metadata object that tells the uploader about the image,
+      // and then attempt to gather it.
+      const imageMeta = { gameId: id, bggId: gameData.bggId, bggURL: gameData.image };
+      const data = await cfImagesURLUpload(ctx, imageMeta);
+
+      // Update the game record we just inserted so that it knows about the new
+      // image path.
+      const imgResponse = await ctx.env.DB.prepare(`
+        UPDATE Game SET imagePath = ?2
+         WHERE id = ?1
+      `).bind(id, `cfi:///${data.id}`).run();
+      getDBResult('insertGame', 'set_img_url', imgResponse);
+    }
+  }
+  catch (error) {
+    console.log(`error while uploading game image: ${error}`);
+  }
 
   // For each of the available metadata items, we need to add items into the
   // appropriate placement table to record that this game utilizes those
