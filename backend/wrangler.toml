@@ -51,6 +51,15 @@ bucket_name = "luddatumbazo-assets"
 # account and not a domain.
 CF_ACCOUNT_ID = 'd8cc4339c920f6d32079a5b483603063'
 
+# These variables are used to configure which Cloudflare image variants should
+# be used when generating images of specific types.
+CF_VARIANT_THUMB = 'thumb'
+CF_VARIANT_BOXART = 'cover'
+
+# When generating URLs for Cloudflare images, use this template to inject the
+# image path and desired variant in order to get a fully working URL.
+CF_IMAGEURL_TEMPLATE = 'https://luddatumbazo.odatnurd.net/images/{imagePath}/{variant}'
+
 # The code that interacts with Cloudflare images needs to have an access token
 # to use in its requests that has the ability to read and edit the CF Images
 # data; this one is not here in this file since that would be a horrible, really
