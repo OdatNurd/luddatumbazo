@@ -3,7 +3,7 @@
 
 import slug from "slug";
 
-import { getDBResult } from './common.js';
+import { mapImageAssets, getDBResult } from './common.js';
 
 
 /******************************************************************************/
@@ -190,13 +190,17 @@ export async function getMetadataDetails(ctx, metaType, idOrSlug, includeGames) 
   if (includeGames === true) {
     // Try to find all such records, if any.
     const gameData = await ctx.env.DB.prepare(`
-      SELECT C.gameId, A.bggId, B.name, A.slug
+      SELECT C.gameId, A.bggId, B.name, A.slug, A.imagePath
         FROM Game as A, GameName as B, GameMetadataPlacement as C
       WHERE A.id == B.gameId and B.isPrimary = 1
         AND C.gameId = A.id
         AND C.itemId = ?
     `).bind(record.id).all();
+
+    // Get the result, and then map the image path for all items into a full
+    // item.
     record.games = getDBResult('getMetadataDetails', 'find_games', gameData);
+    record.games = mapImageAssets(ctx, record.games, 'imagePath', 'thumbnail')
   }
 
   return record;

@@ -3,7 +3,7 @@
 
 import { BGGLookupError } from './exceptions.js';
 
-import { getDBResult } from './common.js';
+import { mapImageAssets, getImageAssetURL, getDBResult } from './common.js';
 import { metadataTypeList, updateMetadata } from './metadata.js';
 import { lookupBGGGame } from "./bgg.js";
 
@@ -58,12 +58,13 @@ const ensureRequiredKeys = (obj, keys) => {
 export async function getGameList(ctx) {
   // Try to find all metadata item of this type.
   const gameList = await ctx.env.DB.prepare(`
-    SELECT A.id, A.bggId, A.slug, B.name
+    SELECT A.id, A.bggId, A.slug, B.name, A.imagePath
       FROM Game as A, GameName as B
      WHERE A.id == B.gameId and B.isPrimary = 1
   `).all();
 
-  return getDBResult('getGameList', 'find_games', gameList);
+  const result = getDBResult('getGameList', 'find_games', gameList);
+  return mapImageAssets(ctx, result, 'imagePath', 'thumbnail');
 }
 
 
@@ -88,8 +89,9 @@ export async function getGameDetails(ctx, idOrSlug) {
     return null;
   }
 
-  // Set up the game ID
+  // Set up the game data and map the game image URL.
   const gameData = result[0];
+  gameData.imagePath = getImageAssetURL(ctx, gameData.imagePath, 'boxart');
 
   // Gather the list of all of the names that this game is known by; much like
   // when we do the insert, the primary name is brought to the top of the list.
