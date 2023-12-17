@@ -52,7 +52,7 @@
       <Flex p="0px" gap="0px" slot="title">
         <Text title> {result.names[0]} ({result.publishedIn})</Text>
         <Text subtitle>
-          <Flex direction="row" gap="16px">
+          <Flex direction="row" gap="16px" fl.wr="wrap">
             <span>
               <strong>Players:</strong>
                 {#if result.minPlayers === result.maxPlayers}
@@ -75,7 +75,7 @@
         </Text>
       </Flex>
     </Titlebar>
-    <Flex gap="16px">
+    <Flex gap="16px" fl.wr="wrap">
       <Text subtitle>
         {#if result.names.length > 1}
           <Flex direction="row" gap="8px">
@@ -83,7 +83,7 @@
             {result.names.slice(1).join(', ')}
           </Flex>
         {/if}
-        <Flex direction="row" gap="32px">
+        <Flex direction="row" gap="32px" fl.wr="wrap">
           {#if result.bggId !== 0}
             <Link href="{bggLink(result.bggId)}" target="_blank">
               View on BoardGameGeek <Icon name="external-link"></Icon>
@@ -110,7 +110,7 @@
 
         {#each metaKeys as metadata (metadata.key) }
           <Flex>{metadata.title}</Flex>
-          <Flex direction="row" gap="4px">
+          <Flex direction="row" gap="4px" fl.wr="wrap">
             {#each result[metadata.key] as row (row.id)}
               <Link href="#/{metadata.key}/{row.slug}">{row.name}</Link>
             {/each}
