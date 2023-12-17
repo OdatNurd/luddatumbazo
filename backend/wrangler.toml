@@ -51,6 +51,15 @@ bucket_name = "luddatumbazo-assets"
 # account and not a domain.
 CF_ACCOUNT_ID = 'd8cc4339c920f6d32079a5b483603063'
 
+# The code that interacts with Cloudflare images needs to have an access token
+# to use in its requests that has the ability to read and edit the CF Images
+# data; this one is not here in this file since that would be a horrible, really
+# bad leak.
+#
+# You should do that in the dashboard, and encrypt the variable; this is just
+# here as a reminder that the variable needs to exist.
+#CF_IMAGES_TOKEN=secrettokenhere
+
 # The UI code needs to know what URI we're running at, which it gets from an
 # environment variable like so (does not need to be set here in the worker,
 # since the worker knows where it lives).
@@ -58,6 +67,7 @@ CF_ACCOUNT_ID = 'd8cc4339c920f6d32079a5b483603063'
 # You can use the packed in .env.template to create your own .env file for local
 # work; when you deploy, make sure your pages deployment sets this value.
 # GAME_API_ROOT_URI = http://localhost:8000
+
 
 # Local dev server settings
 [dev]
