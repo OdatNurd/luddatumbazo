@@ -1,3 +1,4 @@
 PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
+INSERT INTO UserHousehold VALUES(1,1,1);
 COMMIT;

@@ -1267,4 +1267,18 @@ INSERT INTO GameMetadata VALUES(1301,'artist',119983,'frantisek-sedlacek','Frant
 INSERT INTO GameMetadata VALUES(1302,'artist',119982,'lukas-vodicka','Lukáš Vodička');
 INSERT INTO GameMetadata VALUES(1303,'artist',119980,'michaela-zaoralova','Michaela Zaoralová');
 INSERT INTO GameMetadata VALUES(1304,'publisher',48461,'sunnygeeks','Sunnygeeks');
+INSERT INTO GameMetadata VALUES(1305,'mechanic',2962,'move-through-deck','Move Through Deck');
+INSERT INTO GameMetadata VALUES(1306,'artist',131945,'robert-islas','Robert Islas');
+INSERT INTO GameMetadata VALUES(1307,'artist',98541,'prapach-lapamnuaysap','Prapach Lapamnuaysap');
+INSERT INTO GameMetadata VALUES(1308,'publisher',4419,'sunriver-games','Sunriver Games');
+INSERT INTO GameMetadata VALUES(1309,'publisher',40920,'2-pionki','2 Pionki');
+INSERT INTO GameMetadata VALUES(1310,'publisher',18856,'aurum-inc','AURUM, Inc.');
+INSERT INTO GameMetadata VALUES(1311,'publisher',82,'funagain','Funagain');
+INSERT INTO GameMetadata VALUES(1312,'publisher',48438,'games7days','Games7Days');
+INSERT INTO GameMetadata VALUES(1313,'publisher',38305,'mancalamaro','Mancalamaro');
+INSERT INTO GameMetadata VALUES(1314,'publisher',45523,'yes-papa-games','Yes Papa Games');
+INSERT INTO GameMetadata VALUES(1315,'artist',85692,'antoine-de-saint-exupery','Antoine de Saint-Exupéry');
+INSERT INTO GameMetadata VALUES(1316,'publisher',11688,'ludonaute','Ludonaute');
+INSERT INTO GameMetadata VALUES(1317,'publisher',32591,'meeplebr','MeepleBR');
+INSERT INTO GameMetadata VALUES(1318,'publisher',12446,'moonster-games','Moonster Games');
 COMMIT;
