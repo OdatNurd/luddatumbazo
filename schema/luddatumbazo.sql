@@ -129,3 +129,57 @@ CREATE TABLE Wishlist (
     addedByUserId INTEGER NOT NULL REFERENCES User(id)
 );
 
+
+DROP TABLE IF EXISTS GuestUser;
+CREATE TABLE GuestUser (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    firstName TEXT NOT NULL,
+    lastName TEXT NOT NULL
+);
+
+DROP TABLE IF EXISTS SessionReportDetails;
+CREATE TABLE SessionReportDetails (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    sessionId INTEGER NOT NULL REFERENCES SessionReport(id),
+
+    content TEXT DEFAULT('')
+);
+
+DROP TABLE IF EXISTS SessionReportExpansions;
+CREATE TABLE SessionReportExpansions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    sessionId INTEGER NOT NULL REFERENCES SessionReport(id),
+    expansionId INTEGER NOT NULL REFERENCES Game(id)
+);
+
+DROP TABLE IF EXISTS SessionReportPlayer;
+CREATE TABLE SessionReportPlayer (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    sessionId INTEGER NOT NULL REFERENCES SessionReport(id),
+    userId INTEGER REFERENCES User(id),
+    guestId INTEGER REFERENCES GuestUser(id),
+
+    isReporter INTEGER DEFAULT(false),
+    startingPlayer INTEGER DEFAULT(false),
+    score INTEGER DEFAULT(0),
+    winner INTEGER DEFAULT(false)
+);
+
+DROP TABLE IF EXISTS SessionReport;
+CREATE TABLE SessionReport (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    gameId INTEGER NOT NULL REFERENCES Game(id),
+    gameName INTEGER NOT NULL REFERENCES GameName(id),
+
+    sessionBegin TIME NOT NULL,
+    sessionEnd TIME NOT NULL,
+
+    isLearning INTEGER DEFAULT(false)
+);
+
+
