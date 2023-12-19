@@ -113,6 +113,23 @@ const getGameNames = input => getChildrenNamed(input, 'name').sort((left, right)
 }).map(el => decodeHTML(el.children[0].text));
 
 
+/* Given an input tag, find all of the boardgameexpansion records and return
+ * back a mapped version of the list (which may be empty) that indicates the
+ * name and bggId of the entry, with a boolean that indicates whether or not
+ * that entry is an expansion to another game or represents a base game.
+ *
+ * That is to say, a base game has records that associate it with its expansions
+ * and an expansion has records of what games it expands. */
+const getGameExpansions = input => getChildrenNamed(input, 'boardgameexpansion')
+   .map(expansion => {
+      const bggId = parseInt(expansion.attr.objectid);
+      const name = expansion.children.length > 0 ? expansion.children[0]?.text : 'unknown';
+      const isExpansion = expansion.attr?.inbound === undefined;
+
+      return { isExpansion, name, bggId }
+   });
+
+
 /******************************************************************************/
 
 
@@ -123,21 +140,6 @@ function makeBggGameData(gameEntry, gameId) {
   // Start preparing our output structure by including the BoardGameGeek ID for
   // this game in it.
   const output = { "bggId": gameId };
-
-  // This record tells us if a game either has an expansion or IS an expansion;
-  // when this IS an expansion (inbound is an attribute), store a record of
-  // this.
-  //
-  // TODO:
-  //   This doesn't work because:
-  //     - It is giving us the BGG id
-  //     - This entry can appear many times, not just one (so don't do first)
-  //     - An entry might cross link to a game that we don't actually have yet
-  //     - We want it to be OUR game Id, but to do that we need the game first
-  const expansion = getChildNamed(gameEntry, 'boardgameexpansion');
-  if (expansion !== undefined && expansion.attr?.inbound !== undefined) {
-    output.expandsGame = parseInt(expansion.attr.objectid);
-  }
 
   // The statistics node will us the average game weight, presuming that the
   // incoming request asked for it. If so, pull it out.
@@ -151,6 +153,12 @@ function makeBggGameData(gameEntry, gameId) {
   if (output.name.length > 0) {
     output.slug = slug(output.name[0]);
   }
+
+  // There are a set of records that tell us what games we expand (if any) and
+  // what games expand us (if any). The result of this is a list (which may be
+  // empty) of records that convey this information along with an identifying
+  // name value.
+  output.expansions = getGameExpansions(gameEntry);
 
   // Pull in the basic information about the game
   output.description = decodeHTML(getTextOf(gameEntry, 'description'));
