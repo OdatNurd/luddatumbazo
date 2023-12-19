@@ -305,3 +305,60 @@ export async function insertBGGGame(ctx, bggGameId) {
 
 
 /******************************************************************************/
+
+
+/* This accepts an array of items of the form:
+ *
+ *     {
+ *       "isExpansion": false,
+ *       "name": "Reef Encounter",
+ *       "bggId": 12962
+ *     }
+ *
+ * In the record, the bggId is a nonzero ID that represents a BoardGameGeek
+ * entry, and isExpansion indicates if that BGG is an expansion for another
+ * game (true) or is a base game itself (false).
+ *
+ * Such entries come from BoardGameGeek such that an expansion lists all of
+ * the base games that it can expand, and a base game lists all of its expansion
+ * games.
+ *
+ * This will make appropriate adjustments to the GameExpansion table, to either:
+ *   - Add an entry saying that there is a known expansion for some game
+ *   - Add an entry saying that some expansion has a known base game
+ *   - Update the linkage that ties a game to its expansion
+ *
+ * In the table, the supposition is one side of the relation is always populated
+ * while the other has a bggId but not associated inner game ID. When both
+ * sides of the relation are populated, the link is considered established. */
+export async function updateExpansionDetails(ctx, expansionList) {
+  // In order to insert entries, we need to know the game ID's (both internal
+  // and BGG) for the entry that represents the item in the expansionList
+  // variables, since we need them to set up one of the sides of the relation.
+  //
+  // For now these are hard coded but they would need to come as arguments.
+  const bggId = 420;
+  const gameId = 69;
+
+  // For each of the entries in the list:
+  //
+  //   Entries that are expansions (isExpansion === true)
+  //     - If there is no entry in the table that maps to this bggId on the
+  //       expansion side, then insert a new entry that associates us as an
+  //       expansion with a base game (null gameId) on the bggId in the entry
+  //
+  //     - If there is an entry in the table, then the base game exists, so
+  //       insert our records and remove the temporary name, since we are now
+  //       linked in and our name is known.
+  //
+  //   The same is done for entries that are base games (isExpansion === false)
+  //   except that the relation sides are switched; we are the side that is the
+  //   base game, and the entry tracks the expansion record.
+  for (const expansion of expansionList) {
+    //
+    console.log(expansion);
+  }
+}
+
+
+/******************************************************************************/

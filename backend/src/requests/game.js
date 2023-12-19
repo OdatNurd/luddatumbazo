@@ -4,7 +4,8 @@
 import { BGGLookupError } from '../db/exceptions.js';
 import { success, fail } from "./common.js";
 
-import { insertGame, insertBGGGame, getGameList, getGameDetails } from '../db/game.js';
+import { insertGame, insertBGGGame, updateExpansionDetails,
+         getGameList, getGameDetails } from '../db/game.js';
 
 
 /******************************************************************************/
@@ -161,3 +162,26 @@ export async function gameDetailsReq(ctx) {
 
 /******************************************************************************/
 
+
+/* Input: An array of items that contains information on either expansions for
+ *        a particular game or something.
+ *
+ * This will attempt to do the stuff in the place. */
+export async function updateExpansionDetailsReq(ctx) {
+  // Grab the records that give us information on the expansion information that
+  // we want to update.
+  const expansionList = await ctx.req.json();
+
+  // Track which of the games we loop over was added and which was inserted.
+  const inserted = [];
+  const skipped = []
+  const result = { inserted, skipped };
+
+  updateExpansionDetails(ctx, expansionList);
+
+  // Return success back.
+  return success(ctx, `inserted ${inserted.length} records of ${expansionList.length}`, result);
+}
+
+
+/******************************************************************************/
