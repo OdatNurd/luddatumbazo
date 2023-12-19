@@ -1,3 +1,18 @@
+DROP TABLE IF EXISTS GameExpansion;
+CREATE TABLE GameExpansion (
+    id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
+
+    baseGameId INTEGER REFERENCES Game(id),
+    baseGameBggId INTEGER DEFAULT(0),
+
+    expansionGameId INTEGER REFERENCES Game(id),
+    expansionGameBggID INTEGER DEFAULT(0),
+
+    entryName TEXT,
+);
+CREATE INDEX idx_game_expand_base ON GameExpansion(baseGameBggId, baseGameId);
+CREATE INDEX idx_game_expand_expansion ON GameExpansion(expansionGameBggID, expansionGameId);
+
 DROP TABLE IF EXISTS GameMetadataPlacement;
 CREATE TABLE GameMetadataPlacement (
     id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
