@@ -115,7 +115,6 @@ Table UserPermissions {
 Table Game {
     id INTEGER [unique, increment, pk]
     bggId INTEGER [not null]
-    expandsGameId INTEGER [note: 'denotes if this game is an expansion of some other game']
 
     slug TEXT [unique, not null, note: 'the slug is based on the primary name of the game at the time it was added']
     description TEXT [not null]

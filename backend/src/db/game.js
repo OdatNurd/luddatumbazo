@@ -16,7 +16,6 @@ import { lookupBGGGame } from "./bgg.js";
  * values that are seen here. */
 const defaultGameFields = {
   "bggId": 0,
-  "expandsGameId": 0,
   "minPlayers": 1,
   "maxPlayers": 1,
   "minPlayerAge": 1,
@@ -170,12 +169,10 @@ export async function insertGame(ctx, gameData) {
   // 2. Determine the new gameID and then insert the names for this game
   // 3. Update placements for all items in 0
   const stmt = ctx.env.DB.prepare(`INSERT INTO Game
-            (bggId, expandsGameId, slug, description, publishedIn, minPlayers,
-             maxPlayers, minPlayerAge, playtime, minPlaytime, maxPlaytime,
-             complexity)
+            (bggId, slug, description, publishedIn, minPlayers, maxPlayers,
+             minPlayerAge, playtime, minPlaytime, maxPlaytime, complexity)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
     details.bggId,
-    details.expandsGameId,
     details.slug,
     details.description,
     details.published,

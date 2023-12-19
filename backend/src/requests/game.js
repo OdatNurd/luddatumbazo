@@ -14,7 +14,6 @@ import { insertGame, insertBGGGame, getGameList, getGameDetails } from '../db/ga
  *   A JSON object of the form:
  *     {
  *       "bggId": 9216,
- *       "expandsGameId": 0,
  *       "name": [],
  *       "slug",
  *       "published": 2004,
