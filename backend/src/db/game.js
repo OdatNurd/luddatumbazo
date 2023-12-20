@@ -52,6 +52,35 @@ const ensureRequiredKeys = (obj, keys) => {
 /******************************************************************************/
 
 
+/* Takes as input a list of fields of the form:
+ *   {
+ *      "isExpansion": false,
+ *      "name": "Reef Encounter",
+ *      "bggId": 12962,
+ *      "gameId": null
+ *   }
+ *
+ * and validates that they are correct. In particular, isExpansion and name must
+ * be present, but if bggId or gameId are missing, they will be populated with
+ * a default value.
+ *
+ * Missing fields cause an error to be thrown. */
+const validateExpansionDetails = data => data.filter(record => {
+  if (ensureRequiredKeys(record, ["isExpansion", "name"]) == false) {
+    throw new Error(`required fields are missing from the input expansion data`);
+  }
+
+  // Insert any ID's that are missing.
+  record.gameId ??= null;
+  record.bggId ??= 0;
+
+  return record;
+});
+
+
+/******************************************************************************/
+
+
 /* Get a list of all of the games known to the database, including their slug
  * and the primary name associated with each of them. */
 export async function getGameList(ctx) {
@@ -143,7 +172,7 @@ export async function insertGame(ctx, gameData) {
   // if they are not there, we will kick out an error.
   if (ensureRequiredKeys(gameData, ["name", "slug", "published", "description"]) == false ||
                          gameData.name.length == 0) {
-    throw Error(`required fields are missing from the input data`);
+    throw new Error(`required fields are missing from the input data`);
   }
 
   // Combine together the defaults with the provided game record in order to
@@ -307,21 +336,92 @@ export async function insertBGGGame(ctx, bggGameId) {
 /******************************************************************************/
 
 
+/* Tries to find the crap, by doing a thing.
+ *
+ * The result is either the entry that is the crap, or null if we could not
+ * find the crap.
+ *
+ * The paramters are:
+ *    - existing
+ *       The list of existing database records to search
+ *    - ourGameId
+ *       The gameID that represents US
+ *    - ourBggGameId
+ *       The BoardGameGeek ID that represents US
+ *    - otherGame
+ *       The entry with the data on the other side of the relation
+ *
+ * The return value is the first entry in the existing table that matches, or
+ * undefined if we could not find a match.
+ */
+const findTheCrap = (existing, ourGameId, ourBggGameId, otherGame) => {
+  // If the other game is an expansion, then we're the base game, so try to find
+  // an entry where we are the base and the right hand side matches the other
+  // game.
+  let found = undefined;
+
+  if (otherGame.isExpansion) {
+    console.log(`the other game is an expansion, assuming we are the base`);
+    // We are a base game; find the first entry where we are the base and the
+    // other game is the expansion. Our details are always complete, but the
+    // other side might have a null gameId.
+    found = existing.find(game => {
+      // If we are not the base game, then this can't match.
+      if (game.baseGameId !== ourGameId || game.baseGameBggId !== ourBggGameId) {
+        return false;
+      }
+
+      // This only matches if the bggId of the game matches the one in this
+      // row; the internal gameId will never match because it's always null.
+      return otherGame.bggId === game.expansionGameBggId;
+    });
+  } else {
+    console.log(`the other game is the base, assuming we are the expansion`);
+
+    // The other game is a base game, so we are the expansion. Do the same thing
+    // as we just did, except backwards because we're the other side of the
+    // relation.
+    found = existing.find(game => {
+      // If we are not the expansion game, then this can't match.
+      if (game.expansionGameId !== ourGameId || game.expansionGameBggId !== ourBggGameId) {
+        return false;
+      }
+
+      // This only matches if the bggId of the game matches the one in this
+      // row; the internal gameId will never match because it's always null.
+      return otherGame.bggId === game.baseGameBggId;
+    });
+  }
+
+  console.log(`search found: ${JSON.stringify(found)}`);
+  return found;
+}
+
+
+/******************************************************************************/
+
+
 /* This accepts an array of items of the form:
  *
  *     {
  *       "isExpansion": false,
  *       "name": "Reef Encounter",
- *       "bggId": 12962
+ *       "bggId": 12962,
+ *       "gameId": null
  *     }
  *
- * In the record, the bggId is a nonzero ID that represents a BoardGameGeek
- * entry, and isExpansion indicates if that BGG is an expansion for another
- * game (true) or is a base game itself (false).
+ * In the list, if gameId is not present, it is assumed to be null. Similarly
+ * if bggId is not specified, it is assumed to be 0.
  *
- * Such entries come from BoardGameGeek such that an expansion lists all of
- * the base games that it can expand, and a base game lists all of its expansion
- * games.
+ * In the record, the bggId is an ID that represents a BoardGameGeek entry
+ * (which may be 0 to indicate BGG does not know about this game), isExpansion
+ * indicates if that BGG is an expansion for another game (true) or is a base
+ * game itself (false), and gameId is either null if we don't know the ID of
+ * that game, or the gameId if we do.
+ *
+ * This is based on entries that come from BoardGameGeek such that an expanion
+ * lists all of the base games it can expand, and a base game lists all of the
+ * expansions that are known for it.
  *
  * This will make appropriate adjustments to the GameExpansion table, to either:
  *   - Add an entry saying that there is a known expansion for some game
@@ -329,34 +429,95 @@ export async function insertBGGGame(ctx, bggGameId) {
  *   - Update the linkage that ties a game to its expansion
  *
  * In the table, the supposition is one side of the relation is always populated
- * while the other has a bggId but not associated inner game ID. When both
- * sides of the relation are populated, the link is considered established. */
-export async function updateExpansionDetails(ctx, expansionList) {
-  // In order to insert entries, we need to know the game ID's (both internal
-  // and BGG) for the entry that represents the item in the expansionList
-  // variables, since we need them to set up one of the sides of the relation.
-  //
-  // For now these are hard coded but they would need to come as arguments.
-  const bggId = 420;
-  const gameId = 69;
+ * while the other is not associated inner game ID. When both sides of the
+ * relation are populated, the link is considered established. */
+export async function updateExpansionDetails(ctx, myGameId, myBggId, expansionList) {
+  // Fully fill out all of the records in the expansions list. All records are
+  // required to include the appropriate fields, though some will have defaults
+  // if they're not set.
+  const expansions = validateExpansionDetails(expansionList);
 
-  // For each of the entries in the list:
+  console.log('*****************************************');
+  console.log('*****************************************');
+  console.log('*****************************************');
+
+  // Find all of the entries in the GameExpansion table where our data is one
+  // complete side of the link and the other side of the relation has a null
+  // gameId indicating that there is a partial link ready to be established.
   //
-  //   Entries that are expansions (isExpansion === true)
-  //     - If there is no entry in the table that maps to this bggId on the
-  //       expansion side, then insert a new entry that associates us as an
-  //       expansion with a base game (null gameId) on the bggId in the entry
+  // This could return an empty list if there are no entries or if all of them
+  // are already linked. Otherwise it will contain links for this game (for
+  // either side of the link) for which we need to close the loop.
+  const lookup = await ctx.env.DB.prepare(`
+    SELECT * FROM GameExpansion
+     WHERE (baseGameId = ?1 AND baseGameBggId = ?2 AND expansionGameId is null)
+        OR (expansionGameId = ?1 AND expansionGameBggID = ?2 AND baseGameId is null)
+  `).bind(myGameId, myBggId).all();
+  const existing = getDBResult('updateExpansionDetails', 'find_links', lookup);
+
+  // For each of the entries in the list, we need to see if there's an entry in
+  // the existing list of links for the data that we have.
   //
-  //     - If there is an entry in the table, then the base game exists, so
-  //       insert our records and remove the temporary name, since we are now
-  //       linked in and our name is known.
+  //   - If there is an existing item, it must be an incomplete link (since the
+  //     query will not return it otherwise), so fill out the link and we are
+  //     good.
+  //   - If nothing is found, then this is the first time this link is being
+  //     seen; in that case we need to insert a stub value.
   //
-  //   The same is done for entries that are base games (isExpansion === false)
-  //   except that the relation sides are switched; we are the side that is the
-  //   base game, and the entry tracks the expansion record.
-  for (const expansion of expansionList) {
+  // In both cases, the state of isExpansion tells us which side of the
+  // link our details represent.
+  console.log(`we are gameId ${myGameId} (bggId = ${myBggId})`);
+  for (const game of expansions) {
+    console.log(`considering: ${JSON.stringify(game)}`);
+
+    // if isExpansion is false, then WE are an expansion and the game is the
+    // base game. In that case try to find an entry in the existing items where
+    // our data is on the right as an expansion and the data in the game we
+    // have is on the left.
     //
-    console.log(expansion);
+    // - Entry not found:
+    //    This is the first time this relation has been updated; insert a new
+    //    record into the database, trying to use the data from the input record
+    //    to fill out the other side if possible; this may leave the gameID as
+    //    null, which would mean that this is an expansion for a base game that
+    //    is not currently in the database. In that case leave the bggId alone
+    //    so we can fix it later.
+    // - Entry is found:
+    //    This is not the first time this relation has been seen; previouslu
+    //    an entry occured, but the game it refers to must not have been in the
+    //    database, since only incomplete links fall out of the DB. In that case
+    //    we should now how the correct data to insert.
+
+
+
+    // Try to find the entry that maps to this record in the existing item list.
+    // If this is null, we've never seen this before, so we should insert a
+    // new entry
+    const entry = findTheCrap(existing, myGameId, myBggId, game);
+    if (entry === undefined) {
+      console.log(`** nothing found; we need to insert a new record`);
+
+      // This insert is wrong because when we insert the internal gameId for
+      // either side (depending on what this game is), it is inserting the null
+      // value that comes in the game object. It should ACTUALLY be using either
+      // that OR looking up the ID based on the bggId.
+      const insert = await ctx.env.DB.prepare(`
+        INSERT INTO GameExpansion (baseGameId, baseGameBggId,
+                                   expansionGameId, expansionGameBggId,
+                                   entryName)
+                    VALUES (?1, ?2, ?3, ?4, ?5)
+      `).bind(
+        game.isExpansion ? myGameId : game.gameId,
+        game.isExpansion ? myBggId : game.bggId,
+        game.isExpansion ? game.gameId : myGameId,
+        game.isExpansion ? game.bggId : myBggId,
+        game.name
+      ).all();
+      const result = getDBResult('updateExpansionDetails', 'add_new_link', insert);
+      return result;
+    } else {
+      console.log(`** found an entry; the entry needs to be updated`);
+    }
   }
 }
 

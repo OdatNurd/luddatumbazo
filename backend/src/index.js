@@ -70,6 +70,8 @@ app.put(`${APIV1}/game/data/details/bgg/add/list`, ctx => _(ctx, insertBGGGameLi
 app.get(`${APIV1}/game/list`, ctx => _(ctx, gameListReq));
 app.get(`${APIV1}/game/:idOrSlug`, ctx => _(ctx, gameDetailsReq));
 
+// Given a set of input records, try to establish game expansion links in the
+// database.
 app.put(`${APIV1}/game/data/expansions/update`, ctx => _(ctx, updateExpansionDetailsReq));
 
 
