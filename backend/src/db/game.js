@@ -64,15 +64,24 @@ const ensureRequiredKeys = (obj, keys) => {
  * be present, but if bggId or gameId are missing, they will be populated with
  * a default value.
  *
+ * We enforce that if the gameId is null, the bggId must not be 0; otherwise
+ * this entry is ambiguous.
+ *
  * Missing fields cause an error to be thrown. */
 const validateExpansionDetails = data => data.filter(record => {
   if (ensureRequiredKeys(record, ["isExpansion", "name"]) == false) {
     throw new Error(`required fields are missing from the input expansion data`);
   }
 
-  // Insert any ID's that are missing.
+  // Insert any ID's that are missing with their default values.
   record.gameId ??= null;
   record.bggId ??= 0;
+
+  // If the gameId is null and we don't have a bggId, then this entry is useless
+  // because it's ambiguous; raise an error.
+  if (record.gameId === null && record.bggId === 0) {
+    throw new Error(`one of gameId and bggId must be provided in the input expansion data`);
+  }
 
   return record;
 });
@@ -401,7 +410,9 @@ const findTheCrap = (existing, ourGameId, ourBggGameId, otherGame) => {
 /******************************************************************************/
 
 
-/* This accepts an array of items of the form:
+/* This accepts as input a combination of gameId and bggGameId that represents
+ * some game *that exists in the database* whose expansion data we want to
+ * adjust, and an array of items of the shape:
  *
  *     {
  *       "isExpansion": false,
@@ -411,27 +422,37 @@ const findTheCrap = (existing, ourGameId, ourBggGameId, otherGame) => {
  *     }
  *
  * In the list, if gameId is not present, it is assumed to be null. Similarly
- * if bggId is not specified, it is assumed to be 0.
+ * if bggId is not specified, it is assumed to be 0. There is a constraint on
+ * the items in the list that says that EITHER gameId is not null OR bggId is
+ * not 0; that is, the entry needs to either tell us about a game that currently
+ * exists in the database, or have enough information to find it later when it
+ * actually gets inserted.
  *
- * In the record, the bggId is an ID that represents a BoardGameGeek entry
- * (which may be 0 to indicate BGG does not know about this game), isExpansion
- * indicates if that BGG is an expansion for another game (true) or is a base
- * game itself (false), and gameId is either null if we don't know the ID of
- * that game, or the gameId if we do.
+ * In each record, isExpansion describes the relationship between the entry and
+ * the game that the function was called for (i.e. is the entry an expansion of
+ * the game, or is the game an expansion of this entry).
  *
- * This is based on entries that come from BoardGameGeek such that an expanion
- * lists all of the base games it can expand, and a base game lists all of the
- * expansions that are known for it.
+ * Similarly, the gameId/bggId specify the details of the game in the entry,
+ * and name specifies what that entry is called, in case it's not actually in
+ * the database.
+ *
+ * This format is based on data that comes from BoardGameGeek, where each game
+ * lists all of it's expansions and each expansion lists all of its relevant
+ * base games. We use the same data here to maintain better compatibility, with
+ * the added benefit of being able to just add entries specifically by gameId if
+ * they do not exist on bgg.
  *
  * This will make appropriate adjustments to the GameExpansion table, to either:
- *   - Add an entry saying that there is a known expansion for some game
- *   - Add an entry saying that some expansion has a known base game
- *   - Update the linkage that ties a game to its expansion
+ *   - Add an entry saying that there is a known relation to this game
+ *   - Update an incomplete relation once the other side is added to the db.
  *
  * In the table, the supposition is one side of the relation is always populated
- * while the other is not associated inner game ID. When both sides of the
- * relation are populated, the link is considered established. */
+ * while the other may or may not be. */
 export async function updateExpansionDetails(ctx, myGameId, myBggId, expansionList) {
+  // If we did not get a bggID, then set it to be 0, since that's the default
+  // for that value.
+  myBggId ??= 0;
+
   // Fully fill out all of the records in the expansions list. All records are
   // required to include the appropriate fields, though some will have defaults
   // if they're not set.

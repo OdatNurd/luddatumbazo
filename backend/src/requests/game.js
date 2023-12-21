@@ -175,7 +175,7 @@ export async function updateExpansionDetailsReq(ctx) {
 
   // Pull out the keys and verify that they all exist; if not, raise an error.
   const { gameId, bggId, expansions } = expansionUpdate;
-  if ([gameId, bggId, expansions].indexOf(undefined) !== -1) {
+  if ([gameId, expansions].indexOf(undefined) !== -1) {
     throw new Error(`request has missing fields`);
   }
 
