@@ -435,15 +435,18 @@ export async function insertBGGGame(ctx, bggGameId) {
  * In the table, the supposition is one side of the relation is always populated
  * while the other may or may not be. */
 export async function updateExpansionDetails(ctx, gameId, bggId, expansionList) {
+  // Prepare the return result, which will tell the caller how many of the
+  // updates required an insert, how many updated the links in existing records
+  // and how many items were skipped because they were found but already linked.
+  const result = {
+    inserted: 0,
+    updated: 0,
+    skipped: 0
+  };
+
   // Create a game that represents the gameId and bggId that we were given; if
   // there was no bggId, then we can infer that it's 0.
   const myGame = makeGame(gameId, bggId ?? 0);
-
-  console.log('*****************************************');
-  console.log('*****************************************');
-  console.log(`updateExpansionDetails for ${JSON.stringify(myGame)}`);
-  console.log('*****************************************');
-  console.log('*****************************************');
 
   // Fully fill out all of the records in the expansions list. All records are
   // required to include the appropriate fields, though some will have defaults
@@ -453,7 +456,7 @@ export async function updateExpansionDetails(ctx, gameId, bggId, expansionList) 
   // back.
   const expansions = validateExpansionDetails(expansionList);
   if (expansions.length === 0) {
-    return []
+    return result;
   }
 
   // Find all of the entries in the GameExpansion table where our data is one
@@ -475,10 +478,6 @@ export async function updateExpansionDetails(ctx, gameId, bggId, expansionList) 
   `).bind(myGame.gameId, myGame.bggId).all();
   const existing = getDBResult('updateExpansionDetails', 'find_links',
                                lookup).map(el => makeLinkWrapper(el));
-
-  console.log('*****************************************');
-  console.log(JSON.stringify(existing, null, 2));
-  console.log('*****************************************');
 
   // Inserts a new link record into the game expansion table using two sets of
   // gameIds and BGG ids. Either gameId can be set or null, in which case we
@@ -515,71 +514,70 @@ export async function updateExpansionDetails(ctx, gameId, bggId, expansionList) 
      WHERE id = ?2
   `);
 
-  // Iterate over each entry in the list of items that we were given to see what
-  // we need to do with them.
-  for (const entry of expansions) {
-    // Wrap this entry in a game object for easier access.
-    const entryGame = makeGame(entry.gameId, entry.bggId);
-    console.log(` -> Considering entry: ${JSON.stringify(entryGame)}`);
+  // Create an array we can use to store our updates so that we can run them in
+  // a batch transaction.
+  const batch = [];
 
-    // Find the entry in the list of existing records that contains the entry
-    // game. There should be only one of them since games are unique on either
-    // side of the link.
+  // Iterate all of the input expansions to see what kind of update is needed.
+  for (const entry of expansions) {
+    const entryGame = makeGame(entry.gameId, entry.bggId);
+
+    // Find the existing entry that contains this game, if any.
     const dbRecord = findGame(existing, entryGame);
-    console.log(`  -> found ${JSON.stringify(dbRecord, null, 2)}`);
     if (dbRecord === undefined) {
-      // There is no existing record for the game we were given that associates
-      // with this record, so we need to insert a new one.
-      console.log('   => No matching record found, should do insert');
+      // We found no record, so we need to insert a new link; use the value in
+      // the object to determine which side of the link our game is.
       const baseGame = entry.isExpansion === true ? myGame : entryGame;
       const expansionGame = entry.isExpansion === true ? entryGame : myGame;;
 
-      console.log(` ==> Base Insert: ${JSON.stringify(baseGame)}`);
-      console.log(` ==> Expansion Insert: ${JSON.stringify(expansionGame)}`);
-      console.log(baseGame.gameId, baseGame.bggId, expansionGame.gameId, expansionGame.bggId, entry.name);
-      // Perform the insert.
-      const insertResult = await insertStmt.bind(
-        baseGame.gameId, baseGame.bggId,
-        expansionGame.gameId, expansionGame.bggId,
-        entry.name).all();
-      console.log(insertResult);
+      // Add the insert to the batch.
+      result.inserted += 1;
+      batch.push(
+        insertStmt.bind(baseGame.gameId, baseGame.bggId,
+                        expansionGame.gameId, expansionGame.bggId,
+                        entry.name));
     } else {
-      // We found a record; if it is complete on both sides, we don't need to
-      // do anything else; the link is already as complete as it's gonna get.
-      if (dbRecord.baseComplete && dbRecord.expansionComplete) {
-        console.log('   => This record is complete on both sides, doing nothing');
-      } else {
-        // The only side of the link that we can update right now for sure is
-        // the side that is the game we were invoked for, since that is the only
-        // one whose gameId we know is present.
-        if (gamesMatch(myGame, dbRecord.base) === true) {
-          console.log('    => We were called to update the base side');
-          if (dbRecord.baseComplete === true) {
-            console.log('    => We do not need to update the base; it is complete');
-          } else {
-            console.log('    => base is incomplete; updating');
-            const updateResult = await updateBaseStmt
-              .bind(myGame.gameId, dbRecord.id)
-              .all();
-            console.log(updateResult);
-          }
+      // We found a record; if it's already complete on both sides then we don't
+      // need to do anything.
+      if (dbRecord.baseComplete === true && dbRecord.expansionComplete === true) {
+        result.skipped += 1;
+        continue;
+      }
+
+      // The only side of the link that we can update is the side that is the
+      // game we were invoked for, since that is the only one whose gameId we
+      // know is present. Determine which that is.
+      if (gamesMatch(myGame, dbRecord.base) === true) {
+        // We are the base game; Queue an update if it's not complete already.
+        if (dbRecord.baseComplete === false) {
+          // Update the result count and add to the batch
+          result.updated += 1;
+          batch.push(updateBaseStmt.bind(myGame.gameId, dbRecord.id));
         } else {
-          console.log('    => We were called to update the expansion side');
-          if (dbRecord.expansionComplete === true) {
-            console.log('    => We do not need to update the expansion; it is complete');
-          } else {
-            console.log('    => expansion is incomplete; updating');
-            const updateResult = await updateExpansionStmt
-              .bind(myGame.gameId, dbRecord.id)
-              .all();
-            console.log(updateResult);
-          }
+          result.skipped += 1;
+        }
+      } else {
+        // If we get here, we must be the expansion; queue an update if it's
+        // not complete already.
+        if (dbRecord.expansionComplete === false) {
+          // Update the result count and add to the batch
+          result.updated += 1;
+          batch.push(updateExpansionStmt.bind(myGame.gameId, dbRecord.id));
+        } else {
+          result.skipped += 1;
         }
       }
     }
   }
 
-  return [];
+  // If there are any items that need to be updated or inserted, then execute
+  // the batch now.
+  if (batch.length > 0) {
+    const batchResult = await ctx.env.DB.batch(batch);
+    getDBResult('updateExpansionDetails', 'update_links', batchResult);
+  }
+
+  return result;
 }
 
 
