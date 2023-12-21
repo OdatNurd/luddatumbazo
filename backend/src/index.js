@@ -4,7 +4,7 @@ import { cors } from 'hono/cors'
 import { wrappedRequest as _ } from './requests/common.js';
 import { lookupBGGGameInfo } from './requests/bgg.js';
 import { insertGameReq, insertBGGGameReq, insertBGGGameListReq,
-         updateExpansionDetailsReq, gameListReq,
+         updateExpansionDetailsReq, updateExpansionDetailsBggReq, gameListReq,
          gameDetailsReq } from './requests/game.js';
 import { metadataUpdateReq, metadataQueryReq,
          metadataListReq } from './requests/metadata.js';
@@ -71,9 +71,10 @@ app.get(`${APIV1}/game/list`, ctx => _(ctx, gameListReq));
 app.get(`${APIV1}/game/:idOrSlug`, ctx => _(ctx, gameDetailsReq));
 
 // Given a set of input records, try to establish game expansion links in the
-// database.
+// database. The second variation looks up the data for the game in BGG in
+// order to provide the update; for games that are added without expansion info.
 app.put(`${APIV1}/game/data/expansions/update`, ctx => _(ctx, updateExpansionDetailsReq));
-
+app.get(`${APIV1}/game/data/expansions/update/bgg/:bggGameId{[0-9]+}`, ctx => _(ctx, updateExpansionDetailsBggReq))
 
 // As a temporary endpoint on the system, using an internal table that can
 // associate one of our game ID's with a BGG ID and the URL image for such a

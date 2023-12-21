@@ -593,3 +593,47 @@ export async function updateExpansionDetails(ctx, gameId, bggId, expansionList) 
 
 
 /******************************************************************************/
+
+
+/* This accepts as input a BGG Game ID.
+ *
+ * If that game is in our database, a request is made to BGG to fetch the list
+ * of expansions for that game, and that data along with the looked up internal
+ * game ID is used to invoke the update function in order to bring expansions
+ * into our DB.
+ *
+ * An error is raised if the BGG ID is for a game that isn't in our database or
+ * if there was an error looking up the expansion information or if an error is
+ * raised by the actual update. */
+export async function updateExpansionDetailsByBGG(ctx, bggId) {
+  // Find the entry in our database for this BGG ID so that we can determine
+  // what our gameID for it is; If not found, return an error back.
+  const gameSearch = await ctx.env.DB.prepare(`
+    SELECT * FROM Game WHERE bggId = ?
+  `).bind(bggId).all();
+  const gameData = getDBResult('updateExpansionDetailsByBGG', 'find_game', gameSearch);
+  if (gameData.length === 0) {
+    throw new BGGLookupError(`database does not contain game with bggId ${bggId}`, 404);
+  }
+
+  // Call the function that will look up bgg game data for our value so that we
+  // can pluck the expansions table out of it.
+  const bggData = await lookupBGGGame(bggId);
+
+  // Collect the gameId that we need for the sub call.
+  const gameId =  gameData[0].id;
+  const slug =  gameData[0].slug;
+  const expansionList = bggData.expansions;
+
+  // Invoke the other function to do our job.
+  const result = await updateExpansionDetails(ctx, gameId, bggId, expansionList);
+
+  // Insert into the result our gameId and slug and the bggId so that the result
+  // is easier to grok.
+  result.gameId = gameId;
+  result.slug = slug;
+  result.bggId = bggId;
+  result.expansions = expansionList;
+
+  return result;
+}
