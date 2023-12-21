@@ -6,12 +6,12 @@ CREATE TABLE GameExpansion (
     baseGameBggId INTEGER DEFAULT(0),
 
     expansionGameId INTEGER REFERENCES Game(id),
-    expansionGameBggID INTEGER DEFAULT(0),
+    expansionGameBggId INTEGER DEFAULT(0),
 
-    entryName TEXT,
+    entryName TEXT
 );
 CREATE INDEX idx_game_expand_base ON GameExpansion(baseGameBggId, baseGameId);
-CREATE INDEX idx_game_expand_expansion ON GameExpansion(expansionGameBggID, expansionGameId);
+CREATE INDEX idx_game_expand_expansion ON GameExpansion(expansionGameBggId, expansionGameId);
 
 DROP TABLE IF EXISTS GameMetadataPlacement;
 CREATE TABLE GameMetadataPlacement (
