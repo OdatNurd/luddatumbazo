@@ -27,7 +27,8 @@ const defaultGameFields = {
   "mechanic": [],
   "designer": [],
   "artist": [],
-  "publisher": []
+  "publisher": [],
+  "expansions": []
 }
 
 
@@ -260,7 +261,7 @@ export async function insertGame(ctx, gameData) {
   const stmt = ctx.env.DB.prepare(`INSERT INTO Game
             (bggId, slug, description, publishedIn, minPlayers, maxPlayers,
              minPlayerAge, playtime, minPlaytime, maxPlaytime, complexity)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
     details.bggId,
     details.slug,
     details.description,
@@ -282,6 +283,16 @@ export async function insertGame(ctx, gameData) {
   const result = await stmt.run();
   getDBResult('insertGame', 'insert_game', result);
   const id = result.meta.last_row_id;
+
+  // If the game data has any expansions in it, then invoke the outer function
+  // so that those expansions will get registered with the system for this game
+  // now that it's irrevocably inserted into the database.
+  //
+  // This returns insertion status information, which is not useful to us here.
+  if (details.expansions.length !== 0) {
+    const ops = await updateExpansionDetails(ctx, id, details.bggId, details.expansions);
+    console.log(`new game expansion records: inserted=${ops.inserted}, updated=${ops.updated}, skipped=${ops.skipped}`);
+  }
 
   // If we were given the URL to an image for this game, then try to upload it
   // to images so we can add it to our game record.
