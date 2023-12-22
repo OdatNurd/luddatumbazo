@@ -1276,4 +1276,18 @@ INSERT INTO GameMetadata VALUES(1325,'category',1120,'print-play','Print & Play'
 INSERT INTO GameMetadata VALUES(1326,'designer',61,'james-ernest','James Ernest');
 INSERT INTO GameMetadata VALUES(1327,'artist',61,'james-ernest','James Ernest');
 INSERT INTO GameMetadata VALUES(1328,'publisher',12,'cheapass-games','Cheapass Games');
+INSERT INTO GameMetadata VALUES(1329,'mechanic',2984,'closed-drafting','Closed Drafting');
+INSERT INTO GameMetadata VALUES(1330,'artist',125,'bruno-faidutti','Bruno Faidutti');
+INSERT INTO GameMetadata VALUES(1331,'artist',18416,'didier-graffet','Didier Graffet');
+INSERT INTO GameMetadata VALUES(1332,'artist',1150,'darrell-hardy','Darrell Hardy');
+INSERT INTO GameMetadata VALUES(1333,'artist',12017,'scott-nicely','Scott Nicely');
+INSERT INTO GameMetadata VALUES(1334,'artist',107782,'hassan-nozadian','Hassan Nozadian');
+INSERT INTO GameMetadata VALUES(1335,'artist',21,'christian-t-petersen','Christian T. Petersen');
+INSERT INTO GameMetadata VALUES(1336,'artist',11989,'brian-schomburg','Brian Schomburg');
+INSERT INTO GameMetadata VALUES(1337,'artist',19965,'richard-spicer','Richard Spicer');
+INSERT INTO GameMetadata VALUES(1338,'publisher',2738,'e-l-m-productions','E L & M Productions');
+INSERT INTO GameMetadata VALUES(1339,'publisher',18788,'fantasiapelit','Fantasiapelit');
+INSERT INTO GameMetadata VALUES(1340,'publisher',38926,'houpaa','Houpaa');
+INSERT INTO GameMetadata VALUES(1341,'publisher',125,'multisim','MultiSim');
+INSERT INTO GameMetadata VALUES(1342,'publisher',8266,'silver-stars-publishing','Silver Stars Publishing');
 COMMIT;

@@ -332,3 +332,79 @@ export async function updateExpansionDetailsByBGG(ctx, bggId) {
 
 
 /******************************************************************************/
+
+
+/* Given a game ID, this returns back an object that has two arrays of objects
+ * in it, one representing games that are expansions for the given game ID,
+ * and one that are base games that work with this game as an expansion.
+ *
+ * Either or both arrays could be empty or full, since it's possible for games
+ * to have no expansions, for expansions to expand on more than one game, and
+ * for an expansion to itself be a base for some other expansion. */
+export async function getExpansionDetails(ctx, gameId) {
+  // This query will find all of the entries in the expansions table that expand
+  // upon the game with the gameId provided (i.e. it treats the gameId as the
+  // base game); there are two queries that are unioned together.
+  //
+  // The first gathers the list of items that are complete, and thus can have
+  // their names plucked from the Name table, and the second is for items that
+  // don't appear in the database, whose names need to come from somewhere else.
+  const expansionsStmt = ctx.env.DB.prepare(`
+    SELECT C.expansionGameId as id,
+           C.expansionGameBggId as bggId,
+           A.slug,
+           B.name
+      FROM Game as A, GameName as B, GameExpansion as C
+     WHERE C.baseGameId = ?1
+       AND A.id = C.expansionGameId
+       AND B.gameId = C.expansionGameId
+       AND B.isPrimary = 1
+    UNION ALL
+    SELECT NULL as id,
+           A.expansionGameBggId as bggId,
+           NULL as slug,
+           A.entryName as name
+      FROM GameExpansion as A
+     WHERE A.baseGameId = ?1
+       AND A.expansionGameId is NULL
+  `);
+
+  // This query is as above but instead of finding games that expand the game
+  // with the ID provided, it finds games that are expanded by this game (i.e
+  // it treats this game as the expansion).
+  const basesStmt = ctx.env.DB.prepare(`
+    SELECT C.baseGameId as id,
+           C.baseGameBggId as bggId,
+           A.slug,
+           B.name
+      FROM Game as A, GameName as B, GameExpansion as C
+     WHERE C.expansionGameId = ?1
+       AND A.id = C.baseGameId
+       AND B.gameId = C.baseGameId
+       AND B.isPrimary = 1
+    UNION ALL
+    SELECT NULL as id,
+           A.baseGameBggId as bggId,
+           NULL as slug,
+           A.entryName as name
+      FROM GameExpansion as A
+     WHERE A.expansionGameId = ?1
+       AND A.baseGameId is NULL
+  `);
+
+  // Batch out the two requests so that we can gather the results of both;
+  // either or both may end up empty.
+  const query = await ctx.env.DB.batch([
+    basesStmt.bind(gameId),
+    expansionsStmt.bind(gameId)
+  ]);
+
+  // Pluck the results out and then return them back.
+  const result =  getDBResult('getExpansionDetails', 'get_details', query);
+  return {
+    "baseGames": result[0],
+    "expansionGames": result[1],
+  }
+}
+
+/******************************************************************************/

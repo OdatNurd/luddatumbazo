@@ -5,7 +5,7 @@ import { BGGLookupError } from './exceptions.js';
 
 import { cfImagesURLUpload, mapImageAssets, getImageAssetURL, getDBResult, ensureRequiredKeys } from './common.js';
 import { metadataTypeList, updateMetadata } from './metadata.js';
-import { updateExpansionDetails } from './expansion.js';
+import { updateExpansionDetails, getExpansionDetails } from './expansion.js';
 import { lookupBGGGame } from "./bgg.js";
 
 
@@ -85,6 +85,11 @@ export async function getGameDetails(ctx, idOrSlug) {
      ORDER BY isPrimary DESC;
   `).bind(gameData.id).all();
   gameData.names = getDBResult('getGameDetails', 'find_names', names).map(el => el.name);
+
+  // Gather the information on expansions for this game
+  const expansionDetails = await getExpansionDetails(ctx, gameData.id);
+  gameData.baseGames = expansionDetails.baseGames;
+  gameData.expansionGames = expansionDetails.expansionGames;
 
   // Gather the list of all of the metadata that's associated with this game.
   const metadata = await ctx.env.DB.prepare(`

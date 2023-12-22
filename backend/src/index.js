@@ -5,7 +5,8 @@ import { wrappedRequest as _ } from './requests/common.js';
 import { lookupBGGGameInfo } from './requests/bgg.js';
 import { insertGameReq, insertBGGGameReq, insertBGGGameListReq,
          gameListReq, gameDetailsReq } from './requests/game.js';
-import { updateExpansionDetailsReq, updateExpansionDetailsBggReq } from './requests/expansion.js';
+import { updateExpansionDetailsReq, updateExpansionDetailsBggReq,
+         getExpansionDetailsReq } from './requests/expansion.js';
 import { metadataUpdateReq, metadataQueryReq,
          metadataListReq } from './requests/metadata.js';
 import { tempImageDetailsReq } from './requests/image.js';
@@ -74,7 +75,13 @@ app.get(`${APIV1}/game/:idOrSlug`, ctx => _(ctx, gameDetailsReq));
 // database. The second variation looks up the data for the game in BGG in
 // order to provide the update; for games that are added without expansion info.
 app.put(`${APIV1}/game/data/expansions/update`, ctx => _(ctx, updateExpansionDetailsReq));
-app.get(`${APIV1}/game/data/expansions/update/bgg/:bggGameId{[0-9]+}`, ctx => _(ctx, updateExpansionDetailsBggReq))
+app.get(`${APIV1}/game/data/expansions/update/bgg/:bggGameId{[0-9]+}`, ctx => _(ctx, updateExpansionDetailsBggReq));
+
+// Given a gameId (and not a slug), look up the data that indicates the list of
+// expansions and base games that associate with that game. In this parlance,
+// expansions are games that expand this game if it is a base game, and base
+// games are games that this game would expand, if this game was an expansion.
+app.get(`${APIV1}/game/data/expansions/list/:gameId`, ctx => _(ctx, getExpansionDetailsReq));
 
 // As a temporary endpoint on the system, using an internal table that can
 // associate one of our game ID's with a BGG ID and the URL image for such a
