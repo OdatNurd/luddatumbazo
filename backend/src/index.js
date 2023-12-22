@@ -4,8 +4,8 @@ import { cors } from 'hono/cors'
 import { wrappedRequest as _ } from './requests/common.js';
 import { lookupBGGGameInfo } from './requests/bgg.js';
 import { insertGameReq, insertBGGGameReq, insertBGGGameListReq,
-         updateExpansionDetailsReq, updateExpansionDetailsBggReq, gameListReq,
-         gameDetailsReq } from './requests/game.js';
+         gameListReq, gameDetailsReq } from './requests/game.js';
+import { updateExpansionDetailsReq, updateExpansionDetailsBggReq } from './requests/expansion.js';
 import { metadataUpdateReq, metadataQueryReq,
          metadataListReq } from './requests/metadata.js';
 import { tempImageDetailsReq } from './requests/image.js';

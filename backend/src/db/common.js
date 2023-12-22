@@ -22,6 +22,24 @@ const variantMap = {
 /******************************************************************************/
 
 
+/* Given an object and an array of keys, ensure that each of the keys in the
+ * list appear in the object.
+ *
+ * The return value is false if any keys are missing and true if all are
+ * present. */
+export const ensureRequiredKeys = (obj, keys) => {
+  for (const key of keys) {
+    if (obj[key] === undefined) {
+      return false
+    }
+  }
+  return true;
+}
+
+
+/******************************************************************************/
+
+
 /* Given some information on where and what database action is taken, what the
  * result was, and whether or not it is a batch, display a log that displays
  * details of the operation. */
