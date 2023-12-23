@@ -61,7 +61,12 @@
     </svelte:fragment>
     <svelte:fragment slot="row" let:row>
       <td>{row.id}</td>
-      <td><a href="{slugLink(row.slug)}">{row.name}</a></td>
+      <td>
+        {#if row.imagePath !== undefined}
+          <img ws-x="p.r[4px] w[32px] h[32px]" src={row.imagePath} alt="Box art image for game {row.name}">
+        {/if}
+        <a href="{slugLink(row.slug)}">{row.name}</a>
+      </td>
       <td>
         {#if row.bggId !== 0}
           <Link href="{bggLink(row.bggId)}" target="_blank">
@@ -74,3 +79,11 @@
     </svelte:fragment>
   </DataTable>
 </LoadZone>
+
+
+<style>
+  img {
+    vertical-align: middle;
+    object-fit: contain;
+  }
+</style>

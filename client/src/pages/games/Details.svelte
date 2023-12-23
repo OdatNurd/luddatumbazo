@@ -76,6 +76,13 @@
       </Flex>
     </Titlebar>
     <Flex gap="16px" fl.wr="wrap">
+
+      {#if result.imagePath !== undefined}
+        <div ws-x="t.a[center]">
+          <img src={result.imagePath} alt="Box art image for game {result.name}">
+        </div>
+      {/if}
+
       <Text subtitle>
         {#if result.names.length > 1}
           <Flex direction="row" gap="8px">
@@ -106,8 +113,8 @@
           {/if}
         </Flex>
       </Text>
-      <Grid cols="max-content auto" gap="8px">
 
+      <Grid cols="max-content auto" gap="8px">
         {#each metaKeys as metadata (metadata.key) }
           <Flex>{metadata.title}</Flex>
           <Flex direction="row" gap="4px" fl.wr="wrap">
@@ -117,6 +124,7 @@
           </Flex>
         {/each}
       </Grid>
+
       <Text p="8px" b.t="1.5px solid gray">
         {@html result.description}
       </Text>
