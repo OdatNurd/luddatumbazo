@@ -123,7 +123,7 @@ const getGameNames = input => getChildrenNamed(input, 'name').sort((left, right)
 const getGameExpansions = input => getChildrenNamed(input, 'boardgameexpansion')
    .map(expansion => {
       const bggId = parseInt(expansion.attr.objectid);
-      const name = expansion.children.length > 0 ? expansion.children[0]?.text : 'unknown';
+      const name = expansion.children.length > 0 ? decodeHTML(expansion.children[0]?.text) : 'unknown';
       const isExpansion = expansion.attr?.inbound === undefined;
 
       return { isExpansion, name, bggId }
