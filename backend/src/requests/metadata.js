@@ -4,7 +4,8 @@
 import { BGGLookupError } from '../db/exceptions.js';
 import { success, fail } from "./common.js";
 
-import { updateMetadata, getMetadataDetails, getMetadataList } from '../db/metadata.js';
+import { updateMetadata, getMetadataDetails, getMetadataList,
+         purgeUnusedMetadata } from '../db/metadata.js';
 
 
 /******************************************************************************/
@@ -89,6 +90,31 @@ export async function metadataListReq(ctx) {
   const result = await getMetadataList(ctx, metaType);
 
   return success(ctx, `found ${result.length} ${metaType} records`, result);
+}
+
+
+
+/******************************************************************************/
+
+
+/* Find all of the metadata items of the given type that do not have any
+ * references to it and purge them away from the database. */
+export async function metadataPurgeReq(ctx) {
+  const { metaType } = ctx.req.param();
+
+  // If this field exists in the query (regardless of the value), then we will
+  // also purge the found information.
+  const purgeRecords = (ctx.req.query("doPurge") !== undefined);
+
+  // Try to execute the request; this will either return the data, or purge it,
+  // depending on the arguments we got.
+  const result = await purgeUnusedMetadata(ctx, metaType, purgeRecords);
+
+  const msg = (purgeRecords === true)
+               ? `purged all unused ${metaType} records`
+               : `found ${result.length} unused ${metaType} records`;
+
+  return success(ctx, msg, result);
 }
 
 

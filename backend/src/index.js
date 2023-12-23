@@ -8,7 +8,7 @@ import { insertGameReq, insertBGGGameReq, insertBGGGameListReq,
 import { updateExpansionDetailsReq, updateExpansionDetailsBggReq,
          getExpansionDetailsReq } from './requests/expansion.js';
 import { metadataUpdateReq, metadataQueryReq,
-         metadataListReq } from './requests/metadata.js';
+         metadataListReq, metadataPurgeReq } from './requests/metadata.js';
 import { tempImageDetailsReq } from './requests/image.js';
 
 
@@ -51,6 +51,11 @@ app.put(`${APIV1}/game/meta/:metaType/update`, ctx => _(ctx, metadataUpdateReq))
 
 // Get the complete list of records for a specific type of metadata. T
 app.get(`${APIV1}/game/meta/:metaType/list`, ctx => _(ctx, metadataListReq));
+
+// Find all of the metadata entries of the given type that have no references to
+// them by any game currently in the database and purge them away to clean up
+// the lists.
+app.get(`${APIV1}/game/meta/:metaType/purge`, ctx => _(ctx, metadataPurgeReq));
 
 // Gather information about a specific metadata type, which includes the name
 // and slug. This takes an optional "game" query argument, which will cause it

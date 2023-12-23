@@ -233,3 +233,43 @@ export async function getMetadataList(ctx, metaType) {
 
 
 /******************************************************************************/
+
+
+/* Delete from the Metadata list all of the metadata entries of the provided
+ * metaType that are not being referenced by any game currently in the system.
+ *
+ * This may raise exceptions if there are issues talking to the database, or if
+ * the metaType is not valid. */
+export async function purgeUnusedMetadata(ctx, metaType, doPurge) {
+  // Make sure that the metadata type we got is correct.
+  if (isValidMetadataType(metaType) === false) {
+    throw Error(`unknown metadata type ${metaType}`);
+  }
+
+  // Find all of the unused metadata entries of the given type
+  const findSQL = `
+    SELECT id, metatype, name, slug FROM GameMetadata
+     WHERE metatype = ?1
+       AND id NOT IN (SELECT DISTINCT itemId FROM GameMetadataPlacement WHERE metatype = ?1)
+  `;
+
+  // Find and remove all of the unused metadata entries of the given type.
+  const purgeSQL = `
+    DELETE FROM GameMetadata
+     WHERE metatype = ?1
+       AND id NOT IN (SELECT DISTINCT itemId FROM GameMetadataPlacement WHERE metatype = ?1)
+  `;
+
+  // Select the appropriate statement depending on what we were asked to do.
+  const stmt = (doPurge === true) ? purgeSQL : findSQL;
+  const action = (doPurge === true) ? 'purge_meta' : 'find_meta';
+
+  // Try to find all metadata item of this type.
+  const metadata = await ctx.env.DB.prepare(stmt).bind(metaType).all();
+
+  return getDBResult('purgeUnusedMetadata', action, metadata);
+}
+
+
+/******************************************************************************/
+
