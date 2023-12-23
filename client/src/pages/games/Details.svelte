@@ -125,9 +125,44 @@
         {/each}
       </Grid>
 
-      <Text p="8px" b.t="1.5px solid gray">
+      <Text p="8px" b.t="1.5px solid gray" b.b="1.5px solid gray">
         {@html result.description}
       </Text>
+
+      {#if result.expansionGames.length > 0}
+        <Grid cols="max-content auto" gap="8px">
+          <Flex>Expansions:</Flex>
+          <Flex direction="row" gap="4px" fl.wr="wrap">
+            {#each result.expansionGames as row (row.id)}
+              {#if row.id !== null}
+                <Link href="#/game/{row.slug}">{row.name}</Link>
+              {:else}
+                <Link href="{bggLink(row.bggId)}" target="_blank">
+                  {row.name} <Icon name="external-link"></Icon>
+                </Link>
+              {/if}
+            {/each}
+          </Flex>
+        </Grid>
+      {/if}
+
+      {#if result.baseGames.length > 0}
+        <Grid cols="max-content auto" gap="8px">
+          <Flex>Expands:</Flex>
+          <Flex direction="row" gap="4px" fl.wr="wrap">
+            {#each result.baseGames as row (row.id)}
+              {#if row.id !== null}
+                <Link href="#/game/{row.slug}">{row.name}</Link>
+              {:else}
+                <Link href="{bggLink(row.bggId)}" target="_blank">
+                  {row.name} <Icon name="external-link"></Icon>
+                </Link>
+              {/if}
+            {/each}
+          </Flex>
+        </Grid>
+      {/if}
+
     </Flex>
   </Paper>
 
