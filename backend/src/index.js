@@ -9,6 +9,7 @@ import { updateExpansionDetailsReq, updateExpansionDetailsBggReq,
          getExpansionDetailsReq } from './requests/expansion.js';
 import { metadataUpdateReq, metadataQueryReq,
          metadataListReq, metadataPurgeReq } from './requests/metadata.js';
+import { guestListReq, updateGuestsReq, purgeGuestsReq } from './requests/guests.js';
 import { tempImageDetailsReq } from './requests/image.js';
 
 
@@ -92,6 +93,22 @@ app.get(`${APIV1}/game/data/expansions/list/:gameId`, ctx => _(ctx, getExpansion
 // associate one of our game ID's with a BGG ID and the URL image for such a
 // game, grab and upload the image for that game to our images account.
 app.get(`${APIV1}/images/:bggId?`, ctx => _(ctx, tempImageDetailsReq));
+
+
+/*******************************************************************************
+ * Core Session Reporting Data API
+ *******************************************************************************
+ * Items in this section are for creating, querying, updating and deleting the
+ * data that's used to create and maintain the session reports in the system.
+ *
+ * Some requests rely on core game data from the above API's being already
+ * available; these only query such data, never update it.
+ ******************************************************************************/
+
+// Get and manipulate the guest list.
+app.get(`${APIV1}/guest/list`, ctx => _(ctx, guestListReq));
+app.put(`${APIV1}/guest/add`, ctx => _(ctx, updateGuestsReq));
+app.delete(`${APIV1}/guest/delete`, ctx => _(ctx, purgeGuestsReq));
 
 
 /******************************************************************************/
