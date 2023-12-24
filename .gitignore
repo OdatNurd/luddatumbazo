@@ -7,3 +7,6 @@ node_modules/
 
 # The Svelte build output goes here
 client/public/
+
+# Backup databases
+/*.sqlite
