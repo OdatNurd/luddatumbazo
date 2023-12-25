@@ -55,6 +55,7 @@ CF_ACCOUNT_ID = 'd8cc4339c920f6d32079a5b483603063'
 # be used when generating images of specific types.
 CF_VARIANT_THUMB = 'thumb'
 CF_VARIANT_BOXART = 'cover'
+CF_VARIANT_SMALLBOXART = 'entry'
 
 # When generating URLs for Cloudflare images, use this template to inject the
 # image path and desired variant in order to get a fully working URL.

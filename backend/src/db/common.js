@@ -15,7 +15,8 @@ import { BGGLookupError } from '../db/exceptions.js';
  * that tell us what names to use. */
 const variantMap = {
   'boxart': 'CF_VARIANT_BOXART',
-  'thumbnail': 'CF_VARIANT_THUMB'
+  'smallboxart': 'CF_VARIANT_SMALLBOXART',
+  'thumbnail': 'CF_VARIANT_THUMB',
 }
 
 
