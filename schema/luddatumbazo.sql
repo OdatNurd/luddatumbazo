@@ -81,12 +81,14 @@ CREATE TABLE User (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     externalId TEXT UNIQUE NOT NULL,
 
-    firstName TEXT NOT NULL,
-    lastName TEXT NOT NULL,
+    firstName TEXT NOT NULL COLLATE NOCASE,
+    lastName TEXT NOT NULL COLLATE NOCASE,
+    name GENERATED ALWAYS AS (firstName || ' ' || lastName) STORED,
+
     emailAddress TEXT NOT NULL
 );
 CREATE INDEX idx_user_ext ON User(externalId);
-
+CREATE UNIQUE INDEX idx_user_name ON User(firstName, lastName);
 
 DROP TABLE IF EXISTS Household;
 CREATE TABLE Household (
@@ -148,9 +150,13 @@ DROP TABLE IF EXISTS GuestUser;
 CREATE TABLE GuestUser (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    firstName TEXT NOT NULL,
-    lastName TEXT NOT NULL
+    firstName TEXT NOT NULL COLLATE NOCASE,
+    lastName TEXT NOT NULL COLLATE NOCASE,
+    name GENERATED ALWAYS AS (firstName || ' ' || lastName) STORED
 );
+CREATE UNIQUE INDEX idx_guest_name ON GuestUser(firstName, lastName);
+INSERT INTO GuestUser VALUES(1,'Marisue','Martin');
+
 
 DROP TABLE IF EXISTS SessionReportDetails;
 CREATE TABLE SessionReportDetails (
