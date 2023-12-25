@@ -9,7 +9,7 @@ import { updateExpansionDetailsReq, updateExpansionDetailsBggReq,
          getExpansionDetailsReq } from './requests/expansion.js';
 import { metadataUpdateReq, metadataQueryReq,
          metadataListReq, metadataPurgeReq } from './requests/metadata.js';
-import { guestListReq, updateGuestsReq, purgeGuestsReq } from './requests/guests.js';
+import { guestListReq, updateGuestsReq, purgeGuestsReq } from './requests/guest.js';
 import { tempImageDetailsReq } from './requests/image.js';
 
 
@@ -56,7 +56,7 @@ app.get(`${APIV1}/game/meta/:metaType/list`, ctx => _(ctx, metadataListReq));
 // Find all of the metadata entries of the given type that have no references to
 // them by any game currently in the database and purge them away to clean up
 // the lists.
-app.get(`${APIV1}/game/meta/:metaType/purge`, ctx => _(ctx, metadataPurgeReq));
+app.delete(`${APIV1}/game/meta/:metaType/purge`, ctx => _(ctx, metadataPurgeReq));
 
 // Gather information about a specific metadata type, which includes the name
 // and slug. This takes an optional "game" query argument, which will cause it
@@ -106,9 +106,9 @@ app.get(`${APIV1}/images/:bggId?`, ctx => _(ctx, tempImageDetailsReq));
  ******************************************************************************/
 
 // Get and manipulate the guest list.
-app.get(`${APIV1}/guest/list`, ctx => _(ctx, guestListReq));
 app.put(`${APIV1}/guest/add`, ctx => _(ctx, updateGuestsReq));
-app.delete(`${APIV1}/guest/delete`, ctx => _(ctx, purgeGuestsReq));
+app.get(`${APIV1}/guest/list`, ctx => _(ctx, guestListReq));
+app.delete(`${APIV1}/guest/purge`, ctx => _(ctx, purgeGuestsReq));
 
 
 /******************************************************************************/

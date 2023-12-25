@@ -2,7 +2,7 @@
 
 
 import { BGGLookupError } from '../db/exceptions.js';
-import { getGuestList, updateGuests, purgeGuests } from '../db/guests.js';
+import { getGuestList, updateGuests, purgeUnusedGuests } from '../db/guest.js';
 import { success, fail } from "./common.js";
 
 
@@ -35,7 +35,7 @@ export async function updateGuestsReq(ctx) {
   // Perform the update and capture the results.
   const result = await updateGuests(ctx, guestList);
 
-  return success(ctx, `found ${result.length} guest(s)`, result);
+  return success(ctx, `updated some guest records`, result);
 }
 
 
@@ -45,13 +45,19 @@ export async function updateGuestsReq(ctx) {
 /* Given a list of objects that represent guest users, delete any items that
  * exist in the list, skipping any that do not currently exist. */
 export async function purgeGuestsReq(ctx) {
-  // Get the list of guest records from the input request
-  const guestList = await ctx.req.json();
+  // If this field exists in the query (regardless of the value), then we will
+  // also purge the found information.
+  const purgeRecords = (ctx.req.query("doPurge") !== undefined);
 
-  // Perform the update and capture the results.
-  const result = await purgeGuests(ctx, guestList);
+  // Try to execute the request; this will either return the data, or purge it,
+  // depending on the arguments we got.
+  const result = await purgeUnusedGuests(ctx, purgeRecords);
 
-  return success(ctx, `deleted ${result.length} guest(s)`, result);
+  const msg = (purgeRecords === true)
+               ? `purged all unused guest records`
+               : `found ${result.length} unused guest records`;
+
+  return success(ctx, msg, result);
 }
 
 
