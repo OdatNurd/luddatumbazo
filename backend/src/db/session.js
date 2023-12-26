@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { mapImageAssets, getImageAssetURL, getDBResult } from './common.js';
+import { mapImageAssets, getImageAssetURL, mapIntFieldsToBool, getDBResult } from './common.js';
 
 
 /******************************************************************************/
@@ -38,9 +38,10 @@ export async function getSessionDetails(ctx, sessionId) {
     return null;
   }
 
-  // Our session data is the first (and only) returned object; add in a mapped
-  // version of the image URL that we gathered.
-  const sessionData = result[0];
+  // Our session data is the first (and only) returned object; update any of the
+  // boolean fields and add in a mapped version of the image URL that we
+  // gathered.
+  const sessionData = mapIntFieldsToBool(result[0]);
   sessionData.imagePath = getImageAssetURL(ctx, sessionData.imagePath, 'smallboxart');
 
   // Check for the list of expansions that were used to play this game.
@@ -55,19 +56,23 @@ export async function getSessionDetails(ctx, sessionId) {
 
   // Check for the list of players that participated in this session.
   const playerLookup = await ctx.env.DB.prepare(`
-    SELECT 1 as isUser, A.userId, B.name, A.isReporter, A.startingPlayer, A.score, A.winner
+    SELECT 1 as isUser, A.userId, B.name, A.isReporter, A.isStartingPlayer, A.score, A.isWinner
       FROM SessionReportPlayer as A, User as B
      WHERE sessionId = ?1
        AND guestId is NULL
        AND A.userId = B.id
     UNION ALL
-    SELECT 0 as isUser, b.id as userId, B.name, A.isReporter, A.startingPlayer, A.score, A.winner
+    SELECT 0 as isUser, b.id as userId, B.name, A.isReporter, A.isStartingPlayer, A.score, A.isWinner
       FROM SessionReportPlayer as A, GuestUser as B
      WHERE sessionId = ?1
        AND guestId IS NOT NULL
        AND A.guestId = B.id;
   `).bind(sessionId).all();
+
+  // Get the players out of the result and convert any boolean values that
+  // appear in either of them.
   const players = getDBResult('getSessionDetails', 'find_players', playerLookup);
+  players.forEach(player => mapIntFieldsToBool(player));
 
   // Map the found expansions and players in; for expansions we need to get the
   // thumbnail for the expanasion that was used.

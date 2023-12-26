@@ -184,9 +184,9 @@ CREATE TABLE SessionReportPlayer (
     guestId INTEGER REFERENCES GuestUser(id),
 
     isReporter INTEGER DEFAULT(false),
-    startingPlayer INTEGER DEFAULT(false),
+    isStartingPlayer INTEGER DEFAULT(false),
     score INTEGER DEFAULT(0),
-    winner INTEGER DEFAULT(false)
+    isWinner INTEGER DEFAULT(false)
 );
 
 DROP TABLE IF EXISTS SessionReport;

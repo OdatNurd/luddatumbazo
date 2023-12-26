@@ -41,6 +41,45 @@ export const ensureRequiredKeys = (obj, keys) => {
 /******************************************************************************/
 
 
+/* Given an object, find all of the keys in the object that appear like they are
+ * supposed to be booleans based on their name and return the list of them, if
+ * any, back. */
+const getBoolNamedKeys = inputObj => Object.keys(inputObj).filter(k => k.match(/^is[A-Z]/));
+
+
+/******************************************************************************/
+
+
+/* Given an object, convert all of the fields with boolean names from integers
+ * to booleans.
+ *
+ * The passed in object is returned back after being modified. */
+export const mapIntFieldsToBool = inputObj => {
+  for (const key of getBoolNamedKeys(inputObj)) {
+    inputObj[key] = inputObj[key] !== 0;
+  }
+  return inputObj;
+}
+
+
+/******************************************************************************/
+
+
+/* Given an object, convert all of the fields with boolean names from booleans
+ * to integers.
+ *
+ * The passed in object is returned back after being modified. */
+export const mapBoolFieldsToInt = inputObj => {
+  for (const key of getBoolNamedKeys(inputObj)) {
+    inputObj[key] = inputObj[key] ? 1 : 0;
+  }
+  return inputObj;
+}
+
+
+/******************************************************************************/
+
+
 /* Given some information on where and what database action is taken, what the
  * result was, and whether or not it is a batch, display a log that displays
  * details of the operation. */
