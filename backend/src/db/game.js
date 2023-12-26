@@ -36,6 +36,49 @@ const defaultGameFields = {
 /******************************************************************************/
 
 
+/* Given an internal gameID, return back an object with the brief details of
+ * that game:
+ *   - id
+ *   - bggId
+ *   - slug
+ *   - name
+ *   - imagePath
+ *
+ * If there is no such game, NULL is returned instead. If includeNameId is
+ * present, in addition to the name field, the id field in the name table
+ * will also be returned. */
+export async function getGameSynopsis(ctx, gameId, includeNameId) {
+  // Try to find all metadata item of this type.
+  const lookup = await ctx.env.DB.prepare(`
+    SELECT A.id, A.bggId, A.slug, B.name, A.imagePath, B.id as nameId
+      FROM Game as A, GameName as B
+     WHERE A.id == B.gameId and B.isPrimary = 1
+       AND A.id = ?1
+  `).bind(gameId).all();
+
+  // If the list is empty, return NULL; there is no such game.
+  const result = getDBResult('getGameSynopsis', 'find_game', lookup);
+  if (result.length === 0) {
+    return null;
+  }
+
+  // The result list will contain a single game; pluck it out and patch up the
+  // image path.
+  const game = result[0];
+  game.imagePath = getImageAssetURL(ctx, game.imagePath, 'thumbnail');
+
+  // If we were not asked to include the nameId, remove it from the object.
+  if (includeNameId !== true) {
+    delete game.nameId;
+  }
+
+  return game;
+}
+
+
+/******************************************************************************/
+
+
 
 /* Get a list of all of the games known to the database, including their slug
  * and the primary name associated with each of them. */
@@ -132,7 +175,7 @@ export async function insertGame(ctx, gameData) {
   // The incoming data strictly requires the following fields to be present;
   // if they are not there, we will kick out an error.
   if (ensureRequiredKeys(gameData, ["name", "slug", "published", "description"]) == false ||
-                         gameData.name.length == 0) {
+                         gameData.name.length === 0) {
     throw new Error(`required fields are missing from the input data`);
   }
 
