@@ -197,7 +197,7 @@ CREATE TABLE SessionReport (
     gameName INTEGER NOT NULL REFERENCES GameName(id),
 
     sessionBegin TIME NOT NULL,
-    sessionEnd TIME NOT NULL,
+    sessionEnd TIME DEFAULT(NULL),
 
     isLearning INTEGER DEFAULT(false)
 );
