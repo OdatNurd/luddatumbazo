@@ -7,6 +7,46 @@ import { mapImageAssets, getImageAssetURL, mapIntFieldsToBool, getDBResult } fro
 /******************************************************************************/
 
 
+/* Get a shortened list of all of the session reports that are currently known
+ * to the system.
+ *
+ * The objects returned by this only contain the base information from the main
+ * session table, and do not include the players, expansions, or results of the
+ * game itself.
+ *
+ * Each session will contain information on the game to which it applies. */
+export async function getSessionList(ctx) {
+  // Try to find the game with the value has that been provided; we check to see
+  // if the provided ID is either a slug or an actual ID.
+  const lookup = await ctx.env.DB.prepare(`
+    SELECT A.id,
+           A.gameId,
+           C.bggId,
+           B.name as name,
+           C.slug,
+           C.imagePath,
+           A.sessionBegin,
+           A.sessionEnd,
+           A.isLearning
+      FROM SessionReport as A, GameName as B, Game as C
+     WHERE (A.gameId = B.gameId AND B.id = A.gameName)
+       AND (C.id = A.gameId)
+  `).all();
+  const result = getDBResult('getSessionList', 'find_session', lookup);
+
+  // In each resulting object, convert all of the boolean fields to proper bools
+  // for the return, and make sure that the image URL is properly mapped so that
+  // the page can view the image.
+  return result.map(session => {
+    session.imagePath = getImageAssetURL(ctx, session.imagePath, 'smallboxart');
+    return mapIntFieldsToBool(session);
+  });
+}
+
+
+/******************************************************************************/
+
+
 /* Get the full details on the game with either the ID or slug provided. The
  * return will be null if there is no such game, otherwise the return is an
  * object that contains the full details on the game, including all of its

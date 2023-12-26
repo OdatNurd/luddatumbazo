@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { getSessionDetails } from '../db/session.js';
+import { getSessionList, getSessionDetails } from '../db/session.js';
 import { success, fail } from "./common.js";
 
 
@@ -32,7 +32,10 @@ export async function sessionAddReq(ctx) {
  * returned, but at time of writing (during devember) this is more simplistic
  * than that and just returns all sessions. */
 export async function sessionListReq(ctx) {
-  throw new Error(`not implemented yet`);
+  // Fetch and return the list.
+  const result = await getSessionList(ctx);
+
+  return success(ctx, `found ${result.length} session(s)`, result);
 }
 
 
