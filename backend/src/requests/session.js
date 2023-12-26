@@ -1,24 +1,30 @@
 /******************************************************************************/
 
 
-import { getSessionList, getSessionDetails } from '../db/session.js';
+import { addSession, getSessionList, getSessionDetails } from '../db/session.js';
 import { success, fail } from "./common.js";
 
 
 /******************************************************************************/
 
 
-/* Given an object of the form:
- *   {
- *   }
+/* Given an object that contains the required data to insert a new session
+ * report into the system, insert the required data and ship the results back.
  *
- * Insert a new session report into the system with the details from the object.
+ * For details on the actual body of the object, see the addSession() call.
  *
  * This will do all updates required to insert the record for this session
  * report; an object that contains the full details of the new report (as it
  * would be returned from the details request below) is returned back. */
 export async function sessionAddReq(ctx) {
-  throw new Error(`not implemented yet`);
+  // Pull in the body of the request, which will contain the data for setting up
+  // the session report.
+  const sessionData = await ctx.req.json();
+
+  // Add the session and return the result.
+  const result = await addSession(ctx, sessionData);
+
+  return success(ctx, `added new session report`, result);
 }
 
 
