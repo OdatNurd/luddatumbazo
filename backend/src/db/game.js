@@ -36,43 +36,63 @@ const defaultGameFields = {
 /******************************************************************************/
 
 
-/* Given an internal gameID, return back an object with the brief details of
- * that game:
+/* Given an internal gameID or a list of gameIds, return back an object with
+ * the brief details of each game:
  *   - id
  *   - bggId
  *   - slug
  *   - name
  *   - imagePath
  *
- * If there is no such game, NULL is returned instead. If includeNameId is
- * present, in addition to the name field, the id field in the name table
- * will also be returned. */
+ * When a single item is passed in, the return is either a single object or NULL
+ * if the game does not exist.
+ *
+ * For a list of game ID's, the value that is returned is an array with one
+ * entry per item found; this may be short or even empty.
+ *
+ * In all cases, if includeNameId is present, in addition to the name field,
+ * the id field in the name table will also be returned. */
 export async function getGameSynopsis(ctx, gameId, includeNameId) {
+  // Get the list of ID's that we are going to search for.
+  const searchIds = Array.isArray(gameId) ? gameId : [gameId];
+
   // Try to find all metadata item of this type.
   const lookup = await ctx.env.DB.prepare(`
     SELECT A.id, A.bggId, A.slug, B.name, A.imagePath, B.id as nameId
       FROM Game as A, GameName as B
      WHERE A.id == B.gameId and B.isPrimary = 1
-       AND A.id = ?1
-  `).bind(gameId).all();
+       AND A.id in (SELECT value from json_each('${JSON.stringify(searchIds)}'))
+  `).all();
 
-  // If the list is empty, return NULL; there is no such game.
-  const result = getDBResult('getGameSynopsis', 'find_game', lookup);
-  if (result.length === 0) {
-    return null;
+  // Get the resulting array of items out, then map them so that all of the
+  // game images are put in place, and we optionally keep or whack the name ID
+  // value.
+  const games = getDBResult('getGameSynopsis', 'find_game', lookup);
+  const result = games.map(game => {
+    game.imagePath = getImageAssetURL(ctx, game.imagePath, 'thumbnail');
+
+    // If we were not asked to include the nameId, remove it from the object.
+    if (includeNameId !== true) {
+      delete game.nameId;
+    }
+
+    return game;
+  });
+
+
+  // What we do here depends on whether the input was an array or not; if it was
+  // an array, we want to return all values; otherwise, we want to return just
+  // the first value.
+  if (Array.isArray(gameId)) {
+    return result;
+  } else {
+    // If the list is empty, return NULL; there is no such game.
+    if (result.length === 0) {
+      return null;
+    }
+
+    return result[0];
   }
-
-  // The result list will contain a single game; pluck it out and patch up the
-  // image path.
-  const game = result[0];
-  game.imagePath = getImageAssetURL(ctx, game.imagePath, 'thumbnail');
-
-  // If we were not asked to include the nameId, remove it from the object.
-  if (includeNameId !== true) {
-    delete game.nameId;
-  }
-
-  return game;
 }
 
 
