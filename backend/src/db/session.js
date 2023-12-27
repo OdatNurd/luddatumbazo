@@ -3,6 +3,7 @@
 
 import { BGGLookupError } from '../db/exceptions.js';
 import { getGameSynopsis } from '../db/game.js';
+import { updateGuests } from '../db/guest.js';
 
 import { ensureRequiredKeys, ensureDefaultValues, ensureObjectStructure,
          mapImageAssets, getImageAssetURL, getDBResult,
@@ -19,7 +20,7 @@ const defaultSessionFields = {
   "sessionEnd": null,
   "content": '',
   "expansions": [],
-}
+};
 
 /* When we get a request to add a new session, the entries that tell us who is
  * playing the game, both users and guests, can optionally include these fields.
@@ -28,7 +29,199 @@ const defaultPlayerFields = {
   "isStartingPlayer": false,
   "score": 0,
   "isWinner": false
+};
+
+
+/******************************************************************************/
+
+
+/* This takes as input an incoming sessionData object in the format that is
+ * accepted by addSession() and verifies that all of the required fields across
+ * the whole object exist, and that any optional fields have sensible default
+ * values.
+ *
+ * If there are any errors, this will raise an exception; otherwise the adjusted
+ * object is returned back. */
+function validateSessionData(sessionData) {
+  // Validate the base input session data, and ensure that it has good defaults.
+  const session = ensureObjectStructure(sessionData, [
+                                          "gameId", "sessionBegin", "isLearning",
+                                          "reportingUser", "players"],
+                                          defaultSessionFields);
+
+  // We verified players was a field; verify that it has arrays for both user
+  // and guest players.
+  session.players.users ??= [];
+  session.players.guests ??= [];
+
+  // Verify that all of the specified users and guests (if any) have the
+  // required fields, and populate in any required defaults for missing fields.
+  session.players.users = session.players.users.map(user => ensureObjectStructure(user,
+                                              ["userId"], defaultPlayerFields));
+  session.players.guests = session.players.guests.map(guest => ensureObjectStructure(guest,
+                                              ["firstName", "lastName"], defaultPlayerFields));
+
+  // To be valid, there needs to be at least one user in the list of players, on
+  // either side.
+  if (session.players.users.length === 0 && session.players.guests.length === 0) {
+    throw new Error(`session data does not contain any players or users`);
+  }
+
+  // Return the updated session.
+  return session;
 }
+
+
+/******************************************************************************/
+
+
+/* Given a validated session data object, verify that all of the players that
+ * reference users in the system are valid, including the record of the user
+ * that is reporting on the session itself.
+ *
+ * This will find the distinct list of users and verify that they all exist,
+ * patching the data found into the session data player user list within the
+ * object itself.
+ *
+ * If there are any issues, an exception is raised. */
+async function validateSessionUsers(ctx, sessionData) {
+  // Gather the list of all userIds in the player list, if any,
+  const inputUserIds = sessionData.players.users.map(user => user.userId);
+
+  // If the logging userId is not in the list of users that we just gathered,
+  // then add its ID in, since we need to validate that as well.
+  if (inputUserIds.indexOf(sessionData.reportingUser) === -1) {
+    inputUserIds.push(sessionData.reportingUser);
+  }
+
+  // Look up all of the usernames for the list of user ID's that we collected,
+  // then extract from that the list of known userId values.
+  const userQuery = await ctx.env.DB.prepare(`
+    SELECT id, name FROM User
+     WHERE id in (SELECT value from json_each('${JSON.stringify(inputUserIds)}'))
+  `).all();
+  const playerUsers = getDBResult('validateSessionUsers', 'find_users', userQuery);
+
+  // Get a mapped version that uses the userid as a key where the value is the
+  // result of the query.
+  const playerUserMap = playerUsers.reduce((accum, current) => {
+    accum[current.id] = current;
+    return accum;
+  }, {});
+
+  // In order to be valid, the recordingUser has to have an id in the player ID
+  // list.
+  if (playerUserMap[sessionData.reportingUser] === undefined) {
+    throw new Error(`invalid reporting user: no such user ${sessionData.reportingUser}`);
+  }
+
+  // Map through the list of input users, and for each one insert the name that
+  // we got from the lookup; if we find any entries that don't appear in the
+  // lookup list, then we know that the user does not exist, so generate an
+  // error.
+  sessionData.players.users = sessionData.players.users.map(user => {
+    const record = playerUserMap[user.userId];
+    if (record === undefined) {
+      throw new Error(`invalid player user: no such user ${user.userId}`);
+    }
+
+    user.isUser = true;
+    user.isReporter = (user.userId === sessionData.reportingUser);
+    user.name = record.name;
+    return user;
+  });
+}
+
+
+/******************************************************************************/
+
+
+/* Given a validated session data object, verify that all of the games that
+ * are mentioned (both the main game as well as all of the expansions, if
+ * any) are valid.
+ *
+ * The provided session object will be updated to contain information on the
+ * found games.
+ *
+ * If there are any issues, an exception is raised. */
+async function validateGameData(ctx, sessionData) {
+  // Verify that the game that is being session logged exists; this will fetch
+  // the data for it, and return null if it's not found.
+  const gameData = await getGameSynopsis(ctx, sessionData.gameId, true);
+  if (gameData === null) {
+    throw new BGGLookupError(`no game with ID ${sessionData.gameId} found`, 400);
+  }
+
+  // Do the same for all expansions that are mentioned in the expansions list.
+  // Once done, if the two lists don't have the same length, something must be
+  // missing.
+  const expansions = await getGameSynopsis(ctx, sessionData.expansions, true);
+  if (expansions.length !== sessionData.expansions.length) {
+    throw new BGGLookupError(`not all expansions provided exist`, 400);
+  }
+
+  // All lookups have succeeded, so insert the found game information into the
+  // session data.
+  sessionData.gameId = gameData.gameId;
+  sessionData.bggId = gameData.bggId;
+  sessionData.name = gameData.name;
+  sessionData.nameId = gameData.nameId;
+  sessionData.slug = gameData.slug;
+  sessionData.imagePath = gameData.imagePath;
+  sessionData.expansions = expansions;
+}
+
+
+/******************************************************************************/
+
+
+/* Given a validated session data object, verify that all of the guest player
+ * records are filled out.
+ *
+ * Guests always validate in the database because we freely generate any that
+ * are not present; we just need to ensure that all of the data is combined
+ * together.
+ *
+ * If there are any issues, an exception is raised. */
+async function validateSessionGuests(ctx, sessionData) {
+  // Get the unique list of pairs of names from the list of guest players; these
+  // are used to look up the actual guests.
+  const playerGuestNames = sessionData.players.guests.map(guest => {
+    return {
+      firstName: guest.firstName,
+      lastName: guest.lastName
+    }
+  });
+  const playerGuests = await updateGuests(ctx, playerGuestNames);
+
+  // Map across all of the guests in the found list; for each one, find the
+  // guest in the original, and copy the fields over, then return the newly
+  // copied object.
+  sessionData.players.guests = sessionData.players.guests.map(guest => {
+    // Find the entry in the playerGuests lookup that matches; copy the id and
+    // name from it into here.
+    const dbGuest = playerGuests.find(entry => entry.firstName === guest.firstName &&
+                                               entry.lastName === guest.lastName);
+    if (dbGuest === undefined) {
+      throw new Error(`unable to find entry for guest ${guest.firstName} ${guest.lastName}`);
+    }
+
+    // These are only needed to look data up
+    delete guest.firstName;
+    delete guest.lastName;
+
+    // Copy over the ID and name from the DB user.
+    guest.userId = dbGuest.id;
+    guest.name = dbGuest.name;
+
+    // Fill in other values; these are always false for a guest.
+    guest.isUser = false;
+    guest.isReporter = false;
+
+    return guest;
+  });
+}
+
 
 /******************************************************************************/
 
@@ -90,107 +283,22 @@ export async function addSession(ctx, sessionData) {
   // Get a version of the incoming session that is validated to have all of the
   // required fields, and for which any optional but missing fields have a
   // sensible default value.
-  const details = ensureObjectStructure(sessionData, [
-                                          "gameId", "sessionBegin", "isLearning",
-                                          "reportingUser", "players"],
-                                          defaultSessionFields);
+  const details = validateSessionData(sessionData);
 
-  // Validate that players contains both a users and guests array; for each item
-  // in the array, validate that they have the correct fields, and that for
-  // any defaults, that sensible values are in place.
-  details.players.users ??= [];
-  details.players.guests ??= [];
+  // Validate that all of the users that are referenced in the session data
+  // actually exist; this will patch in the user ID's and also validate the
+  // reporter at the same time.
+  await validateSessionUsers(ctx, details);
 
-  // Validate that any of the records for users or guests that are participating
-  // in the session are fully formed. This will check structural validity and
-  // insert any defaults that are needed; the call to verify them as existing
-  // will happen later.
+  // Validate that all of the games that are mentioned within the session data
+  // are valid and patch their details in.
+  await validateGameData(ctx, details);
 
-  // Validate that there is at least one player in the game.
-  if (details.players.users.length === 0 && details.players.guests.length === 0) {
-    throw new Error(`session data does not contain any players`);
-  }
+  // Validate all of the guest players; this happens last because all guests
+  // always validate; any missing guests are inserted always.
+  await validateSessionGuests(ctx, details);
 
-  // Gather the list of all users in the player list, if any; then include the
-  // ID of the reporting user, if it's not there. All of these users need to
-  // exist, so look up their data.
-  // Collect the userId from each record
-  const userPlayerIds = details.players.users.map(user => user.playerId);
-
-  // If the logging userId is not in the list of users that we just gathered,
-  // then add its ID in, since we need to validate that as well.
-  if (userPlayerIds.indexOf(details.reportingUser) === -1) {
-    userPlayerIds.push(details.reportingUser);
-  }
-
-  // ---
-  // Look up details for all of the users in the list; Once that is done,
-  // extract out the entry for the reportingUser, if possible.
-  //
-  // Now, if the resulting list is not the same length as the number of
-  // players, or the record for the reporting user is not found, then one or
-  // more of the users is garbage, so fail.
-  //
-  // Otherwise, we can update the player list with the list of users we just
-  // found. Make sure to include the fields from the incoming object too.
-
-
-  // -----
-  // Verify that the game that is being session logged exists; this will fetch
-  // the data for it, and return null if it's not found.
-  const gameData = await getGameSynopsis(ctx, details.gameId);
-  if (gameData === null) {
-    throw new BGGLookupError(`no game with ID ${details.gameId} found`, 400);
-  }
-
-  // ----
-  // Verify that all of the expansions that are mentioned exist; this will
-  // fetch the data for them, and return a list; the list must have the same
-  // length as the input, or we know that something is missing.
-
-
-  // ---
-  // If there is a list of guests in the player list, ensure that they all exist;
-  // here we know that the request will insert if they're not present, and will
-  // return data back regardless, so this has to be last so that we don't add
-  // new guests if there are other problems.
-  if (details.players.guests.length !== 0) {
-    // Pass in the list of guests to the call to do the insert.
-  }
-
-  return gameData;
-
-  // - Verify that the game specified exists; fetch details while doing so
-  // - Verify that all expansions specified exist; fetch data while doing so
-  // - Verify that the reporting user exists
-  // - Verify that the playing users exist
-  // - Add in any guest users that might not exist
-  // - Fill in sessionEnd and content with defaults
-  // - Fill player information in with defaults
-
-
-  // sessionId
-  // bggId
-  // name: (as str, but we need the ID too)
-  // slug
-  // imagePath
-  //
-  // all expansion data
-  //   bggId
-  //   name
-  //   slug
-  //   imagePath
-  //
-  // player data:
-  //   user information
-  //   guest Id's and such
-  //
-  // backfill:
-  // sessionEnd with NULL if not present
-  // content with '' if not present
-  return sessionData;
-
-  throw new Error('NO!');
+  return details;
 }
 
 
@@ -305,7 +413,7 @@ export async function getSessionDetails(ctx, sessionId) {
   players.forEach(player => mapIntFieldsToBool(player));
 
   // Map the found expansions and players in; for expansions we need to get the
-  // thumbnail for the expanasion that was used.
+  // thumbnail for the expansion that was used.
   sessionData.expansions = mapImageAssets(ctx, expansions, 'imagePath', 'thumbnail');
   sessionData.players = players;
 
