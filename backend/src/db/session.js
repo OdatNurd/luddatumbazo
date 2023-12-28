@@ -88,12 +88,6 @@ async function validateSessionUsers(ctx, sessionData) {
   // Gather the list of all userIds in the player list, if any,
   const inputUserIds = sessionData.players.users.map(user => user.userId);
 
-  // If the logging userId is not in the list of users that we just gathered,
-  // then add its ID in, since we need to validate that as well.
-  if (inputUserIds.indexOf(sessionData.reportingUser) === -1) {
-    inputUserIds.push(sessionData.reportingUser);
-  }
-
   // Look up all of the usernames for the list of user ID's that we collected,
   // then extract from that the list of known userId values.
   const userQuery = await ctx.env.DB.prepare(`
@@ -102,7 +96,7 @@ async function validateSessionUsers(ctx, sessionData) {
   `).all();
   const playerUsers = getDBResult('validateSessionUsers', 'find_users', userQuery);
 
-  // Get a mapped version that uses the userid as a key where the value is the
+  // Get a mapped version that uses the userId as a key where the value is the
   // result of the query.
   const playerUserMap = playerUsers.reduce((accum, current) => {
     accum[current.id] = current;
@@ -112,7 +106,7 @@ async function validateSessionUsers(ctx, sessionData) {
   // In order to be valid, the recordingUser has to have an id in the player ID
   // list.
   if (playerUserMap[sessionData.reportingUser] === undefined) {
-    throw new Error(`invalid reporting user: no such user ${sessionData.reportingUser}`);
+    throw new Error(`invalid reporting user: user ${sessionData.reportingUser} is not a player`);
   }
 
   // Map through the list of input users, and for each one insert the name that
