@@ -52,7 +52,7 @@ const defaultGameFields = {
  *
  * In all cases, if includeNameId is present, in addition to the name field,
  * the id field in the name table will also be returned. */
-export async function getGameSynopsis(ctx, gameId, includeNameId) {
+export async function getGameSynopsis(ctx, gameId, imageType, includeNameId) {
   // Get the list of ID's that we are going to search for.
   const searchIds = Array.isArray(gameId) ? gameId : [gameId];
 
@@ -69,7 +69,7 @@ export async function getGameSynopsis(ctx, gameId, includeNameId) {
   // value.
   const games = getDBResult('getGameSynopsis', 'find_game', lookup);
   const result = games.map(game => {
-    game.imagePath = getImageAssetURL(ctx, game.imagePath, 'thumbnail');
+    game.imagePath = getImageAssetURL(ctx, game.imagePath, imageType);
 
     // If we were not asked to include the nameId, remove it from the object.
     if (includeNameId !== true) {
