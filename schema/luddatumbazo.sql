@@ -172,7 +172,8 @@ CREATE TABLE SessionReportExpansions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
     sessionId INTEGER NOT NULL REFERENCES SessionReport(id),
-    expansionId INTEGER NOT NULL REFERENCES Game(id)
+    expansionId INTEGER NOT NULL REFERENCES Game(id),
+    expansionName INTEGER NOT NULL REFERENCES GameName(id)
 );
 
 DROP TABLE IF EXISTS SessionReportPlayer;

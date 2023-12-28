@@ -162,7 +162,7 @@ async function validateGameData(ctx, sessionData) {
 
   // All lookups have succeeded, so insert the found game information into the
   // session data.
-  sessionData.gameId = gameData.gameId;
+  sessionData.gameId = gameData.id;
   sessionData.bggId = gameData.bggId;
   sessionData.name = gameData.name;
   sessionData.nameId = gameData.nameId;
@@ -387,7 +387,7 @@ export async function getSessionDetails(ctx, sessionId) {
     SELECT A.expansionId as gameId, C.bggId, B.name as name, C.slug, C.imagePath
       FROM SessionReportExpansions as A, GameName as B, Game as C
      WHERE A.sessionId = ?1
-       AND (A.expansionId = B.gameId AND B.isPrimary = 1)
+       AND (A.expansionId = B.gameId AND B.id = A.expansionName)
        AND (A.expansionId = C.id);
   `).bind(sessionId).all();
   const expansions = getDBResult('getSessionDetails', 'find_expansions', expansionLookup);
