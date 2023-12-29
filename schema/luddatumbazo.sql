@@ -164,6 +164,7 @@ CREATE TABLE SessionReportDetails (
 
     sessionId INTEGER NOT NULL REFERENCES SessionReport(id),
 
+    title TEXT DEFAULT(''),
     content TEXT DEFAULT('')
 );
 
@@ -202,5 +203,3 @@ CREATE TABLE SessionReport (
 
     isLearning INTEGER DEFAULT(false)
 );
-
-

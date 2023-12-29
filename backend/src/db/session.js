@@ -18,6 +18,7 @@ import { ensureRequiredKeys, ensureDefaultValues, ensureObjectStructure,
  * values that are seen here. */
 const defaultSessionFields = {
   "sessionEnd": null,
+  "title": '',
   "content": '',
   "expansions": [],
 };
@@ -297,9 +298,9 @@ async function insertSessionDetails(ctx, session) {
     // Store the session report details for this session; this needs to pull the
     // stored session ID.
     ctx.env.DB.prepare(`
-      INSERT INTO SessionReportDetails (sessionId, content)
-           VALUES ((SELECT id FROM __temp), ?1)
-    `).bind(session.content)
+      INSERT INTO SessionReportDetails (sessionId, title, content)
+           VALUES ((SELECT id FROM __temp), ?1, ?2)
+    `).bind(session.title, session.content)
   ];
 
   // Insert records for each of the expansions in the report, if any.
@@ -365,6 +366,7 @@ function prepareSessionUpdate(sessionData, updateData) {
   const defaultFields = {
     "isLearning": updateData.isLearning ?? sessionData.isLearning,
     "sessionEnd": updateData.sessionEnd ?? sessionData.sessionEnd,
+    "title": updateData.title ?? sessionData.title,
     "content": updateData.content ?? sessionData.content,
   }
 
@@ -390,6 +392,7 @@ function prepareSessionUpdate(sessionData, updateData) {
   // want to populate into the session object as a whole.
   sessionData.isLearning = updateData.isLearning;
   sessionData.sessionEnd = updateData.sessionEnd;
+  sessionData.title = updateData.title;
   sessionData.content = updateData.content;
 
   // If the update doesn't contain and player data, there's nothign else to
@@ -499,6 +502,15 @@ export async function addSession(ctx, sessionData) {
   // always validate; any missing guests are inserted always.
   await validateSessionGuests(ctx, details);
 
+  // If we get here and the session title is the empty string, then come up with
+  // a default that displays the name of the game so that the title makes more
+  // sense when viewed.
+  if (details.title === '') {
+    const users = [...details.players.users.map(user => user.name),
+                   ...details.players.guests.map(guest => guest.name)];
+    details.title = `Play of ${details.name} (${users.join(', ')})`
+  }
+
   // Perform the actual insertion of the data, capturing the sessionId of the
   // newly inserted session.
   const sessionId = await insertSessionDetails(ctx, details);
@@ -572,9 +584,9 @@ export async function updateSession(ctx, sessionId, updateData) {
 
     ctx.env.DB.prepare(`
       UPDATE SessionReportDetails
-         SET content = ?2
+         SET title = ?2, content = ?3
        WHERE sessionId = ?1
-    `).bind(newSessionData.sessionId, newSessionData.content),
+    `).bind(newSessionData.sessionId, newSessionData.title, newSessionData.content),
 
     ...getUserUpdates()
   ]);
@@ -600,17 +612,19 @@ export async function getSessionList(ctx) {
   // if the provided ID is either a slug or an actual ID.
   const lookup = await ctx.env.DB.prepare(`
     SELECT A.id,
+           C.title,
            A.gameId,
-           C.bggId,
+           D.bggId,
            B.name as name,
-           C.slug,
-           C.imagePath,
+           D.slug,
+           D.imagePath,
            A.sessionBegin,
            A.sessionEnd,
            A.isLearning
-      FROM SessionReport as A, GameName as B, Game as C
+      FROM SessionReport as A, GameName as B, SessionReportDetails as C, Game as D
      WHERE (A.gameId = B.gameId AND B.id = A.gameName)
-       AND (C.id = A.gameId)
+       AND (D.id = A.gameId)
+       AND (A.id = C.sessionId)
   `).all();
   const result = getDBResult('getSessionList', 'find_session', lookup);
 
@@ -636,6 +650,7 @@ export async function getSessionDetails(ctx, sessionId) {
   // if the provided ID is either a slug or an actual ID.
   const lookup = await ctx.env.DB.prepare(`
     SELECT A.id as sessionId,
+           C.title,
            A.gameId,
            D.bggId,
            B.name as name,
