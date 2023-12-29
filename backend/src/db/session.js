@@ -31,6 +31,10 @@ const defaultPlayerFields = {
   "isWinner": false
 };
 
+// Various boolean values need to be converted to an integer and D1 can't do
+// that for you, because the calculation is a little tricky.
+const int = val => val === true ? 1 : 0;
+
 
 /******************************************************************************/
 
@@ -266,10 +270,6 @@ function reshapeSessionInput(sessionId, sessionData) {
  * The return value is the sessionId of the newly added session; if there was
  * any error during the insert, an error is thrown to signal it. */
 async function insertSessionDetails(ctx, session) {
-  // Various boolean values need to be converted to an integer and D1 can't do
-  // that for you, because the calculation is a little tricky.
-  const int = val => val === true ? 1 : 0;
-
   // Start the batch for the insert; we need to create a temporary table to
   // catch the new sessionId, which will be used in other queries.
   //
@@ -346,6 +346,81 @@ async function insertSessionDetails(ctx, session) {
   // select that asked what the new sessionId is; fetch that and return it
   // back while trying not to be sick at how that looks.
   return result[result.length - 2][0].id;
+}
+
+
+/******************************************************************************/
+
+
+/* Given a full session data object as queried from the database and a set of
+ * update data, ensure that the update data is valid and then use it to update
+ * the session data provided.
+ *
+ * On any validation error, an exception is thrown. Otherwise, the return value
+ * is a modified version of the sessionData passed in. */
+function prepareSessionUpdate(sessionData, updateData) {
+  // The update is allowed to touch only a few of the core values; if any of
+  // them were not provided, use the value from the session data we just looked
+  // up.
+  const defaultFields = {
+    "isLearning": updateData.isLearning ?? sessionData.isLearning,
+    "sessionEnd": updateData.sessionEnd ?? sessionData.sessionEnd,
+    "content": updateData.content ?? sessionData.content,
+  }
+
+  // Ensure that the updateData has the fields and defaults that we want.
+  updateData = ensureObjectStructure(updateData, [], defaultFields);
+
+  // Get a user or guest record from the provided update data, delete it and
+  // return it back. If it's not found, return null instead.
+  const getSessionUser = (userId, isUser) => {
+    // Determine which array to search, then try to find the record for that
+    // user; if we don't find it, return null.
+    const content = updateData.players[(isUser === true) ? 'users' : 'guests'];
+    const userIdx = content.findIndex(player => player.userId == userId);
+    if (userIdx === -1) {
+      return null;
+    }
+
+    // Pull out the record and then delete it from the array
+    return content.splice(userIdx, 1)[0];
+  }
+
+  // Apply our updates; the top level fields in the update data are what we
+  // want to populate into the session object as a whole.
+  sessionData.isLearning = updateData.isLearning;
+  sessionData.sessionEnd = updateData.sessionEnd;
+  sessionData.content = updateData.content;
+
+  // If the update doesn't contain and player data, there's nothign else to
+  // update so short circuit the return now.
+  if (updateData.players === undefined) {
+    return sessionData;
+  }
+
+  // Iterate over all of the players in the session data, and try to update them
+  // from the data in the update; for each one we will delete the entry from
+  // the update as we consume it. If we can't find the user, then this is
+  // not valid.
+  for (const player of sessionData.players) {
+    const update = getSessionUser(player.userId, player.isUser);
+    if (update === null) {
+      throw new Error(`update data has no ${player.isUser ? 'user' : 'guest'} with id ${player.userId}`)
+    }
+
+    // Update the player now
+    player.isStartingPlayer = update.isStartingPlayer ?? player.isStartingPlayer;
+    player.isWinner = update.isWinner ?? player.isWinner;
+    player.score = update.score ?? player.score;
+  }
+
+  // The list of users and guests in the update must now be 0, or we got more
+  // update data than there were players, which we do not support.
+  if (updateData.players.users.length !== 0 || updateData.players.guests.length !== 0) {
+    throw new Error(`session update data has too many player records to update this session`);
+  }
+
+  return sessionData;
 }
 
 
@@ -432,6 +507,80 @@ export async function addSession(ctx, sessionData) {
   // if someone were to query this session; this allows the person that added
   // to be able to display the result right away if desired.
   return reshapeSessionInput(sessionId, details);
+}
+
+
+/******************************************************************************/
+
+
+/* Update the session report with the given ID using the update data provided.
+ *
+ * The update data can only update a subset of the data on an existing session,
+ * and does not allow wholesale edits.
+ *
+ * The return value of this mimics the return for a request on details for this
+ * session, including returning null if the session does not exist. Note however
+ * that the returned details will be the updated ones. */
+export async function updateSession(ctx, sessionId, updateData) {
+  // Use the provided data to look up the existing session since we need to
+  // have the data from it both to validate the input, and to provide the
+  // eventual result.
+  const sessionData = await getSessionDetails(ctx, sessionId);
+  if (sessionData == null) {
+    return null;
+  }
+
+  // Validate the incoming update data, and use it to update looked up session
+  // data in order to come up with the final version that we use to update the
+  // database.
+  const newSessionData = prepareSessionUpdate(sessionData, updateData);
+
+  // Iterate over all of the players in the new session data and return back an
+  // array of updates to update them.
+  const getUserUpdates = () => {
+    const updates = [];
+
+    const playerUpdate = ctx.env.DB.prepare(`
+      UPDATE SessionReportPlayer
+         SET isStartingPlayer = ?3, score = ?4, isWinner = ?5
+       WHERE sessionId = ?1 AND userId = ?2
+    `);
+    const userUpdate = ctx.env.DB.prepare(`
+      UPDATE SessionReportPlayer
+         SET isStartingPlayer = ?3, score = ?4, isWinner = ?5
+       WHERE sessionId = ?1 AND guestId = ?2
+    `);
+
+    for (const player of newSessionData.players) {
+      const stmt = (player.isUser === true) ? playerUpdate : userUpdate;
+      updates.push(stmt.bind(
+        newSessionData.sessionId, player.userId,
+        int(player.isStartingPlayer), player.score, int(player.isWinner)
+      ));
+    }
+
+    return updates;
+  }
+
+  // Prepare the batch of statements that will perform the update.
+  const update = await ctx.env.DB.batch([
+    ctx.env.DB.prepare(`
+      UPDATE SessionReport
+         SET isLearning = ?2, sessionEnd = ?3
+       WHERE id = ?1
+    `).bind(newSessionData.sessionId, int(newSessionData.isLearning), newSessionData.sessionEnd),
+
+    ctx.env.DB.prepare(`
+      UPDATE SessionReportDetails
+         SET content = ?2
+       WHERE sessionId = ?1
+    `).bind(newSessionData.sessionId, newSessionData.content),
+
+    ...getUserUpdates()
+  ]);
+  getDBResult('updateSession', 'do_update', update);
+
+  return newSessionData;
 }
 
 
