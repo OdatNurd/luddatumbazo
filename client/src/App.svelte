@@ -75,11 +75,11 @@
         <Text subtitle>Exactly like BoardGameGeek except not</Text>
       </Flex>
 
-      <Button outline slot="menu" on:click={home}>
+      <Button m="2px" w="44px" outline slot="menu" on:click={home}>
         <Icon name="home"></Icon>
       </Button>
 
-      <Link button outline slot="action" t.dec="none" href="/cdn-cgi/access/logout">
+      <Link m="2px" w="44px" button outline slot="action" t.dec="none" href="/cdn-cgi/access/logout">
         <Icon name="logout"></Icon>
       </Link>
     </Titlebar>
