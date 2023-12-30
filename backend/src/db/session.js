@@ -600,16 +600,37 @@ export async function updateSession(ctx, sessionId, updateData) {
 
 
 /* Get a shortened list of all of the session reports that are currently known
- * to the system.
+ * to the system, optionally filtering the list to only session reports that
+ * record games where the games in the optional gameIdList are the main game or
+ * expansions used in a session.
  *
  * The objects returned by this only contain the base information from the main
  * session table, and do not include the players, expansions, or results of the
  * game itself.
  *
  * Each session will contain information on the game to which it applies. */
-export async function getSessionList(ctx) {
-  // Try to find the game with the value has that been provided; we check to see
-  // if the provided ID is either a slug or an actual ID.
+export async function getSessionList(ctx, gameIdList) {
+  // Ensure that we got a gameId list input.
+  gameIdList ??= [];
+
+  // Construct the possible subquery we want to add if any gameId's were
+  // provided as filter criteria.
+  const filter = JSON.stringify(gameIdList);
+  const subQuery = `
+   AND A.id IN (
+    SELECT DISTINCT A.id
+      FROM SessionReport as A, SessionReportExpansions as B
+     WHERE A.gameId in (SELECT value from json_each('${filter}'))
+        OR (B.expansionId in (SELECT value from json_each('${filter}'))
+            AND (A.id = B.sessionId))
+       )
+  `;
+
+  // Find all of the session reports that exist, OR all of the sessions that
+  // mention the games in the provided filter list as either the main game or
+  // one of the expansions.
+  //
+  // The filter only happens when a list of specific gameId's is provided.
   const lookup = await ctx.env.DB.prepare(`
     SELECT A.id,
            C.title,
@@ -625,6 +646,7 @@ export async function getSessionList(ctx) {
      WHERE (A.gameId = B.gameId AND B.id = A.gameName)
        AND (D.id = A.gameId)
        AND (A.id = C.sessionId)
+       ${(gameIdList.length === 0) ? '' : subQuery}
   `).all();
   const result = getDBResult('getSessionList', 'find_session', lookup);
 

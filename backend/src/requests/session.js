@@ -61,14 +61,22 @@ export async function sessionUpdateReq(ctx) {
 
 
 /* Fetch a short list of all of the session reports that are currently known to
- * the system.
+ * the system, optionally also filtering based on gameId's for games in the
+ * session.
  *
- * In the future this will provide various filters to control which items are
- * returned, but at time of writing (during devember) this is more simplistic
- * than that and just returns all sessions. */
+ * In the future this will provide itger various filters to control which items
+ * are returned, but at time of writing (during devember) this is more
+ * simplistic than that and only supports gameId filters. */
 export async function sessionListReq(ctx) {
-  // Fetch and return the list.
-  const result = await getSessionList(ctx);
+  // The query can optionally contain a list of games to collect the session
+  // reports for; these will be searched as both the main game as well as an
+  // expansion to some game.
+  const games = ctx.req.query("games") ?? '';
+  const gameFilter = games.split(',').map(e => parseInt(e))
+                                     .filter(e => isNaN(e) === false);
+
+  // Fetch and return the list, optionally filtering it.
+  const result = await getSessionList(ctx, gameFilter);
 
   return success(ctx, `found ${result.length} session(s)`, result);
 }
