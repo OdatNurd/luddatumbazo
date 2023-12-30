@@ -9,7 +9,9 @@
   import Home from '$pages/Home.svelte';
   import GameList from '$pages/games/List.svelte';
   import GameDetails from '$pages/games/Details.svelte';
+
   import SessionList from '$pages/sessions/List.svelte';
+  import SessionDetails from '$pages/sessions/Details.svelte';
 
   import MetaList from '$pages/metadata/List.svelte';
   import MetaDetails from '$pages/metadata/Details.svelte';
@@ -44,6 +46,7 @@
     '/game/:slug': GameDetails,
 
     '/sessions': SessionList,
+    '/session/:id': SessionDetails,
 
     '/categories': wrap({ component: MetaList, props: { metaType: 'category'  } }),
     '/mechanics':  wrap({ component: MetaList, props: { metaType: 'mechanic'  } }),

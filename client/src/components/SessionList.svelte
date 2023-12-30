@@ -63,7 +63,7 @@
       <td>{row.id}</td>
       <td>
         {#if row.isLearning}
-          <Icon c="chartreuse" name="school"></Icon>
+          <Icon c="&secondary" name="school"></Icon>
         {/if}
       </td>
       <td>
