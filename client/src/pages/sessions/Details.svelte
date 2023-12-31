@@ -3,7 +3,6 @@
 
   import SlugList from '$components/SlugList.svelte';
 
-  import { location, push } from 'svelte-spa-router';
   import { DateTime } from 'luxon';
 
 
@@ -11,6 +10,10 @@
   // Properties
   // ---------------------------------------------------------------------------
 
+  // Receive paramters from the URL route that landed us on this page; this
+  // will contain the slug that we need in order to display the details pane.
+  // The paramters come from the named arguments in the route itself.
+  export let params = {};
 
   // ---------------------------------------------------------------------------
 
@@ -19,13 +22,9 @@
 
   export let gameLink = '#/game/:slug';
 
-  // Pluck the sessionId from the end of our URI; for sessions this is always a
-  // numeric ID.
-  const sessionId = $location.split('/').at(-1);
-
   // Default the name on the page to the sessionId that was used to load it,
   // until the data is fully loaded.
-  let name = sessionId;
+  let name = params.id;
 
   // Using the props that we were given, generate out the kinds of links that
   // the table needs to generate both internal and external links to the data
@@ -39,7 +38,7 @@
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
   const loadData = async () => {
-    const dataURI = `${API}/session/${sessionId}`;
+    const dataURI = `${API}/session/${params.id}`;
 
     const response = await fetch(dataURI);
     const result = await response.json();

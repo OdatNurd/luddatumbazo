@@ -1,19 +1,18 @@
 <script>
   import DetailsPane from '$components/GameDetailsPane.svelte';
 
-  import { location } from 'svelte-spa-router';
-
+  // ---------------------------------------------------------------------------
+  // Properties
   // ---------------------------------------------------------------------------
 
-  // Get the slug from the URI, which is the game slug to display; this can be
-  // either a number or a string, and changing it will re-render the component.
-  let slug = undefined;
-
-  $: slug = $location.split('/').at(-1);
+  // Receive paramters from the URL route that landed us on this page; this
+  // will contain the slug that we need in order to display the details pane.
+  // The paramters come from the named arguments in the route itself.
+  export let params = {};
 
   // ---------------------------------------------------------------------------
 </script>
 
-{#key slug}
-  <DetailsPane {slug} />
+{#key params.slug}
+  <DetailsPane slug={params.slug} />
 {/key}

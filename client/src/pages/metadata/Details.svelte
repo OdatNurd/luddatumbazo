@@ -1,7 +1,7 @@
 <script>
   import { Flex, Button, Icon } from "@axel669/zephyr";
 
-  import { location, push } from 'svelte-spa-router';
+  import { push } from 'svelte-spa-router';
 
   import SlugList from '$components/SlugList.svelte';
 
@@ -19,16 +19,17 @@
   // parent meta type.
   export let parentLink;
 
-  // ---------------------------------------------------------------------------
+  // Receive paramters from the URL route that landed us on this page; this
+  // will contain the slug that we need in order to display the details pane.
+  // The paramters come from the named arguments in the route itself.
+  export let params = {};
 
-  // Pluck the slug from the end of our URI; this can be either a number or the
-  // named slug.
-  const slug = $location.split('/').at(-1);
+  // ---------------------------------------------------------------------------
 
   // Default the name on the page to the slug that was used to load it, until
   // the data is fully loaded. This could also be smarter and just not display
   // anything there to start with.
-  let name = slug;
+  let name = params.slug;
 
   // The result of the query gives us the game details in a sub key instead of
   // at the top level, and the field that represents the game is named
@@ -56,7 +57,7 @@
 </Flex>
 
 <SlugList bggType='boardgame' baseLink='#/game/:slug'
-          query='/game/meta/{metaType}/{slug}?games'
+          query='/game/meta/{metaType}/{params.slug}?games'
           filter={gameFilter} />
 
 <style>
