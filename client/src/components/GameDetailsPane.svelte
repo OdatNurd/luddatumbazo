@@ -20,6 +20,10 @@
   // Cause the router to jump back to the base
   const back = () => push('/games');
 
+  // Cause the router to jump to the list of sessions for this particular
+  // game.
+  const sessionList = () => push(`/game/${slug}/sessions`);
+
   // The list of keys that represent metadata in the returned game object, what
   // titles they should have, and what order to display them in.
   const metaKeys = [
@@ -128,6 +132,22 @@
           </Flex>
         {/each}
       </Grid>
+
+      <Flex direction="row" gap="32px" fl.wr="wrap">
+        <Button fill color="secondary" disabled on:click={back}>
+          <Icon name="plus"></Icon>
+          Log a Session
+        </Button>
+
+        <Button fill color="secondary" disabled={!result.hasSessions} on:click={sessionList}>
+          <Icon name="report-analytics"></Icon>
+          {#if result.hasSessions}
+            View Session Reports
+          {:else}
+            No logged sessions
+          {/if}
+        </Button>
+      </Flex>
 
       <Text p="8px" b.t="1.5px solid gray" b.b="1.5px solid gray">
         {@html result.description}

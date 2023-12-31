@@ -1,6 +1,8 @@
 <script>
   import { LoadZone, Table, Flex, Button, Link, Icon, Text, Chip } from "@axel669/zephyr";
 
+  import { push } from 'svelte-spa-router';
+
   import SlugList from '$components/SlugList.svelte';
 
   import { DateTime } from 'luxon';
@@ -22,9 +24,12 @@
 
   export let gameLink = '#/game/:slug';
 
+  // Default to an empty game and a session title that is the id paramter;
+  // these will be laoded when the session loads.
   // Default the name on the page to the sessionId that was used to load it,
   // until the data is fully loaded.
-  let name = params.id;
+  let name = 'Unknown';
+  let title = params.id;
 
   // Using the props that we were given, generate out the kinds of links that
   // the table needs to generate both internal and external links to the data
@@ -32,7 +37,7 @@
   const slugLink = slug => gameLink.replaceAll(':slug', slug);
   const bggLink = bggId => `https://boardgamegeek.com/boardgame/${bggId}/`;
 
-  // Cause the router to jump back to the base
+  // Cause the router to jump back to the game
   const back = () => push('/sessions');
 
   // Fetch the list of data that we need from the back end API, and return
@@ -43,16 +48,19 @@
     const response = await fetch(dataURI);
     const result = await response.json();
 
-    name = result.data.title;
+    name = result.data.name;
+    title = result.data.title;
     return result.data;
   };
 </script>
 
-<Flex direction="row">
-  <Button fill color="secondary"  on:click={back}> <Icon name="arrow-left"></Icon> </Button>
-  <h3>{name}</h3>
+<Flex direction="column">
+  <Flex direction="row">
+    <Button fill color="secondary"  on:click={back}> <Icon name="arrow-left"></Icon> </Button>
+    <h3>{name}</h3>
+  </Flex>
+  <h3>{title}</h3>
 </Flex>
-
 
 <LoadZone source={loadData()} let:result>
   {#if result.imagePath !== undefined}
