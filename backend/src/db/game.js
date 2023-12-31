@@ -99,6 +99,26 @@ export async function getGameSynopsis(ctx, gameId, imageType, includeNameId) {
 /******************************************************************************/
 
 
+/* Given an array of identifiers that can be either gameId numbers or game slug
+ * values, return back a short list that provides a list of all matching games.
+ *
+ * The retutrn will always return a list, though the list may be empty. Each
+ * item in the list is a pair of id and slug values that represent a looked up
+ * game. */
+export async function performGameLookup(ctx, identifiers) {
+  const filter = JSON.stringify(identifiers);
+  const idValues = await ctx.env.DB.prepare(`
+    SELECT id, slug
+      FROM Game
+      WHERE id IN (SELECT value from json_each('${filter}'))
+         OR slug in (SELECT value from json_each('${filter}'))
+  `).all();
+
+  return getDBResult('performGameLookup', 'lookup_ids', idValues);
+}
+
+/******************************************************************************/
+
 
 /* Get a list of all of the games known to the database, including their slug
  * and the primary name associated with each of them. */

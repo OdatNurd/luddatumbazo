@@ -5,7 +5,7 @@ import { BGGLookupError } from '../db/exceptions.js';
 import { success, fail } from "./common.js";
 
 import { insertGame, insertBGGGame,
-         getGameList, getGameDetails } from '../db/game.js';
+         getGameList, getGameDetails, performGameLookup } from '../db/game.js';
 
 
 /******************************************************************************/
@@ -137,6 +137,23 @@ export async function gameListReq(ctx) {
   const result = await getGameList(ctx);
 
   return success(ctx, `found ${result.length} games`, result);
+}
+
+
+/******************************************************************************/
+
+
+/* Takes as a body an array of values that are either gameId values or game slug
+ * names, and returns back a list of objects that tell you the id and slug
+ * values for all matched games. */
+export async function performGameLookupReq(ctx) {
+  const filterList = await ctx.req.json();
+  if (Array.isArray(filterList) === false) {
+    return fail(ctx, 'request body should be an array of ids or slugs');
+  }
+
+  const result = await performGameLookup(ctx, filterList);
+  return success(ctx, `looked up ${result.length} games`, result);
 }
 
 

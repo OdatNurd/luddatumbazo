@@ -4,7 +4,7 @@ import { cors } from 'hono/cors'
 import { wrappedRequest as _ } from './requests/common.js';
 import { lookupBGGGameInfo } from './requests/bgg.js';
 import { insertGameReq, insertBGGGameReq, insertBGGGameListReq,
-         gameListReq, gameDetailsReq } from './requests/game.js';
+         gameListReq, gameDetailsReq, performGameLookupReq } from './requests/game.js';
 import { updateExpansionDetailsReq, updateExpansionDetailsBggReq,
          getExpansionDetailsReq } from './requests/expansion.js';
 import { metadataUpdateReq, metadataQueryReq,
@@ -73,6 +73,10 @@ app.get(`${APIV1}/game/meta/:metaType/:slug`, ctx => _(ctx, metadataQueryReq));
 app.put(`${APIV1}/game/data/details/add`, ctx => _(ctx, insertGameReq));
 app.put(`${APIV1}/game/data/details/bgg/add/:bggGameId{[0-9]+}`, ctx => _(ctx, insertBGGGameReq));
 app.put(`${APIV1}/game/data/details/bgg/add/list`, ctx => _(ctx, insertBGGGameListReq));
+
+// Given an array of values that are a mix of id values and/or slugs, perform a
+// short lookup to tell you the id and slug of all matches.
+app.post(`${APIV1}/game/lookup`, ctx => _(ctx, performGameLookupReq));
 
 // Get a list of all games known to the system, or the details of a specific
 // game that the system knows about.
