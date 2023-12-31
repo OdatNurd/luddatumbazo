@@ -174,6 +174,22 @@ export async function getGameDetails(ctx, idOrSlug) {
   gameData.baseGames = expansionDetails.baseGames;
   gameData.expansionGames = expansionDetails.expansionGames;
 
+  // Do a quick scan to see if there is at least one session report that lists
+  // this gameId either as the main game or as an expansion that was used during
+  // the session.
+  //
+  // This is stored as a boolean and doesn't have anything like a count, just
+  // the presence or absence of such information.
+  const sessionReq = await ctx.env.DB.prepare(`
+      SELECT DISTINCT A.id
+      FROM SessionReport as A, SessionReportExpansions as B
+     WHERE A.gameId = ?1
+        OR (B.expansionId = ?1 and A.id = B.sessionId)
+     LIMIT 1
+  `).bind(gameData.id).all();
+  const hasSession = getDBResult('getGameDetails', 'find_sessions', sessionReq);
+  gameData.hasSessions = hasSession.length !== 0;
+
   // Gather the list of all of the metadata that's associated with this game.
   const metadata = await ctx.env.DB.prepare(`
     SELECT A.metatype, B.id, B.bggId, B.slug, B.name
