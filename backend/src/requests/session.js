@@ -3,6 +3,7 @@
 
 import { addSession, updateSession, getSessionList,
          getSessionDetails } from '../db/session.js';
+import { performGameLookup } from '../db/game.js';
 import { success, fail } from "./common.js";
 
 
@@ -70,13 +71,22 @@ export async function sessionUpdateReq(ctx) {
 export async function sessionListReq(ctx) {
   // The query can optionally contain a list of games to collect the session
   // reports for; these will be searched as both the main game as well as an
-  // expansion to some game.
+  // expansion to some game, and can be specified as either ID values, slugs
+  // or some combination of both.
   const games = ctx.req.query("games") ?? '';
-  const gameFilter = games.split(',').map(e => parseInt(e))
-                                     .filter(e => isNaN(e) === false);
+  const gameFilter = games.split(',').map(e => e.trim()).filter(e => e !== '');
+
+  // Use the list in a lookup to map it to objects that we can use to get to
+  // definitive gameId values to pass in.
+  //
+  // TODO: This is stupid because we could check the list to see which items are
+  //       numbers, and then only perform, the lookup for any that don't appear
+  //       to be. However this is still a WIP, so blindly doing the dumb thing
+  //       for the moment.
+  const lookup = await performGameLookup(ctx, gameFilter);
 
   // Fetch and return the list, optionally filtering it.
-  const result = await getSessionList(ctx, gameFilter);
+  const result = await getSessionList(ctx, lookup.map(e => e.id));
 
   return success(ctx, `found ${result.length} session(s)`, result);
 }
