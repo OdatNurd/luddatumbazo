@@ -56,11 +56,11 @@
     '/artists':    wrap({ component: MetaList, props: { metaType: 'artist'    } }),
     '/publishers': wrap({ component: MetaList, props: { metaType: 'publisher' } }),
 
-    '/category/:slug':  wrap({ component: MetaDetails, props: { metaType: 'category',  parentLink: '/categories' } }),
-    '/mechanic/:slug':  wrap({ component: MetaDetails, props: { metaType: 'mechanic',  parentLink: '/mechanics' } }),
-    '/designer/:slug':  wrap({ component: MetaDetails, props: { metaType: 'designer',  parentLink: '/designers' } }),
-    '/artist/:slug':    wrap({ component: MetaDetails, props: { metaType: 'artist',    parentLink: '/artists' } }),
-    '/publisher/:slug': wrap({ component: MetaDetails, props: { metaType: 'publisher', parentLink: '/publishers' } }),
+    '/category/:slug':  wrap({ component: MetaDetails, props: { metaType: 'category'  } }),
+    '/mechanic/:slug':  wrap({ component: MetaDetails, props: { metaType: 'mechanic'  } }),
+    '/designer/:slug':  wrap({ component: MetaDetails, props: { metaType: 'designer'  } }),
+    '/artist/:slug':    wrap({ component: MetaDetails, props: { metaType: 'artist'    } }),
+    '/publisher/:slug': wrap({ component: MetaDetails, props: { metaType: 'publisher' } }),
   };
 
   // Cause the router to jump directly to the root route.

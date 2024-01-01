@@ -1,7 +1,8 @@
 <script>
   import { LoadZone, Paper, Titlebar, Link, Text,  Flex, Grid, Button, Icon } from "@axel669/zephyr";
+  import { push, pop } from 'svelte-spa-router';
 
-  import { push } from 'svelte-spa-router';
+  import BackButton from '$components/BackButton.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -16,9 +17,6 @@
   // The base link to the API
   const API = `${process.env.GAME_API_ROOT_URI}/api/v1`;
   const bggLink = bggId => `https://boardgamegeek.com/boardgame/${bggId}/`;
-
-  // Cause the router to jump back to the base
-  const back = () => push('/games');
 
   // Cause the router to jump to the list of sessions for this particular
   // game.
@@ -50,7 +48,7 @@
 
 
 <Flex direction="row">
-  <Button fill color="secondary"  on:click={back}> <Icon name="arrow-left"></Icon> </Button>
+  <BackButton />
   <h3>Game Details</h3>
 </Flex>
 
@@ -134,7 +132,7 @@
       </Grid>
 
       <Flex direction="row" gap="32px" fl.wr="wrap">
-        <Button fill color="secondary" disabled on:click={back}>
+        <Button fill color="secondary" disabled on:click={() => pop()}>
           <Icon name="plus"></Icon>
           Log a Session
         </Button>

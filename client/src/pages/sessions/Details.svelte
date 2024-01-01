@@ -1,9 +1,9 @@
 <script>
   import { LoadZone, Table, Flex, Button, Link, Icon, Text, Chip } from "@axel669/zephyr";
 
-  import { push } from 'svelte-spa-router';
-
+  import BackButton from '$components/BackButton.svelte';
   import SlugList from '$components/SlugList.svelte';
+
 
   import { DateTime } from 'luxon';
 
@@ -37,9 +37,6 @@
   const slugLink = slug => gameLink.replaceAll(':slug', slug);
   const bggLink = bggId => `https://boardgamegeek.com/boardgame/${bggId}/`;
 
-  // Cause the router to jump back to the game
-  const back = () => push('/sessions');
-
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
   const loadData = async () => {
@@ -56,7 +53,7 @@
 
 <Flex direction="column">
   <Flex direction="row">
-    <Button fill color="secondary"  on:click={back}> <Icon name="arrow-left"></Icon> </Button>
+    <BackButton />
     <h3>{name}</h3>
   </Flex>
   <h3>{title}</h3>

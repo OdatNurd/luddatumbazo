@@ -1,5 +1,8 @@
 <script>
+  import { Flex } from '@axel669/zephyr';
+
   import SessionList from '$components/SessionList.svelte';
+  import BackButton from '$components/BackButton.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -11,5 +14,9 @@
   export let params = {};
 </script>
 
-<h3>Session Reports FOR A GAME</h3>
+<Flex direction="row">
+  <BackButton />
+  <h3>Session Reports FOR A GAME</h3>
+</Flex>
+
 <SessionList query='/session/list?games={params.slug}' />

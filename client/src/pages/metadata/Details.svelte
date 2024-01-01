@@ -1,8 +1,7 @@
 <script>
   import { Flex, Button, Icon } from "@axel669/zephyr";
 
-  import { push } from 'svelte-spa-router';
-
+  import BackButton from '$components/BackButton.svelte';
   import SlugList from '$components/SlugList.svelte';
 
   // ---------------------------------------------------------------------------
@@ -13,11 +12,6 @@
   // for; this allows us to adjust things like the data query to match the
   // type of meta we're detailing.
   export let metaType;
-
-  // The link to the appropriate parent page for the details this page is
-  // viewing; this allows for going back to the main list of items of the
-  // parent meta type.
-  export let parentLink;
 
   // Receive paramters from the URL route that landed us on this page; this
   // will contain the slug that we need in order to display the details pane.
@@ -47,12 +41,10 @@
     });
   }
 
-  // Cause the router to jump back to the base
-  const back = () => push(parentLink)
 </script>
 
 <Flex direction="row">
-  <Button fill color="secondary"  on:click={back}> <Icon name="arrow-left"></Icon> </Button>
+  <BackButton />
   <h3>{metaType}: {name}</h3>
 </Flex>
 
