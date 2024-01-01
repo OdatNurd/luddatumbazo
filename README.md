@@ -24,13 +24,20 @@ be, depending on the part of the month) using the following technology:
 - [Cloudflare Pages](https://www.cloudflare.com/developer-platform/pages/) to host the front end
 - [Cloudflare Workers](https://www.cloudflare.com/developer-platform/workers/) to host the functions driving the API
 - [Cloudflare D1](https://www.cloudflare.com/developer-platform/d1/) as the backing database
-- [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/) for object storage
 - [Cloudflare Images](https://www.cloudflare.com/developer-platform/cloudflare-images/) for image storage
 
 
 Libraries that are used in this project include (but are not limited to, based
 on my ability to remember to update this):
 
- - [@axel669/Windstorm](https://windstorm.axel669.net/)/[@axel669/Zephyr](https://zephyr.axel669.net/) for the front end interface
- - [@axel669/sanic-xml](https://www.npmjs.com/package/@axel669/sanic-xml) for handling XML API data from BoardGameGeek
- - [@axel669/asuid](https://asuid.axel669.net/) for generating random, (almost) sortable ID's
+- [@axel669/Windstorm](https://windstorm.axel669.net/)/[@axel669/Zephyr](https://zephyr.axel669.net/) for the front end interface
+- [@axel669/sanic-xml](https://www.npmjs.com/package/@axel669/sanic-xml) for handling XML API data from BoardGameGeek
+
+
+The following things were planned inclusions in the project but the MVP that we
+ended with at the end of Devember did not include them. Future development will
+bring these changes in, though that will happen outside of this repository,
+since it freezes at the end of Devember.
+
+- [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/) for object storage
+- [@axel669/asuid](https://asuid.axel669.net/) for generating random, (almost) sortable ID's
