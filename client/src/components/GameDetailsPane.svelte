@@ -1,8 +1,9 @@
 <script>
   import { LoadZone, Paper, Titlebar, Link, Text,  Flex, Grid, Button, Icon } from "@axel669/zephyr";
-  import { push, pop } from 'svelte-spa-router';
+  import { push } from 'svelte-spa-router';
 
   import BackButton from '$components/BackButton.svelte';
+  import BGGLink from '$components/BGGLink.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -16,7 +17,6 @@
 
   // The base link to the API
   const API = `${process.env.GAME_API_ROOT_URI}/api/v1`;
-  const bggLink = bggId => `https://boardgamegeek.com/boardgame/${bggId}/`;
 
   // Cause the router to jump to the list of sessions for this particular
   // game.
@@ -97,11 +97,10 @@
           </Flex>
         {/if}
         <Flex direction="row" gap="32px" fl.wr="wrap">
-          {#if result.bggId !== 0}
-            <Link href="{bggLink(result.bggId)}" target="_blank">
-              View on BoardGameGeek <Icon name="external-link"></Icon>
-            </Link>
-          {/if}
+          <BGGLink bggId={result.bggId}>
+            View on BoardGameGeek
+            <span slot="nolink">No BGG Link available</span>
+          </BGGLink>
 
           {#if result.officialURL !== ''}
             <Link href="{result.officialURL}" target="_blank">
@@ -132,7 +131,7 @@
       </Grid>
 
       <Flex direction="row" gap="32px" fl.wr="wrap">
-        <Button fill color="secondary" disabled on:click={() => pop()}>
+        <Button fill color="secondary" disabled on:click={() => push('/')}>
           <Icon name="plus"></Icon>
           Log a Session
         </Button>
@@ -159,9 +158,7 @@
               {#if row.id !== null}
                 <Link href="#/game/{row.slug}">{row.name}</Link>
               {:else}
-                <Link href="{bggLink(row.bggId)}" target="_blank">
-                  {row.name} <Icon name="external-link"></Icon>
-                </Link>
+                <BGGLink bggId={row.bggId}>{row.name}</BGGLink>
               {/if}
             {/each}
           </Flex>
@@ -176,9 +173,7 @@
               {#if row.id !== null}
                 <Link href="#/game/{row.slug}">{row.name}</Link>
               {:else}
-                <Link href="{bggLink(row.bggId)}" target="_blank">
-                  {row.name} <Icon name="external-link"></Icon>
-                </Link>
+                <BGGLink bggId={row.bggId}>{row.name}</BGGLink>
               {/if}
             {/each}
           </Flex>

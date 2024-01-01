@@ -1,6 +1,8 @@
 <script>
   import { Link, Icon, LoadZone, DataTable, Th, sorts, filters } from "@axel669/zephyr";
 
+  import BGGLink from '$components/BGGLink.svelte';
+
   // ---------------------------------------------------------------------------
 
   // The base link to the API
@@ -32,10 +34,8 @@
   // ---------------------------------------------------------------------------
 
   // Using the props that we were given, generate out the kinds of links that
-  // the table needs to generate both internal and external links to the data
-  // that it contains.
+  // the table needs to generate internal links to the data that it contains.
   const slugLink = slug => baseLink.replaceAll(':slug', slug);
-  const bggLink = bggId => `https://boardgamegeek.com/${bggType}/${bggId}/`;
 
   // ---------------------------------------------------------------------------
 
@@ -68,13 +68,7 @@
         <a href="{slugLink(row.slug)}">{row.name}</a>
       </td>
       <td>
-        {#if row.bggId !== 0}
-          <Link href="{bggLink(row.bggId)}" target="_blank">
-            BGG <Icon name="external-link"></Icon>
-          </Link>
-        {:else}
-          --
-        {/if}
+        <BGGLink {bggType} bggId={row.bggId} />
       </td>
     </svelte:fragment>
   </DataTable>

@@ -1,9 +1,9 @@
 <script>
-  import { LoadZone, Table, Flex, Button, Link, Icon, Text, Chip } from "@axel669/zephyr";
+  import { LoadZone, Table, Flex, Button, Icon, Text, Chip } from "@axel669/zephyr";
 
   import BackButton from '$components/BackButton.svelte';
+  import BGGLink from '$components/BGGLink.svelte';
   import SlugList from '$components/SlugList.svelte';
-
 
   import { DateTime } from 'luxon';
 
@@ -32,10 +32,8 @@
   let title = params.id;
 
   // Using the props that we were given, generate out the kinds of links that
-  // the table needs to generate both internal and external links to the data
-  // that it contains.
+  // the table needs to generate internal links to the data that it contains.
   const slugLink = slug => gameLink.replaceAll(':slug', slug);
-  const bggLink = bggId => `https://boardgamegeek.com/boardgame/${bggId}/`;
 
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
@@ -124,13 +122,7 @@
         <a href="{slugLink(row.slug)}">{row.name}</a>
       </td>
       <td>
-        {#if row.bggId !== 0}
-          <Link href="{bggLink(row.bggId)}" target="_blank">
-            BGG <Icon name="external-link"></Icon>
-          </Link>
-        {:else}
-          --
-        {/if}
+        <BGGLink bggId={row.bggId} />
       </td>
     </tr>
   </Table>
