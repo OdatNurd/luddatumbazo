@@ -2,6 +2,8 @@
   import { Link, Icon, LoadZone, DataTable, Th, sorts, filters } from "@axel669/zephyr";
   import { DateTime } from 'luxon';
 
+  import GameImage from '$components/GameImage.svelte';
+
   // ---------------------------------------------------------------------------
 
   // The base link to the API
@@ -67,9 +69,7 @@
         {/if}
       </td>
       <td>
-        {#if row.imagePath !== undefined}
-          <img ws-x="p.r[4px] w[32px] h[32px]" src={row.imagePath} alt="Box art image for game {row.name}">
-        {/if}
+        <GameImage imagePath={row.imagePath} name={row.name} icon={true} />
         <a href="{session(row.id)}">{row.title}</a>
       </td>
       <td>
@@ -83,11 +83,3 @@
     </svelte:fragment>
   </DataTable>
 </LoadZone>
-
-
-<style>
-  img {
-    vertical-align: middle;
-    object-fit: contain;
-  }
-</style>

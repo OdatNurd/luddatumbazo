@@ -2,6 +2,7 @@
   import { Link, Icon, LoadZone, DataTable, Th, sorts, filters } from "@axel669/zephyr";
 
   import BGGLink from '$components/BGGLink.svelte';
+  import GameImage from '$components/GameImage.svelte';
 
   // ---------------------------------------------------------------------------
 
@@ -62,9 +63,7 @@
     <svelte:fragment slot="row" let:row>
       <td>{row.id}</td>
       <td>
-        {#if row.imagePath !== undefined}
-          <img ws-x="p.r[4px] w[32px] h[32px]" src={row.imagePath} alt="Box art image for game {row.name}">
-        {/if}
+        <GameImage imagePath={row.imagePath} name={row.name} icon={true} />
         <a href="{slugLink(row.slug)}">{row.name}</a>
       </td>
       <td>
@@ -73,11 +72,3 @@
     </svelte:fragment>
   </DataTable>
 </LoadZone>
-
-
-<style>
-  img {
-    vertical-align: middle;
-    object-fit: contain;
-  }
-</style>

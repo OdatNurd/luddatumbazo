@@ -4,6 +4,7 @@
 
   import BackButton from '$components/BackButton.svelte';
   import BGGLink from '$components/BGGLink.svelte';
+  import GameImage from '$components/GameImage.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -82,12 +83,7 @@
       </Flex>
     </Titlebar>
     <Flex gap="16px" fl.wr="wrap">
-
-      {#if result.imagePath !== undefined}
-        <div ws-x="t.a[center]">
-          <img src={result.imagePath} alt="Box art image for game {result.name}">
-        </div>
-      {/if}
+      <GameImage imagePath={result.imagePath} name={result.names[0]} />
 
       <Text subtitle>
         {#if result.names.length > 1}

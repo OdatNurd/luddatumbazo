@@ -3,6 +3,7 @@
 
   import BackButton from '$components/BackButton.svelte';
   import BGGLink from '$components/BGGLink.svelte';
+  import GameImage from '$components/GameImage.svelte';
   import SlugList from '$components/SlugList.svelte';
 
   import { DateTime } from 'luxon';
@@ -58,11 +59,12 @@
 </Flex>
 
 <LoadZone source={loadData()} let:result>
-  {#if result.imagePath !== undefined}
-    <div ws-x="t.a[center]">
-      <img src={result.imagePath} alt="Box art image for game {result.name}">
-    </div>
-  {/if}
+  <Flex gap="16px" fl.wr="wrap" direction="row">
+    <GameImage imagePath={result.imagePath} name={result.name} />
+    <Text p="8px" b.l="1.5px solid gray">
+      {@html result.content}
+    </Text>
+  </Flex>
   <Chip color="secondary" fill>
     {DateTime.fromISO(result.sessionBegin).toLocaleString(DateTime.DATETIME_SHORT)}
     <Icon name="arrow-right"></Icon>
@@ -71,9 +73,6 @@
   {#if result.isLearning}
     <Chip color="accent" fill>Learning Game!</Chip>
   {/if}
-  <Text p="8px" b.t="1.5px solid gray" b.b="1.5px solid gray">
-    {@html result.content}
-  </Text>
 
   <Table data={result.players} fillHeader color="primary">
     <tr slot="header">
@@ -116,9 +115,7 @@
         {row.gameId}
       </td>
       <td>
-        {#if row.imagePath !== undefined}
-          <img ws-x="p.r[4px] w[32px] h[32px]" src={row.imagePath} alt="Box art image for game {row.name}">
-        {/if}
+        <GameImage imagePath={row.imagePath} name={row.name} icon={true} />
         <a href="{slugLink(row.slug)}">{row.name}</a>
       </td>
       <td>
@@ -133,9 +130,5 @@
 <style>
   h3 {
     text-transform: capitalize;
-  }
-  img {
-    vertical-align: middle;
-    object-fit: contain;
   }
 </style>
