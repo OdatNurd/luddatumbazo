@@ -1,24 +1,23 @@
-# Devember 2023 - Luddatumbazo
+# Luddatumbazo - Personalized Board Game Database
 
-This repository represents my entry into [Devember](https://devember.org/) 2023
-and is a home grown, smaller scale version of [BoardGameGeek](https://boardgamegeek.com/)),
-intended to be something my wife and I (and our family and gaming group) can
-use to track the specific board games we own, want and are playing.
+Luddatumbazo (Esperanto for "Game Database") is an application that was my
+[Devember](https://devember.org/) 2023 project; a home grown, smaller scale
+version of [BoardGameGeek](https://boardgamegeek.com/)), intended to be
+something my wife and I (and our family and gaming group) can use to track the
+specific board games we own, want and are playing.
 
-If you're viewing this in December of 2023, development work is ongoing live on
-my [Twitch channel](https://twitch.tv/odatnurd), which is serving as the daily
-devlog requirement of Devember. What better way to follow what the day's work
-was than to actually watch the day's work?
+Development work for this project was streamed live during the entire month of
+December 2023 on my [Twitch channel](https://twitch.tv/odatnurd), where we
+spent 128 hours and 37 minutes working on the project live (though of course at
+least half of that time was spent chatting with people).
 
-At the end of each day, the last commit made on that day (if any) is tagged,
-allowing for easy viewing of the progression of the project over the given time
-period.
+See [devember-2023](https://github.com/OdatNurd/devember-2023) to see what the
+state of the project was at the point at which Devember ended; this version of
+the repo was split from it and shares the same history, but is continually
+developed.
 
-THe project is code named <code>Luddatumbazo</code>, which is the translation
-of "Game Database" into Esperanto, because naming things is hard.
-
-This particular project is intended to be entirely cloud based and is (or will
-be, depending on the part of the month) using the following technology:
+This particular project is intended to be entirely cloud based and is using the
+following technology:
 
 - [Cloudflare Zero Trust](https://www.cloudflare.com/zero-trust/) for IAM
 - [Cloudflare Pages](https://www.cloudflare.com/developer-platform/pages/) to host the front end
@@ -36,8 +35,8 @@ on my ability to remember to update this):
 
 The following things were planned inclusions in the project but the MVP that we
 ended with at the end of Devember did not include them. Future development will
-bring these changes in, though that will happen outside of this repository,
-since it freezes at the end of Devember.
+bring these changes in, or possibly already did and I just forgot to update this
+README file.
 
 - [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/) for object storage
 - [@axel669/asuid](https://asuid.axel669.net/) for generating random, (almost) sortable ID's
