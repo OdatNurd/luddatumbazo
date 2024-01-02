@@ -1,289 +1,302 @@
-// Owner: odatnurd@gmail.com
+// Luddatumbazo was my 2023 Devember project; a mini version of BoardGameGeek
+// to allow me and my wife to easily track our boardgame collection and plays.
 //
-// https://dbdiagram.io/d/GameDB-6557eafa3be14957873b557c
-// https://dbml.dbdiagram.io/docs/#table-notes
-
+// The code can be found at:
+//    https://github.com/OdatNurd/devember-2023
+//
+// This particular file is a DBML file that is viewable via:
+//    https://dbdiagram.io/
 Project Luddatumbazo {
   database_type: 'SQLite'
   Note: 'Personalized Board Game ownership and playtime tracker'
 }
 
-Table ConfigInfo {
-  name TEXT [unique, pk]
-  value VALUE [not null, note: 'setting value can be string, number or boolean']
 
-  Note: 'Allows for free form system configuration. Settings must be unique, and values can be any string, number of boolean value'
-}
-
-Table Log {
-  logID INTEGER [unique, increment, pk]
-
-  message TEXT [not null]
-  ip TEXT [not null]
-  userID INTEGER [ref: < User.userId]
-  eventTime TIME [default: 'now()']
-
-  Note: 'Log messages regarding users that are taking actions, and what they are'
-}
-
-enum AssetType {
-  R2 [note: 'stored within the data bucket; path defines the URL']
-  Images [note: 'stored as an image in Cloudflare Images; path is the full image URL']
-  ImageKit [note: 'stored as an image in Imagekit; path is the full imagekit URL']
-}
-
-Table Asset {
-  id INTEGER [unique, increment, pk]
-
-  mimetype STRING [not null, note: 'The mime type of the asset being stored']
-  filename STRING [not null, note: 'The original name of the file when it was uploaded']
-  storage AssetType [not null, note: 'The storage location for this asset (e.g. R2)']
-  path STRING [not null, note: 'The location within storage for this asset']
-
-  Note: 'Storage for some form of external asset, such as an image, a PDF, etc. Asset type is open ended'
-}
+// -----------------------------------------------------------------------------
+// These tables track Users and Guests.
+//
+// In the parlance of the system, a User is someone that has been granted the
+// authorization to log into the application and directly view it; this is done
+// via CloudFlare Zero Trust, which does all of the authentication and provides
+// us with a unique identifier to track the user (externalId).
+//
+// Guests are people that played games that are reported but which do not have
+// access to the application, or people that used to have access and no longer
+// do.
+// -----------------------------------------------------------------------------
 
 Table User {
   userId INTEGER [unique, increment, pk, note: 'internal identifier for this user']
   externalId TEXT [unique, note: 'unique identifier based on the external auth being used']
 
-  profileImage INTEGER [ref: > Asset.id]
   firstName TEXT [not null]
   lastName TEXT [not null]
   emailAddress TEXT [not null]
-  lastLoginTime TIME [not null, default: 'now()']
 
   indexes {
-    externalId
+    externalId [name: 'idx_user_ext']
+    (firstName, lastName) [name: 'idx_user_name']
   }
 
   Note: 'A known user in the system; associates an external authentication ID with a specific user'
 }
 
-Table UserConfigInfo {
-  userID INTEGER [ref: - User.userId]
+// -----------------------------------------------------------------------------
 
-  name TEXT
-  value TEXT [not null, note: 'setting value can be string, number or boolean']
+Table GuestUser {
+  id INTEGER [unique, increment, pk]
 
-  Note: 'Allows for free form user configuration. Settings must be unique, and values can be any string, number of boolean value'
+  firstName TEXT [not null, note: 'this field is collate nocase']
+  lastName TEXT [not null, note: 'this field is collate nocase']
+
+  // SQLite generates this automatically whenever a record is added or
+  // updated.
+  name GENERATED [note: 'Generated automatically by SQLite as a concatenation of firstName lastName']
+
+  indexes {
+    (firstName, lastName) [name: 'idx_guest_name']
+  }
+
+  Note: 'A guest user of the system; for participating in session reports'
 }
 
-Table UserPermissions {
-  userID INTEGER [unique, increment, pk, ref: < User.userId]
 
-  canEditUser BOOLEAN [default: false]
-  canRemoveUser BOOLEAN [default: false]
-
-  canAddGame BOOLEAN [default: false]
-  canEditGame BOOLEAN [default: false]
-  canRemoveGame BOOLEAN [default: false]
-
-  canAddDesigner BOOLEAN [default: false]
-  canEditDesigner BOOLEAN [default: false]
-  canRemoveDesigner BOOLEAN [default: false]
-
-  canAddArtist BOOLEAN [default: false]
-  canEditArtist BOOLEAN [default: false]
-  canRemoveArtist BOOLEAN [default: false]
-
-  canAddPublisher BOOLEAN [default: false]
-  canEditPublisher BOOLEAN [default: false]
-  canRemovePublisher BOOLEAN [default: false]
-
-  canAddCategory BOOLEAN [default: false]
-  canEditCategory BOOLEAN [default: false]
-  canRemoveCategory BOOLEAN [default: false]
-
-  canAddMechanic BOOLEAN [default: false]
-  canEditMechanic BOOLEAN [default: false]
-  canRemoveMechanic BOOLEAN [default: false]
-
-  canAddAsset BOOLEAN [default: false]
-  canEditAsset BOOLEAN [default: false]
-  canRemoveAsset BOOLEAN [default: false]
-
-  canAddSessionReport BOOLEAN [default: false]
-  canEditSessionReport BOOLEAN [default: false]
-  canRemoveSessionReport BOOLEAN [default: false]
-
-  canConfigSystem BOOLEAN [default: false]
-
-  Note: 'Granular permissions that allow specific users to carry out specific actions'
-}
+// -----------------------------------------------------------------------------
+// Tables in this section track games that exist in the system and the data that
+// is associated with them.
+//
+// Some types of data are also available on BoardGameGeek pages directly for
+// viewing, and so in various places there is a bggId style field that allows
+// for creating links. These fields are optional, and where 0 they indicate that
+// there is no BGG specific data for that item.
+//
+// Games are known by many names, so we associate a list of names per game via
+// a table, with one name being the "primary" name used to refer to the game.
+//
+// Games may have expansions, and expansions themselves may also be the base of
+// some other expansion (e.g. if one expansion is required to be used with a
+// second expansion), so our table holds those associations as well.
+// -----------------------------------------------------------------------------
 
 Table Game {
-    id INTEGER [unique, increment, pk]
-    bggId INTEGER [not null]
+  id INTEGER [unique, increment, pk]
+  bggId INTEGER [not null, default: 0]
 
-    slug TEXT [unique, not null, note: 'the slug is based on the primary name of the game at the time it was added']
-    description TEXT [not null]
-    publishedIn INTEGER [not null]
+  slug TEXT [unique, not null, note: 'the slug is based on the primary name of the game at the time it was added']
+  description TEXT [not null]
+  publishedIn INTEGER [not null]
 
-    minPlayers INTEGER [default: 1]
-    maxPlayers INTEGER [default: 1]
-    minPlayerAge INTEGER [default: 1]
-    playTime INTEGER [default: 1]
-    minPlayTime INTEGER [default: 1]
-    maxPlayTime INTEGER [default: 1]
-    complexity DECIMAL [default: 1]
+  minPlayers INTEGER [default: 1]
+  maxPlayers INTEGER [default: 1]
+  minPlayerAge INTEGER [default: 1]
+  playTime INTEGER [default: 1]
+  minPlayTime INTEGER [default: 1]
+  maxPlayTime INTEGER [default: 1]
+  complexity DECIMAL [default: 1]
 
-    // coverId INTEGER [ref: < Asset.id]
-    officialURL TEXT [default: '']
-    teachingURL TEXT [default: '', note: 'Link to a YT video that teaches this game']
+  officialURL TEXT [default: '']
+  teachingURL TEXT [default: '', note: 'Link to a YT video that teaches this game']
 
-    Note: 'A representation of a unique game'
+  imagePath TEXT [default: '', note: 'a URI like cfi://imagename']
+
+  Note: 'A representation of a unique game'
 }
+
+// -----------------------------------------------------------------------------
 
 Table GameName {
   id INTEGER [unique, increment, pk]
   gameId INTEGER [not null, ref: > Game.id]
 
-  name VARCHAR [not null]
+  name TEXT [not null]
   isPrimary BOOLEAN [default: false, note: 'The primary is the name this is best known by']
 
   Note: 'Associates alternate game names with game IDs'
 }
 
-Table Category {
+// -----------------------------------------------------------------------------
+
+// In this table, it is possible for either the base OR the expansion id to be
+// a NULL value, to indicate that part of the relation does not currently exist
+// in our database yet (e.g. we own a game but not the expansions).
+//
+// In order for this to occur, the bggId associated with that side must not be 0
+// because it is required to know what the other side of the relation is
+// supposed to be.
+//
+// In the specific case of one of the two ID's being NULL, the entryName field
+// is the name of the item that is null (i.e. "missing"), so that it can be
+// displayed in links.
+//
+// Once the association is completed, this field is ignored; when it is present
+// it provides a human readable hint as to which part of the association was
+// originally missing.
+Table GameExpansion {
+    id INTEGER [unique, increment, pk]
+
+    baseGameid INTEGER [null, ref: <> Game.id, note: 'is null when this game is not in the DB yet']
+    baseGameBggId INTEGER [default: 0]
+    expansionGameId INTEGER [null, ref: <> Game.id, note: 'is null when this game is not in the DB yet']
+    expansionGameBggId INTEGER [default: 0]
+
+    entryName TEXT [note: 'this is only used when one side of the relation is not a game, to reflect the name of that item']
+
+    Note: 'Associates a game with an expansion for that game; one side always has a gameId, the other could be null'
+}
+
+
+// -----------------------------------------------------------------------------
+// Tables in this section store the metadata that is associated with games in
+// our database. This falls into one of a series of "metaTypes", where we have
+// a list of items for each type, and a table that associates that metadata with
+// specific games.
+// -----------------------------------------------------------------------------
+
+// The distinct types of metadata that are supported by the system; using a
+// value that is not here throws a constraint error.
+enum metadata_type {
+  designer
+  publisher
+  artist
+  category
+  mechanic
+}
+
+// -----------------------------------------------------------------------------
+
+Table GameMetadata {
   id INTEGER [unique, increment, pk]
+
+  metaType metadata_type
   bggId INTEGER [default: 0]
+  slug TEXT [not null]
+  name TEXT [not null]
 
-  slug TEXT [unique, not null]
-  name VARCHAR [not null]
-
-  Note: 'A record of a specific and unique category'
+  Note: 'Typed metadata record; each record associates with a potential BGG entry'
 }
 
-Table Mechanic {
+// -----------------------------------------------------------------------------
+
+// There is one row in this table for every association of a metadata item with
+// a game
+Table GameMetadataPlacement {
   id INTEGER [unique, increment, pk]
-  bggId INTEGER [default: 0]
 
-  slug TEXT [unique, not null]
-  name VARCHAR [not null]
-
-  Note: 'A record of a specific and unique mechanic'
-}
-
-Table Designer {
-  id INTEGER [unique, increment, pk]
-  bggId INTEGER [default: 0]
-
-  slug TEXT [unique, not null]
-  name VARCHAR [not null]
-
-  Note: 'A record of a specific and unique designer'
-}
-
-Table Artist {
-  id INTEGER [unique, increment, pk]
-  bggId INTEGER [default: 0]
-
-  slug TEXT [unique, not null]
-  name VARCHAR [not null]
-
-  Note: 'A record of a specific and unique artist'
-}
-
-Table Publisher {
-  id INTEGER [unique, increment, pk]
-  bggId INTEGER [default: 0]
-
-  slug TEXT [unique, not null]
-  name VARCHAR [not null]
-
-  Note: 'A record of a specific and unique publisher'
-}
-
-Table CategoryPlacement {
-  id INTEGER [unique, increment, pk]
   gameId INTEGER [not null, ref: > Game.id]
-  categoryId INTEGER [not null, ref: > Category.id]
 
-  Note: 'Associates a specific category with a specific game'
+  metatType metadata_type [not null]
+  itemId INTEGER [ref: > GameMetadata.id]
+
+  Note: 'Associates known metadata records with a specific game'
 }
 
-Table MechanicPlacement {
-  id INTEGER [unique, increment, pk]
-  gameId INTEGER [not null, ref: > Game.id]
-  mechanicId INTEGER [not null, ref: > Mechanic.id]
 
-  Note: 'Associates a specific mechanic with a specific game'
-}
+// -----------------------------------------------------------------------------
+// Tables in this session relate to session reporting in the system.
+//
+// Session reports track the game that was played, any expansions that were used
+// as a part of the play, a title and some descriptive text, the time the
+// session started and stopped,  and a set of players and their scores.
+//
+// For the purposes of session reporting, it is possible for people that are
+// not users of the system to participate, so Guests are allowed to participate
+// in sessions.
+//
+// Every report can be marked as "learning", which is just metadata to indicate
+// that this play of the game at least one player was learning how to play, so
+// that such sessions can excluded from statistics and the like.
+//
+// The system does not enforce that there is any specific start player or winner
+// or that scores are set, since different games work different ways.
+// -----------------------------------------------------------------------------
 
-Table DesignerPlacement {
-  id INTEGER [unique, increment, pk]
-  gameId INTEGER [not null, ref: > Game.id]
-  designerId INTEGER [not null, ref: > Designer.id]
-
-  Note: 'Associates a specific designer with a specific game'
-}
-
-Table ArtistPlacement {
-  id INTEGER [unique, increment, pk]
-  gameId INTEGER [not null, ref: > Game.id]
-  artistId INTEGER [not null, ref: > Artist.id]
-
-  Note: 'Associates a specific artist with a specific game'
-}
-
-Table PublisherPlacement {
-  id INTEGER [unique, increment, pk]
-  gameId INTEGER [not null, ref: > Game.id]
-  publisherId INTEGER [not null, ref: > Publisher.id]
-
-  Note: 'Associates a specific publisher with a specific game'
-}
-
-Table GameAsset {
-  id INTEGER [unique, increment, pk]
-
-  assetId INTEGER [not null, ref: - Asset.id]
-  gameId INTEGER [not null, ref: < Game.id]
-
-  Note: 'Associate specific assets to a particular game'
-}
-
-// Session reports need to have potentially multiple game ID's associated with
-// them; the primary game, and then a list of all expansions (if any) that were
-// a part of the play.
 Table SessionReport {
   id INTEGER [unique, increment, pk]
+
   gameID INTEGER [not null, ref: > Game.id]
+  gameName INTEGER [not null, ref: > GameName.id]
+
   loggingPlayerId INTEGER [not null, ref: > User.userId]
 
-  sessionDate TIME [default: 'now()']
-  sessionDuration INTEGER [default: 1]
-  isDetailed BOOLEAN [default: false, note: 'Detailed session reports also include a textual body']
+  sessionBegin TIME [default: 'now()']
+  sessionEnd TIME [default: null]
+
+  isLearning INTEGER [default: false]
 
   Note: 'An entry for a specific session report'
 }
 
-Table SessionReportEntry {
+// -----------------------------------------------------------------------------
+
+Table SessionReportExpansions {
   id INTEGER [unique, increment, pk]
+
+  sessionId INTEGER [not null, ref: < SessionReport.id]
+  expansionId INTEGER [not null, ref: <> Game.id]
+  expansionName INTEGER [not null, ref: <> GameName.id]
+
+  Note: 'Entries in this table are used to associate game expansions used during a play session'
+}
+
+// -----------------------------------------------------------------------------
+
+Table SessionReportPlayer {
+  id INTEGER [unique, increment, pk]
+
   sessionID INTEGER [not null, ref: - SessionReport.id]
-  playerID INTEGER [not null, ref: < User.userId]
+  userId INTEGER [ref: > User.userId, note: 'is null when the record tracks a guest']
+  guestId INTEGER [ref: > GuestUser.id, note: 'is null when the record tracks a user']
+
+  isReporter INTEGER [default: false]
+  isStartingPlayer INTEGER [default: false]
 
   score INTEGER [default: 0]
   winner BOOLEAN [default: false]
 
-  Note: 'Tracks a specific player in a specific session report entry'
+  Note: 'Tracks a specific player or user in a specific session report entry'
 }
 
-Table SessionReportContents {
-  sessionID INTEGER [unique, pk, ref: - SessionReport.id]
-  contents VARCHAR
+// -----------------------------------------------------------------------------
+
+Table SessionReportDetails {
+  id INTEGER [unique, increment, pk]
+
+  sessionID INTEGER [not null, ref: - SessionReport.id]
+  title TEXT [default: '']
+  contents TEXT [default: '']
 
   Note: 'Contains the textual content of a detailed session report'
 }
 
 
+// -----------------------------------------------------------------------------
+// Tables in this section are related to the ownership of games and the
+// relationships between different users.
+//
+// We take the tack of saying that games are owned or wished for not by a user
+// but by a "household" instead, so that multiple users from the same house do
+// not need to maintain their collection of games distinctly. The presumption
+// is that people living in the same house can play the same games.
+//
+// Thus, we create one or more households, assign users to one or more household
+// groups, and then associate game ownership, loans and wishlists to a household
+// instead.
+// -----------------------------------------------------------------------------
+
 Table Household {
   id INTEGER [unique, increment, pk]
-  name VARCHAR [not null]
+
+  name TEXT [not null, unique]
+  slug TEXT [not null, unique]
+
+  indexes {
+    slug [name: 'idx_household_slug']
+  }
 
   Note: 'Users can exist in one or more households; a household tracks who owns games'
 }
+
+// -----------------------------------------------------------------------------
 
 Table UserHousehold {
   id INTEGER [unique, increment, pk]
@@ -291,25 +304,49 @@ Table UserHousehold {
   userId INTEGER [not null, ref: < User.userId]
   householdId INTEGER [not null, ref: < Household.id]
 
+  indexes {
+    (userId, householdId) [name: 'idx_user_household']
+  }
+
   Note: 'Register that a specific user resides in a specific household'
 }
+
+// -----------------------------------------------------------------------------
 
 Table GameOwners {
   id INTEGER [unique, increment, pk]
   householdId INTEGER [not NULL, ref: < Household.id]
   gameId INTEGER [not NULL, ref: < Game.id]
 
-  gameName VARCHAR [not NULL, note: 'The name of the game this household owns; may not be the primary name']
-  loanedTo INTEGER [ref: < Household.id]
+  gameName INTEGER [not NULL, ref: < GameName.id]
+  gamePublisher INTEGER [not NULL, ref: < GameMetadata.id]
 
-  Note: 'Game ownership is tracked by household; games can be loaned to other households'
+  Note: 'Game ownership is tracked by household'
 }
 
-Table GameWishlist {
+// -----------------------------------------------------------------------------
+
+Table GameLoans {
   id INTEGER [unique, increment, pk]
+
+  gameId INTEGER [not null, ref: < Game.id]
+
+  loanedTo INTEGER [not null, ref: < Household.id]
+  loanTime DATE [not null]
+}
+
+// -----------------------------------------------------------------------------
+
+Table Wishlist {
+  id INTEGER [unique, increment, pk]
+
   householdId INTEGER [not NULL, ref: < Household.id]
   gameId INTEGER [not NULL, ref: < Game.id]
+  gameName INTEGER [not NULL, ref: < GameName.id]
+
   addedByUserId INTEGER [ref: < User.userId]
 
   Note: 'Game wishlist is tracked by household; the wishing user is stored'
 }
+
+// -----------------------------------------------------------------------------
