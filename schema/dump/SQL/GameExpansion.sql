@@ -1244,4 +1244,12 @@ INSERT INTO GameExpansion VALUES(1241,206,199561,NULL,368442,'Sagrada: The Great
 INSERT INTO GameExpansion VALUES(1242,206,199561,NULL,359142,'Sagrada: The Great Facades – Glory');
 INSERT INTO GameExpansion VALUES(1243,206,199561,NULL,301561,'Sagrada: The Great Facades – Life');
 INSERT INTO GameExpansion VALUES(1244,206,199561,NULL,263695,'Sagrada: The Great Facades – Passion');
+INSERT INTO GameExpansion VALUES(1245,207,265736,NULL,388566,'Tiny Towns: Architects');
+INSERT INTO GameExpansion VALUES(1246,207,265736,NULL,311714,'Tiny Towns: FLGS and Larkstone Promo Cards');
+INSERT INTO GameExpansion VALUES(1247,207,265736,NULL,287576,'Tiny Towns: Fortune');
+INSERT INTO GameExpansion VALUES(1248,207,265736,NULL,312568,'Tiny Towns: Fortune – Pirate''s Den');
+INSERT INTO GameExpansion VALUES(1249,207,265736,NULL,373505,'Tiny Towns: Joinery');
+INSERT INTO GameExpansion VALUES(1250,207,265736,NULL,370580,'Tiny Towns: McPherson Manor Promo Card');
+INSERT INTO GameExpansion VALUES(1251,207,265736,NULL,321679,'Tiny Towns: Tiny Trees');
+INSERT INTO GameExpansion VALUES(1252,207,265736,NULL,311441,'Tiny Towns: Villagers');
 COMMIT;

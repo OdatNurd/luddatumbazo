@@ -1319,4 +1319,8 @@ INSERT INTO GameMetadata VALUES(1389,'designer',88370,'adrian-adamescu','Adrian 
 INSERT INTO GameMetadata VALUES(1390,'designer',67502,'daryl-andrews','Daryl Andrews');
 INSERT INTO GameMetadata VALUES(1391,'artist',39902,'peter-wocken','Peter Wocken');
 INSERT INTO GameMetadata VALUES(1392,'publisher',21756,'floodgate-games','Floodgate Games');
+INSERT INTO GameMetadata VALUES(1393,'designer',110951,'peter-mcpherson','Peter McPherson');
+INSERT INTO GameMetadata VALUES(1394,'artist',122536,'gong-studios','Gong Studios');
+INSERT INTO GameMetadata VALUES(1395,'publisher',40047,'all-in-games','All In Games');
+INSERT INTO GameMetadata VALUES(1396,'publisher',36401,'arrakis-games','Arrakis Games');
 COMMIT;
