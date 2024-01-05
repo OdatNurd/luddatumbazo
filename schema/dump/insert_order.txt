@@ -1,0 +1,16 @@
+User
+GuestUser
+Household
+UserHousehold
+Game
+GameName
+GameExpansion
+GameMetadata
+GameMetadataPlacement
+GameOwners
+GameLoans
+Wishlist
+SessionReport
+SessionReportDetails
+SessionReportExpansions
+SessionReportPlayer
