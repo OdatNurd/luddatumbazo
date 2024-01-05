@@ -1,5 +1,5 @@
 <script>
-  import { LoadZone, Table, Flex, Button, Icon, Text, Chip } from "@axel669/zephyr";
+  import { LoadZone, Table, Flex, Grid, Button, Icon, Text, Chip } from "@axel669/zephyr";
 
   import BackButton from '$components/BackButton.svelte';
   import BGGLink from '$components/BGGLink.svelte';
@@ -30,6 +30,7 @@
   // Default the name on the page to the sessionId that was used to load it,
   // until the data is fully loaded.
   let name = 'Unknown';
+  let slug = 'unknown';
   let title = params.id;
 
   // Using the props that we were given, generate out the kinds of links that
@@ -45,7 +46,9 @@
     const result = await response.json();
 
     name = result.data.name;
+    slug = result.data.slug;
     title = result.data.title;
+
     return result.data;
   };
 </script>
@@ -53,26 +56,31 @@
 <Flex direction="column">
   <Flex direction="row">
     <BackButton />
-    <h3>{name}</h3>
+    <h3><a href="{slugLink(slug)}">{name}</a></h3>
   </Flex>
   <h3>{title}</h3>
 </Flex>
 
 <LoadZone source={loadData()} let:result>
-  <Flex gap="16px" fl.wr="wrap" direction="row">
+  <Grid cols="max-content auto" gap="8px">
     <GameImage imagePath={result.imagePath} name={result.name} />
-    <Text p="8px" b.l="1.5px solid gray">
-      {@html result.content}
-    </Text>
+      <Text p="8px" b.l="1.5px solid gray">
+        {@html result.content}
+      </Text>
+  </Grid>
+  <Flex gap="16px" fl.wr="wrap" direction="row">
+    {#if result.isLearning}
+      <Chip color="accent" fill>Learning Game!</Chip>
+    {/if}
+    <Chip color="secondary" fill>
+      Played {DateTime.fromISO(result.sessionBegin).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)}
+
+      @
+      {DateTime.fromISO(result.sessionBegin).toLocaleString(DateTime.TIME_SIMPLE)}
+      <Icon name="arrow-right"></Icon>
+      {DateTime.fromISO(result.sessionEnd).toLocaleString(DateTime.TIME_SIMPLE)}
+    </Chip>
   </Flex>
-  <Chip color="secondary" fill>
-    {DateTime.fromISO(result.sessionBegin).toLocaleString(DateTime.DATETIME_SHORT)}
-    <Icon name="arrow-right"></Icon>
-    {DateTime.fromISO(result.sessionEnd).toLocaleString(DateTime.DATETIME_SHORT)}
-  </Chip>
-  {#if result.isLearning}
-    <Chip color="accent" fill>Learning Game!</Chip>
-  {/if}
 
   <Table data={result.players} fillHeader color="primary">
     <tr slot="header">
@@ -124,7 +132,6 @@
     </tr>
   </Table>
   {/if}
-
 </LoadZone>
 
 <style>
