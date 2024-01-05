@@ -10,8 +10,12 @@ CREATE TABLE GameExpansion (
 
     entryName TEXT
 );
-CREATE INDEX idx_game_expand_base ON GameExpansion(baseGameBggId, baseGameId);
-CREATE INDEX idx_game_expand_expansion ON GameExpansion(expansionGameBggId, expansionGameId);
+CREATE INDEX idx_game_expand_base ON GameExpansion(baseGameId);
+CREATE INDEX idx_game_expand_expansion ON GameExpansion(expansionGameId);
+
+
+--------------------------------------------------------------------------------
+
 
 DROP TABLE IF EXISTS GameMetadataPlacement;
 CREATE TABLE GameMetadataPlacement (
@@ -21,7 +25,10 @@ CREATE TABLE GameMetadataPlacement (
     metatype VARCHAR CHECK(metatype in ("designer", "artist", "publisher", "mechanic", "category")),
     itemId INTEGER REFERENCES GameMetadata(id)
 );
-CREATE INDEX idx_metadata_place_map ON GameMetadataPlacement(metatype, itemId);
+CREATE INDEX idx_metadata_place_map ON GameMetadataPlacement(gameId, metatype, itemId);
+
+
+--------------------------------------------------------------------------------
 
 
 DROP TABLE IF EXISTS GameMetadata;
@@ -39,6 +46,9 @@ CREATE UNIQUE INDEX idx_metadata_metaslug_map ON GameMetadata(metatype, slug);
 CREATE INDEX idx_metadata_slug_map ON GameMetadata(slug);
 
 
+--------------------------------------------------------------------------------
+
+
 DROP TABLE IF EXISTS GameName;
 CREATE TABLE GameName (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,6 +58,10 @@ CREATE TABLE GameName (
     isPrimary INTEGER DEFAULT(false)
 );
 CREATE INDEX idx_gamename_id ON GameName(gameId);
+CREATE INDEX idx_gamename_primary on GameName(gameId, isPrimary) WHERE isPrimary = 1;
+
+
+--------------------------------------------------------------------------------
 
 
 DROP TABLE IF EXISTS Game;
@@ -74,6 +88,10 @@ CREATE TABLE Game (
     teachingURL TEXT DEFAULT(''),
     imagePath TEXT DEFAULT('')
 );
+CREATE INDEX idx_game_slug on Game(slug);
+
+
+--------------------------------------------------------------------------------
 
 
 DROP TABLE IF EXISTS User;
@@ -100,6 +118,9 @@ CREATE TABLE Household (
 CREATE INDEX idx_household_slug ON Household(slug);
 
 
+--------------------------------------------------------------------------------
+
+
 DROP TABLE IF EXISTS UserHousehold;
 CREATE TABLE UserHousehold (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,6 +129,9 @@ CREATE TABLE UserHousehold (
     householdId INTEGER NOT NULL REFERENCES Household(id)
 );
 CREATE UNIQUE INDEX idx_user_household ON UserHousehold(userId, householdId);
+
+
+--------------------------------------------------------------------------------
 
 
 DROP TABLE IF EXISTS GameOwners;
@@ -122,6 +146,9 @@ CREATE TABLE GameOwners (
 );
 
 
+--------------------------------------------------------------------------------
+
+
 -- We could also add a table to track loan history, which would include when the loan happened
 DROP TABLE IF EXISTS GameLoans;
 CREATE TABLE GameLoans (
@@ -132,6 +159,9 @@ CREATE TABLE GameLoans (
     loanedTo INTEGER NOT NULL REFERENCES Household(id),
     loanTime DATE NOT NULL
 );
+
+
+--------------------------------------------------------------------------------
 
 
 DROP TABLE IF EXISTS Wishlist;
@@ -146,6 +176,9 @@ CREATE TABLE Wishlist (
 );
 
 
+--------------------------------------------------------------------------------
+
+
 DROP TABLE IF EXISTS GuestUser;
 CREATE TABLE GuestUser (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -155,7 +188,9 @@ CREATE TABLE GuestUser (
     name GENERATED ALWAYS AS (firstName || ' ' || lastName) STORED
 );
 CREATE UNIQUE INDEX idx_guest_name ON GuestUser(firstName, lastName);
-INSERT INTO GuestUser VALUES(1,'Marisue','Martin');
+
+
+--------------------------------------------------------------------------------
 
 
 DROP TABLE IF EXISTS SessionReportDetails;
@@ -167,6 +202,11 @@ CREATE TABLE SessionReportDetails (
     title TEXT DEFAULT(''),
     content TEXT DEFAULT('')
 );
+CREATE INDEX idx_session_details on SessionReportDetails(sessionId);
+
+
+--------------------------------------------------------------------------------
+
 
 DROP TABLE IF EXISTS SessionReportExpansions;
 CREATE TABLE SessionReportExpansions (
@@ -176,6 +216,11 @@ CREATE TABLE SessionReportExpansions (
     expansionId INTEGER NOT NULL REFERENCES Game(id),
     expansionName INTEGER NOT NULL REFERENCES GameName(id)
 );
+CREATE INDEX idx_session_expansion_game ON SessionReportExpansions(sessionId, expansionId);
+
+
+--------------------------------------------------------------------------------
+
 
 DROP TABLE IF EXISTS SessionReportPlayer;
 CREATE TABLE SessionReportPlayer (
@@ -190,6 +235,12 @@ CREATE TABLE SessionReportPlayer (
     score INTEGER DEFAULT(0),
     isWinner INTEGER DEFAULT(false)
 );
+CREATE INDEX idx_session_players on SessionReportPlayer(sessionId, userId) WHERE userId IS NOT NULL;
+CREATE INDEX idx_session_guests on SessionReportPlayer(sessionId, guestId) WHERE guestId IS NOT NULL;
+
+
+--------------------------------------------------------------------------------
+
 
 DROP TABLE IF EXISTS SessionReport;
 CREATE TABLE SessionReport (
@@ -203,3 +254,8 @@ CREATE TABLE SessionReport (
 
     isLearning INTEGER DEFAULT(false)
 );
+CREATE INDEX idx_session_game ON SessionReport(gameId);
+CREATE INDEX idx_session_game_names ON SessionReport(gameId, gameName);
+
+
+--------------------------------------------------------------------------------

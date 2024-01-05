@@ -106,6 +106,15 @@ export async function getGameSynopsis(ctx, gameId, imageType, includeNameId) {
  * item in the list is a pair of id and slug values that represent a looked up
  * game. */
 export async function performGameLookup(ctx, identifiers) {
+  // Short circut the lookup if we were not given any identifiers to look up.
+  if (identifiers.length === 0) {
+    return [];
+  }
+
+  // TODO: The subselects here cost writes and reads because the back end uses
+  //       a vtable instance for them; could maybe be made smarter if we want to
+  //       try to only look up integers in one and strings in the other to cut
+  //       potiential ops.
   const filter = JSON.stringify(identifiers);
   const idValues = await ctx.env.DB.prepare(`
     SELECT id, slug
