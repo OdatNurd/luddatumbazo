@@ -618,11 +618,13 @@ export async function getSessionList(ctx, gameIdList) {
   const filter = JSON.stringify(gameIdList);
   const subQuery = `
    AND A.id IN (
-    SELECT DISTINCT A.id
-      FROM SessionReport as A, SessionReportExpansions as B
-     WHERE A.gameId in (SELECT value from json_each('${filter}'))
-        OR (B.expansionId in (SELECT value from json_each('${filter}'))
-            AND (A.id = B.sessionId))
+    SELECT DISTINCT id
+      FROM SessionReport
+     WHERE gameId in (SELECT value from json_each('${filter}'))
+    UNION ALL
+    SELECT DISTINCT sessionId
+      FROM SessionReportExpansions
+     WHERE expansionId in (SELECT value from json_each('${filter}'))
        )
   `;
 

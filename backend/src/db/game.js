@@ -190,11 +190,14 @@ export async function getGameDetails(ctx, idOrSlug) {
   // This is stored as a boolean and doesn't have anything like a count, just
   // the presence or absence of such information.
   const sessionReq = await ctx.env.DB.prepare(`
-      SELECT DISTINCT A.id
-      FROM SessionReport as A, SessionReportExpansions as B
-     WHERE A.gameId = ?1
-        OR (B.expansionId = ?1 and A.id = B.sessionId)
-     LIMIT 1
+    SELECT DISTINCT id
+      FROM SessionReport
+     WHERE gameId = ?1
+    UNION ALL
+    SELECT DISTINCT sessionId
+      FROM SessionReportExpansions
+     WHERE expansionId = ?1
+    LIMIT 1
   `).bind(gameData.id).all();
   const hasSession = getDBResult('getGameDetails', 'find_sessions', sessionReq);
   gameData.hasSessions = hasSession.length !== 0;
