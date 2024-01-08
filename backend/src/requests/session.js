@@ -69,6 +69,10 @@ export async function sessionUpdateReq(ctx) {
  * are returned, but at time of writing (during devember) this is more
  * simplistic than that and only supports gameId filters. */
 export async function sessionListReq(ctx) {
+  // The query can optionally contain a flag requesting that the list be
+  // returned in a reverse sorted order.
+  const reverseSort = (ctx.req.query("reverse") !== undefined);
+
   // The query can optionally contain a list of games to collect the session
   // reports for; these will be searched as both the main game as well as an
   // expansion to some game, and can be specified as either ID values, slugs
@@ -85,8 +89,8 @@ export async function sessionListReq(ctx) {
   //       for the moment.
   const lookup = await performGameLookup(ctx, gameFilter);
 
-  // Fetch and return the list, optionally filtering it.
-  const result = await getSessionList(ctx, lookup.map(e => e.id));
+  // Fetch and return the list, optionally filtering and reversing it.
+  const result = await getSessionList(ctx, lookup.map(e => e.id), reverseSort);
 
   return success(ctx, `found ${result.length} session(s)`, result);
 }

@@ -19,4 +19,4 @@
   <h3>Session Reports FOR A GAME</h3>
 </Flex>
 
-<SessionList query='/session/list?games={params.slug}' />
+<SessionList query='/session/list?games={params.slug}&reverse' />

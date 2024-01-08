@@ -3,4 +3,4 @@
 </script>
 
 <h3>Session Reports</h3>
-<SessionList query='/session/list' />
+<SessionList query='/session/list?reverse' />

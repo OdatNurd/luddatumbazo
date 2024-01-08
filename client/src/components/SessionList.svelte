@@ -49,6 +49,15 @@
 
     return filter(result);
   };
+
+  // This is a duplicate of the natural sort order from sorts.natural() but
+  // based on how we may want to have incoming dates be actual dates and not
+  // strings, I'm going to leave this here so that when the time comes I can
+  // do less work, cause lazy.
+  const dateSort = (propName) => {
+    const comparitor = new Intl.Collator(undefined, { numeric: true })
+    return (a, b) => comparitor.compare(a[propName], b[propName])
+  }
 </script>
 
 
@@ -58,7 +67,7 @@
       <Th w="64px" sort={sorts.natural("id")}>ID</Th>
       <Th w="32px"></Th>
       <Th filter={filters.text("title")} sort={sorts.natural("title")}>Name</Th>
-      <Th w="64px">Date</Th>
+      <Th sort={dateSort("sessionBegin")} w="64px">Date</Th>
       <Th w="64px">Game</Th>
     </svelte:fragment>
     <svelte:fragment slot="row" let:row>

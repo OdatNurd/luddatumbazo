@@ -609,9 +609,12 @@ export async function updateSession(ctx, sessionId, updateData) {
  * game itself.
  *
  * Each session will contain information on the game to which it applies. */
-export async function getSessionList(ctx, gameIdList) {
+export async function getSessionList(ctx, gameIdList, reverse) {
   // Ensure that we got a gameId list input.
   gameIdList ??= [];
+
+  // If we got no flag for reversing, assume no reverse is desired.
+  reverse ??= false;
 
   // Construct the possible subquery we want to add if any gameId's were
   // provided as filter criteria.
@@ -649,6 +652,7 @@ export async function getSessionList(ctx, gameIdList) {
        AND (D.id = A.gameId)
        AND (A.id = C.sessionId)
        ${(gameIdList.length === 0) ? '' : subQuery}
+     ${(reverse === false) ? '' : 'ORDER BY A.sessionBegin DESC'}
   `).all();
   const result = getDBResult('getSessionList', 'find_session', lookup);
 
