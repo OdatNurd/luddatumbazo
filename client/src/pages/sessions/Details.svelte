@@ -6,7 +6,7 @@
   import GameImage from '$components/GameImage.svelte';
   import SlugList from '$components/SlugList.svelte';
 
-  import { DateTime } from 'luxon';
+  import { DateTime, Interval } from 'luxon';
 
 
   // ---------------------------------------------------------------------------
@@ -49,6 +49,23 @@
     slug = result.data.slug;
     title = result.data.title;
 
+    // Convert the incoming session begin and end into DateTime for easier
+    // handling.
+    const begin = DateTime.fromISO(result.data.sessionBegin);
+    const end   = DateTime.fromISO(result.data.sessionEnd);
+
+    // Calculate the duration; we want this to be in minutes unless the game
+    // look at least an hour
+    let duration = Interval.fromDateTimes(begin, end).toDuration(['minutes']);
+    if (duration.minutes > 60) {
+      duration = duration.shiftTo('hours', 'minutes');
+    }
+
+    // Store back now
+    result.data.sessionBegin = begin
+    result.data.sessionEnd = end
+    result.data.sessionDuration = duration;
+
     return result.data;
   };
 </script>
@@ -73,12 +90,14 @@
       <Chip color="accent" fill>Learning Game!</Chip>
     {/if}
     <Chip color="secondary" fill>
-      Played {DateTime.fromISO(result.sessionBegin).toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)}
+      Played {result.sessionBegin.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)}
 
       @
-      {DateTime.fromISO(result.sessionBegin).toLocaleString(DateTime.TIME_SIMPLE)}
+      {result.sessionBegin.toLocaleString(DateTime.TIME_SIMPLE)}
       <Icon name="arrow-right"></Icon>
-      {DateTime.fromISO(result.sessionEnd).toLocaleString(DateTime.TIME_SIMPLE)}
+      {result.sessionEnd.toLocaleString(DateTime.TIME_SIMPLE)}
+
+      ({result.sessionDuration.toHuman({'unitDisplay': 'short'})})
     </Chip>
   </Flex>
 
