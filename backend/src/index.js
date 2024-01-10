@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors'
 
 import { wrappedRequest as _ } from './requests/common.js';
-import { lookupBGGGameInfo } from './requests/bgg.js';
 import { insertGameReq, insertBGGGameReq, insertBGGGameListReq,
          gameListReq, gameDetailsReq, performGameLookupReq } from './requests/game.js';
 import { updateExpansionDetailsReq, updateExpansionDetailsBggReq,
@@ -13,6 +12,7 @@ import { sessionAddReq, sessionUpdateReq,  sessionListReq,
          sessionDetailsReq } from './requests/session.js';
 import { tempImageDetailsReq } from './requests/image.js';
 
+import { bgg } from './requests/bgg/index.js';
 import { guest } from './requests/guest/index.js';
 
 
@@ -34,10 +34,7 @@ app.use('/api/*', cors())
  * convert it to JSON to make handling of it easier.
  ******************************************************************************/
 
-// Given a BoardGameGeek game ID, access the BGG API and return back and object
-// that describes that game. The object is in the same form as that used by
-// inserts or queries from our internal game API's.
-app.get(`${APIV1}/bgg/boardgame/:bggGameId`, ctx => _(ctx, lookupBGGGameInfo));
+app.route(`${APIV1}/bgg`, bgg);
 
 
 /*******************************************************************************

@@ -4,6 +4,7 @@
 import { BGGLookupError } from '../db/exceptions.js';
 
 import { validator } from 'hono/validator';
+import { z } from 'zod';
 
 
 /******************************************************************************/
@@ -49,7 +50,7 @@ export const fail = (ctx, message, status) => {
  *
  * The underlying request will be able to fetch this via: ctx.req.valid('json')
  * in the handler, rather than trying to collect the actual JSON data. */
-export const validateAgainst = (schemaObj) => validator('json', async (value, ctx) => {
+export const validateAgainst = (schemaObj, dataType) => validator(dataType ?? 'json', async (value, ctx) => {
   // Using this schema, parse the data out; this does the work of conforming
   // the value to the appropriate schema.
   const result = await schemaObj.safeParseAsync(value);
@@ -74,6 +75,32 @@ export const validateAgainst = (schemaObj) => validator('json', async (value, ct
   // the return (in cases where there is more than one).
   return fail(ctx, `error in ${field}: ${errors.fieldErrors[field][0]}`);
 });
+
+
+/******************************************************************************/
+
+
+/* During parsing of data, this can be used as part of a transform stage in a
+ * schema to coerce the value into a number.
+ *
+ * The return value is a number, but errors can be flagged if the value is not
+ * a valid number. */
+export function asNumber(value, zCtx) {
+  // Parse it into a number; if it's not a valid number, we can return right
+  // away.
+  const parsed = Number(value);
+  if (isNaN(parsed) === true) {
+    zCtx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Not a number",
+    });
+
+    return z.NEVER;
+  }
+
+  // All good
+  return parsed;
+}
 
 
 /******************************************************************************/
