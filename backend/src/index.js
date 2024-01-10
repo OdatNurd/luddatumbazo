@@ -9,10 +9,11 @@ import { updateExpansionDetailsReq, updateExpansionDetailsBggReq,
          getExpansionDetailsReq } from './requests/expansion.js';
 import { metadataUpdateReq, metadataQueryReq,
          metadataListReq, metadataPurgeReq } from './requests/metadata.js';
-import { guestListReq, updateGuestsReq, purgeGuestsReq } from './requests/guest.js';
 import { sessionAddReq, sessionUpdateReq,  sessionListReq,
          sessionDetailsReq } from './requests/session.js';
 import { tempImageDetailsReq } from './requests/image.js';
+
+import { guest } from './requests/guest/index.js';
 
 
 /******************************************************************************/
@@ -112,9 +113,7 @@ app.get(`${APIV1}/images/:bggId?`, ctx => _(ctx, tempImageDetailsReq));
  ******************************************************************************/
 
 // Get and manipulate the guest list.
-app.put(`${APIV1}/guest/add`, ctx => _(ctx, updateGuestsReq));
-app.get(`${APIV1}/guest/list`, ctx => _(ctx, guestListReq));
-app.delete(`${APIV1}/guest/purge`, ctx => _(ctx, purgeGuestsReq));
+app.route(`${APIV1}/guest`, guest);
 
 // Adding and querying session reports.
 app.put(`${APIV1}/session/add`, ctx => _(ctx, sessionAddReq));

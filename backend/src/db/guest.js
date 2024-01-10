@@ -1,35 +1,7 @@
 /******************************************************************************/
 
 
-import { ensureRequiredKeys, getDBResult } from './common.js';
-
-
-/******************************************************************************/
-
-
-/* Given a list of input guest data records, verify that the fields that must
- * exist are present, and fill in any of the optional fields that are not
- * there.
- *
- * A modified version of the list is returned that contains (potentially)
- * updated items, unless any one of them is invalid, in which case an exception
- * is thrown instead. */
-const validateGuestData = guestData => guestData.map(guest => {
-  // These keys must exist.
-  if (ensureRequiredKeys(guest, ['firstName', 'lastName']) === false) {
-    throw new Error(`guest list element is missing a requred field`)
-  }
-
-  // This key cannot exist because as a generated column outside code can't
-  // specify the value); so fail if it is present, and set it otherwise.
-  if (guest.name !== undefined) {
-    throw new Error(`guest list entries cannot have an explicit name field`);
-  }
-
-  // Put the desired name in.
-  guest.name = `${guest.firstName} ${guest.lastName}`;
-  return guest;
-});
+import { getDBResult } from './common.js';
 
 
 /******************************************************************************/
@@ -44,9 +16,12 @@ const validateGuestData = guestData => guestData.map(guest => {
  * The result is a list of objects, including their ID values, which exist. This
  * will include not only new users but also any that previously existed. */
 export async function updateGuests(ctx, inputGuestList) {
-  // Verify that all of the input data has the appropriate shape; throws an
-  // exception if it does not.
-  const guests = validateGuestData(inputGuestList);
+  // The input data is pre-validated to include a list of objects with first
+  // and last names only; populate in the name field as a concatenation of them.
+  const guests = inputGuestList.map(guest => {
+    guest.name = `${guest.firstName} ${guest.lastName}`;
+    return guest;
+  });
 
   // Grab from the input list all of the names so we can see which ones already
   // exist in the table.

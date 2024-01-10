@@ -3,6 +3,8 @@
 
 import { BGGLookupError } from '../db/exceptions.js';
 
+import { validator } from 'hono/validator';
+
 
 /******************************************************************************/
 
@@ -33,6 +35,45 @@ export const fail = (ctx, message, status) => {
   ctx.status(status);
   return ctx.json({ success: false, message });
 }
+
+
+/******************************************************************************/
+
+
+/* Create a validator that will validate the schema provided against the JSON
+ * data from the context provided.
+ *
+ * This provides a middleware filter for use in Hono; it is expected to either
+ * trigger a failure, or return the data that is the validated and cleaned
+ * object from the request.
+ *
+ * The underlying request will be able to fetch this via: ctx.req.valid('json')
+ * in the handler, rather than trying to collect the actual JSON data. */
+export const validateAgainst = (schemaObj) => validator('json', async (value, ctx) => {
+  // Using this schema, parse the data out; this does the work of conforming
+  // the value to the appropriate schema.
+  const result = await schemaObj.safeParseAsync(value);
+
+  // If there was no issue, return the result back directly; this will be the
+  // parsed and sanitized object.
+  if (result.success === true) {
+    return result.data;
+  }
+
+  // There was a problem; flatten the error structure down and grab out the
+  // first field error to use as our failure message before we return.
+  //
+  // TODO: This could be made much better, but we're currently in a state of
+  //       flux as to what the errors should look like and what library we use
+  //       for the sanitization.
+  // console.log(JSON.stringify(result.error, null, 2));
+  const errors = result.error.flatten();
+  const field = Object.keys(errors.fieldErrors)[0];
+
+  // Return failure, indicating an issue with the first field with an error in
+  // the return (in cases where there is more than one).
+  return fail(ctx, `error in ${field}: ${errors.fieldErrors[field][0]}`);
+});
 
 
 /******************************************************************************/
