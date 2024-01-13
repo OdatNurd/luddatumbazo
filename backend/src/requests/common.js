@@ -86,22 +86,34 @@ export const validate = (dataType, schemaObj) => validator(dataType, async (valu
  * schema to coerce the value into a number.
  *
  * The return value is a number, but errors can be flagged if the value is not
- * a valid number. */
-export function asNumber(value, zCtx) {
-  // Parse it into a number; if it's not a valid number, we can return right
-  // away.
-  const parsed = Number(value);
-  if (isNaN(parsed) === true) {
-    zCtx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Not a number",
-    });
+ * a valid number and the number is required.
+ *
+ * If the value does not convert into a number, and it's not required, then the
+ * return value will be undefined as an indication of this. */
+export function asNumber(isRequired) {
+  // The underlying validation mechanism does not allow for extra arguments,
+  // so return back a wrapped version of the actual function that will be used
+  // so that it can close over our arguments here.
+  return function(value, zCtx) {
+    const parsed = Number(value);
+    if (isNaN(parsed) === true) {
+      // If the value is not strictly required, return undefined instead.
+      if (isRequired === false) {
+        return undefined;
+      }
 
-    return z.NEVER;
+      // Flag this as an issue
+      zCtx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Not a number",
+      });
+
+      return z.NEVER;
+    }
+
+    // All good
+    return parsed;
   }
-
-  // All good
-  return parsed;
 }
 
 

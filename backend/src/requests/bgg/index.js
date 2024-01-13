@@ -10,11 +10,11 @@ import { lookupBGGGame } from '../../db/bgg.js';
 
 /******************************************************************************/
 
-/* When adding new guests to the system, the only data that's required is the
- * first and last name of the guest to be added. No other fields (including
- * name) are valid in this context. */
+
+/* When making a request, a valid BoardGameGeek ID is required, or the request
+ * does not know what data to ask for. */
 export const BGGGameIDSchema = z.object({
-  bggId: z.string().transform(asNumber)
+  bggId: z.string().transform(asNumber(true))
 });
 
 

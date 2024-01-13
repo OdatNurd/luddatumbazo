@@ -10,10 +10,10 @@ import { metadataUpdateReq, metadataQueryReq,
          metadataListReq, metadataPurgeReq } from './requests/metadata.js';
 import { sessionAddReq, sessionUpdateReq,  sessionListReq,
          sessionDetailsReq } from './requests/session.js';
-import { tempImageDetailsReq } from './requests/image.js';
 
 import { bgg } from './requests/bgg/index.js';
 import { guest } from './requests/guest/index.js';
+import { image } from './requests/image/index.js';
 
 
 /******************************************************************************/
@@ -93,11 +93,6 @@ app.get(`${APIV1}/game/data/expansions/update/bgg/:bggGameId{[0-9]+}`, ctx => _(
 // games are games that this game would expand, if this game was an expansion.
 app.get(`${APIV1}/game/data/expansions/list/:gameId`, ctx => _(ctx, getExpansionDetailsReq));
 
-// As a temporary endpoint on the system, using an internal table that can
-// associate one of our game ID's with a BGG ID and the URL image for such a
-// game, grab and upload the image for that game to our images account.
-app.get(`${APIV1}/images/:bggId?`, ctx => _(ctx, tempImageDetailsReq));
-
 
 /*******************************************************************************
  * Core Session Reporting Data API
@@ -117,6 +112,21 @@ app.put(`${APIV1}/session/add`, ctx => _(ctx, sessionAddReq));
 app.patch(`${APIV1}/session/update/:sessionId{[0-9]+}`, ctx => _(ctx, sessionUpdateReq));
 app.get(`${APIV1}/session/list`, ctx => _(ctx, sessionListReq));
 app.get(`${APIV1}/session/:sessionId{[0-9]+}`, ctx => _(ctx, sessionDetailsReq));
+
+
+/*******************************************************************************
+ * Temporary Requests
+ *******************************************************************************
+ *
+ * Requests in this area are not meant for permanent production use, and are
+ * here only for an interim period to help backfill data, run extra test queries
+ * and so on.
+ ******************************************************************************/
+
+// As a temporary endpoint on the system, using an internal table that can
+// associate one of our game ID's with a BGG ID and the URL image for such a
+// game, grab and upload the image for that game to our images account.
+app.route(`${APIV1}/images`, image);
 
 
 /******************************************************************************/
