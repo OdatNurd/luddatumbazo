@@ -41,16 +41,18 @@ export const fail = (ctx, message, status) => {
 /******************************************************************************/
 
 
-/* Create a validator that will validate the schema provided against the JSON
- * data from the context provided.
+/* Create a validator that will validate the type of request data provided
+ * against a specifically defined schema object. The data is both validated
+ * against the schema as well as filtered so that non-schema properties of the
+ * data are discarded.
  *
  * This provides a middleware filter for use in Hono; it is expected to either
  * trigger a failure, or return the data that is the validated and cleaned
  * object from the request.
  *
- * The underlying request will be able to fetch this via: ctx.req.valid('json')
- * in the handler, rather than trying to collect the actual JSON data. */
-export const validateAgainst = (schemaObj, dataType) => validator(dataType ?? 'json', async (value, ctx) => {
+ * When using this filter, underlying requests can fetch the validated data
+ * via the ctx.req.valid() function, e.g. ctx.req.valid('json'). */
+export const validate = (dataType, schemaObj) => validator(dataType, async (value, ctx) => {
   // Using this schema, parse the data out; this does the work of conforming
   // the value to the appropriate schema.
   const result = await schemaObj.safeParseAsync(value);

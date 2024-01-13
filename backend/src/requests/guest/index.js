@@ -2,7 +2,7 @@
 
 
 import { Hono } from 'hono'
-import { wrappedRequest as _, validateAgainst } from '../common.js';
+import { wrappedRequest as _, validate } from '../common.js';
 
 import { guestListReq } from './list.js';
 import { updateGuestsReq, NewGuestSchema } from './update.js';
@@ -16,7 +16,7 @@ import { purgeGuestsReq } from './purge.js';
  * map all routes in. */
 export const guest = new Hono();
 
-guest.put('/add', validateAgainst(NewGuestSchema), ctx => _(ctx, updateGuestsReq));
+guest.put('/add', validate('json', NewGuestSchema), ctx => _(ctx, updateGuestsReq));
 guest.get('/list', ctx => _(ctx, guestListReq));
 
 // The get version lists items that can be purged, while the delete version will
