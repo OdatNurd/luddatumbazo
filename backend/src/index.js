@@ -8,12 +8,11 @@ import { updateExpansionDetailsReq, updateExpansionDetailsBggReq,
          getExpansionDetailsReq } from './requests/expansion.js';
 import { metadataUpdateReq, metadataQueryReq,
          metadataListReq, metadataPurgeReq } from './requests/metadata.js';
-import { sessionAddReq, sessionUpdateReq,  sessionListReq,
-         sessionDetailsReq } from './requests/session.js';
 
 import { bgg } from './requests/bgg/index.js';
 import { guest } from './requests/guest/index.js';
 import { image } from './requests/image/index.js';
+import { session } from './requests/session/index.js';
 
 
 /******************************************************************************/
@@ -108,10 +107,7 @@ app.get(`${APIV1}/game/data/expansions/list/:gameId`, ctx => _(ctx, getExpansion
 app.route(`${APIV1}/guest`, guest);
 
 // Adding and querying session reports.
-app.put(`${APIV1}/session/add`, ctx => _(ctx, sessionAddReq));
-app.patch(`${APIV1}/session/update/:sessionId{[0-9]+}`, ctx => _(ctx, sessionUpdateReq));
-app.get(`${APIV1}/session/list`, ctx => _(ctx, sessionListReq));
-app.get(`${APIV1}/session/:sessionId{[0-9]+}`, ctx => _(ctx, sessionDetailsReq));
+app.route(`${APIV1}/session`, session);
 
 
 /*******************************************************************************

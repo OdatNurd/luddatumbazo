@@ -5,7 +5,7 @@ import { BGGLookupError } from '../db/exceptions.js';
 import { getGameSynopsis } from '../db/game.js';
 import { updateGuests } from '../db/guest.js';
 
-import { ensureRequiredKeys, ensureDefaultValues, ensureObjectStructure,
+import { ensureRequiredKeys, ensureObjectStructure,
          mapImageAssets, getImageAssetURL, getDBResult,
          mapIntFieldsToBool } from './common.js';
 
@@ -13,68 +13,9 @@ import { ensureRequiredKeys, ensureDefaultValues, ensureObjectStructure,
 /******************************************************************************/
 
 
-/* When we get a request to add a new session, these fields represent the fields
- * that are optional; if they're not specified, their values are set with the
- * values that are seen here. */
-const defaultSessionFields = {
-  "sessionEnd": null,
-  "title": '',
-  "content": '',
-  "expansions": [],
-};
-
-/* When we get a request to add a new session, the entries that tell us who is
- * playing the game, both users and guests, can optionally include these fields.
- * If they're not present, the values specified here will be used. */
-const defaultPlayerFields = {
-  "isStartingPlayer": false,
-  "score": 0,
-  "isWinner": false
-};
-
 // Various boolean values need to be converted to an integer and D1 can't do
 // that for you, because the calculation is a little tricky.
 const int = val => val === true ? 1 : 0;
-
-
-/******************************************************************************/
-
-
-/* This takes as input an incoming sessionData object in the format that is
- * accepted by addSession() and verifies that all of the required fields across
- * the whole object exist, and that any optional fields have sensible default
- * values.
- *
- * If there are any errors, this will raise an exception; otherwise the adjusted
- * object is returned back. */
-function validateSessionData(sessionData) {
-  // Validate the base input session data, and ensure that it has good defaults.
-  const session = ensureObjectStructure(sessionData, [
-                                          "gameId", "sessionBegin", "isLearning",
-                                          "reportingUser", "players"],
-                                          defaultSessionFields);
-
-  // We verified players was a field; verify that it has arrays for both user
-  // and guest players.
-  session.players.users ??= [];
-  session.players.guests ??= [];
-
-  // Verify that all of the specified users and guests (if any) have the
-  // required fields, and populate in any required defaults for missing fields.
-  session.players.users = session.players.users.map(user => ensureObjectStructure(user,
-                                              ["userId"], defaultPlayerFields));
-  session.players.guests = session.players.guests.map(guest => ensureObjectStructure(guest,
-                                              ["firstName", "lastName"], defaultPlayerFields));
-
-  // To be valid, there needs to be at least one user in the list of players, on
-  // either side.
-  if (session.players.users.length === 0 && session.players.guests.length === 0) {
-    throw new Error(`session data does not contain any players or users`);
-  }
-
-  // Return the updated session.
-  return session;
-}
 
 
 /******************************************************************************/
@@ -363,6 +304,8 @@ function prepareSessionUpdate(sessionData, updateData) {
   // The update is allowed to touch only a few of the core values; if any of
   // them were not provided, use the value from the session data we just looked
   // up.
+  //
+  // TODO: Try not to be so gross about this.
   const defaultFields = {
     "isLearning": updateData.isLearning ?? sessionData.isLearning,
     "sessionEnd": updateData.sessionEnd ?? sessionData.sessionEnd,
@@ -484,41 +427,34 @@ function prepareSessionUpdate(sessionData, updateData) {
  * If there is any error during the insertion process, such as games or users
  * not being present, this will raise an error. */
 export async function addSession(ctx, sessionData) {
-  // Get a version of the incoming session that is validated to have all of the
-  // required fields, and for which any optional but missing fields have a
-  // sensible default value.
-  const details = validateSessionData(sessionData);
-
   // Validate that all of the users that are referenced in the session data
   // actually exist; this will patch in the user ID's and also validate the
   // reporter at the same time.
-  await validateSessionUsers(ctx, details);
+  await validateSessionUsers(ctx, sessionData);
 
   // Validate that all of the games that are mentioned within the session data
   // are valid and patch their details in.
-  await validateGameData(ctx, details);
+  await validateGameData(ctx, sessionData);
 
   // Validate all of the guest players; this happens last because all guests
   // always validate; any missing guests are inserted always.
-  await validateSessionGuests(ctx, details);
+  await validateSessionGuests(ctx, sessionData);
 
   // If we get here and the session title is the empty string, then come up with
   // a default that displays the name of the game so that the title makes more
   // sense when viewed.
-  if (details.title === '') {
-    const users = [...details.players.users.map(user => user.name),
-                   ...details.players.guests.map(guest => guest.name)];
-    details.title = `Play of ${details.name} (${users.join(', ')})`
+  if (sessionData.title === '') {
+    sessionData.title = `Play of ${sessionData.name}})`
   }
 
   // Perform the actual insertion of the data, capturing the sessionId of the
   // newly inserted session.
-  const sessionId = await insertSessionDetails(ctx, details);
+  const sessionId = await insertSessionDetails(ctx, sessionData);
 
   // Using the sessionId, modify the input structure to look as it would look
   // if someone were to query this session; this allows the person that added
   // to be able to display the result right away if desired.
-  return reshapeSessionInput(sessionId, details);
+  return reshapeSessionInput(sessionId, sessionData);
 }
 
 
