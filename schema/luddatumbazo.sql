@@ -22,7 +22,7 @@ CREATE TABLE GameMetadataPlacement (
     id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
     gameId INTEGER NOT NULL REFERENCES Game(id),
 
-    metatype VARCHAR CHECK(metatype in ("designer", "artist", "publisher", "mechanic", "category")),
+    metatype TEXT CHECK(metatype in ("designer", "artist", "publisher", "mechanic", "category")),
     itemId INTEGER REFERENCES GameMetadata(id)
 );
 CREATE INDEX idx_metadata_place_map ON GameMetadataPlacement(gameId, metatype, itemId);
@@ -35,7 +35,7 @@ DROP TABLE IF EXISTS GameMetadata;
 CREATE TABLE GameMetadata (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    metatype VARCHAR CHECK(metatype in ("designer", "artist", "publisher", "mechanic", "category")),
+    metatype TEXT CHECK(metatype in ("designer", "artist", "publisher", "mechanic", "category")),
     bggId INTEGER DEFAULT(0),
     slug TEXT NOT NULL,
 
