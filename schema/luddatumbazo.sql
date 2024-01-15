@@ -101,6 +101,8 @@ CREATE TABLE User (
 
     firstName TEXT NOT NULL COLLATE NOCASE,
     lastName TEXT NOT NULL COLLATE NOCASE,
+    displayName TEXT NOT NULL COLLATE NOCASE,
+
     name GENERATED ALWAYS AS (firstName || ' ' || lastName) STORED,
 
     emailAddress TEXT NOT NULL
@@ -185,6 +187,8 @@ CREATE TABLE GuestUser (
 
     firstName TEXT NOT NULL COLLATE NOCASE,
     lastName TEXT NOT NULL COLLATE NOCASE,
+    displayName TEXT NOT NULL COLLATE NOCASE,
+
     name GENERATED ALWAYS AS (firstName || ' ' || lastName) STORED
 );
 CREATE UNIQUE INDEX idx_guest_name ON GuestUser(firstName, lastName);

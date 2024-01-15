@@ -2,6 +2,7 @@
 
 
 import { updateGuests } from '../../db/guest.js';
+import { makeDisplayName } from '../../db/common.js';
 import { success } from "../common.js";
 import { z } from 'zod';
 
@@ -16,6 +17,13 @@ export const NewGuestSchema = z.array(
   z.object({
     firstName: z.string(),
     lastName: z.string(),
+    displayName: z.string().default('')
+  }).transform((value, zCtx) => {
+    if (value.displayName === '') {
+      value.displayName = makeDisplayName(value.firstName, value.lastName);
+    }
+
+    return value;
   })
 );
 

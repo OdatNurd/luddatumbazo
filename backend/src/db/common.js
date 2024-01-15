@@ -374,3 +374,19 @@ export async function cfImagesURLUpload(ctx, image) {
 
 
 /******************************************************************************/
+
+
+/* Given a first name and a last name field, return a display name that consists
+ * of the first name and the first initial of the last name.
+ *
+ * This degrades gracefully if the last name field is empty. */
+export function makeDisplayName(firstName, lastName) {
+  if (lastName === '') {
+    return firstName;
+  }
+
+  return `${firstName} ${lastName.charAt(0).toUpperCase()}.`;
+}
+
+
+/******************************************************************************/

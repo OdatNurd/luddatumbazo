@@ -37,7 +37,7 @@ async function validateSessionUsers(ctx, sessionData) {
   // Look up all of the usernames for the list of user ID's that we collected,
   // then extract from that the list of known userId values.
   const userQuery = await ctx.env.DB.prepare(`
-    SELECT id, name FROM User
+    SELECT id, name, displayName FROM User
      WHERE id in (SELECT value from json_each('${JSON.stringify(inputUserIds)}'))
   `).all();
   const playerUsers = getDBResult('validateSessionUsers', 'find_users', userQuery);
@@ -67,7 +67,7 @@ async function validateSessionUsers(ctx, sessionData) {
 
     user.isUser = true;
     user.isReporter = (user.userId === sessionData.reportingUser);
-    user.name = record.name;
+    user.name = record.displayName;
     return user;
   });
 }
@@ -152,7 +152,7 @@ async function validateSessionGuests(ctx, sessionData) {
 
     // Copy over the ID and name from the DB user.
     guest.userId = dbGuest.id;
-    guest.name = dbGuest.name;
+    guest.name = dbGuest.displayName;
 
     // Fill in other values; these are always false for a guest.
     guest.isUser = false;
@@ -657,13 +657,13 @@ export async function getSessionDetails(ctx, sessionId) {
 
   // Check for the list of players that participated in this session.
   const playerLookup = await ctx.env.DB.prepare(`
-    SELECT 1 as isUser, A.userId, B.name, A.isReporter, A.isStartingPlayer, A.score, A.isWinner
+    SELECT 1 as isUser, A.userId, B.displayName as name, A.isReporter, A.isStartingPlayer, A.score, A.isWinner
       FROM SessionReportPlayer as A, User as B
      WHERE sessionId = ?1
        AND guestId is NULL
        AND A.userId = B.id
     UNION ALL
-    SELECT 0 as isUser, b.id as userId, B.name, A.isReporter, A.isStartingPlayer, A.score, A.isWinner
+    SELECT 0 as isUser, b.id as userId, B.displayName as name, A.isReporter, A.isStartingPlayer, A.score, A.isWinner
       FROM SessionReportPlayer as A, GuestUser as B
      WHERE sessionId = ?1
        AND guestId IS NOT NULL

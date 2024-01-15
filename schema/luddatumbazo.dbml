@@ -31,6 +31,12 @@ Table User {
 
   firstName TEXT [not null]
   lastName TEXT [not null]
+  displayName TEXT [not null, note: 'this field is collate nocase']
+
+  // SQLite generates this automatically whenever a record is added or
+  // updated.
+  name GENERATED [note: 'Generated automatically by SQLite as a concatenation of firstName lastName']
+
   emailAddress TEXT [not null]
 
   indexes {
@@ -48,6 +54,7 @@ Table GuestUser {
 
   firstName TEXT [not null, note: 'this field is collate nocase']
   lastName TEXT [not null, note: 'this field is collate nocase']
+  displayName TEXT [not null, note: 'this field is collate nocase']
 
   // SQLite generates this automatically whenever a record is added or
   // updated.

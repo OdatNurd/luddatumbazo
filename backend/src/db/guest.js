@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { getDBResult } from './common.js';
+import { getDBResult, makeDisplayName } from './common.js';
 
 
 /******************************************************************************/
@@ -16,10 +16,18 @@ import { getDBResult } from './common.js';
  * The result is a list of objects, including their ID values, which exist. This
  * will include not only new users but also any that previously existed. */
 export async function updateGuests(ctx, inputGuestList) {
-  // The input data is pre-validated to include a list of objects with first
-  // and last names only; populate in the name field as a concatenation of them.
+  // The input data is pre-validated to contain first and last names; it can
+  // never contain a name field (which we must make). Depending on the source of
+  // the data, it might not have a displayName in it (for example when a guest
+  // is implicitly inserted because they appear in a session report).
+  //
+  // Here we make sure that the name field exists, and that the display name is
+  // provided if it's missing.
   const guests = inputGuestList.map(guest => {
     guest.name = `${guest.firstName} ${guest.lastName}`;
+    if (guest.displayName === undefined) {
+      guest.displayName = makeDisplayName(guest.firstName, guest.lastName);
+    }
     return guest;
   });
 
@@ -30,7 +38,7 @@ export async function updateGuests(ctx, inputGuestList) {
   // Query the database to see which of the included names already have entries
   // in the table; we don't want to try to insert those.
   const lookupExisting = ctx.env.DB.prepare(`
-    SELECT id, firstName, lastName, name FROM GuestUser
+    SELECT id, firstName, lastName, displayName, name FROM GuestUser
     WHERE name IN (SELECT value from json_each('${JSON.stringify(names)}'))
   `);
   const existing = getDBResult('updateGuests', 'find_existing', await lookupExisting.all());
@@ -51,8 +59,8 @@ export async function updateGuests(ctx, inputGuestList) {
 
   // Construct an insert statement that we can use to insert a new record when
   // needed.
-  const insertNew = ctx.env.DB.prepare(`INSERT INTO GuestUser VALUES(NULL, ?1, ?2)`);
-  const insertBatch = insertMetadata.map(el => insertNew.bind(el.firstName, el.lastName));
+  const insertNew = ctx.env.DB.prepare(`INSERT INTO GuestUser VALUES(NULL, ?1, ?2, ?3)`);
+  const insertBatch = insertMetadata.map(el => insertNew.bind(el.firstName, el.lastName, el.displayName));
 
   // If the batch is not empty, then we can execute to insert the new ones.
   // The batch returns an array of results, one per item in the input, but none
@@ -84,7 +92,7 @@ export async function updateGuests(ctx, inputGuestList) {
 export async function getGuestList(ctx, inputGuestList) {
   // Try to find all metadata item of this type.
   const guests = await ctx.env.DB.prepare(`
-    SELECT id, firstName, lastName, name from GuestUser
+    SELECT id, firstName, lastName, displayName, name from GuestUser
   `).all();
 
   return getDBResult('getGuestList', 'find_guests', guests);
@@ -102,7 +110,7 @@ export async function getGuestList(ctx, inputGuestList) {
 export async function purgeUnusedGuests(ctx, doPurge) {
   // Find all of the unused guest entries
   const findSQL = `
-    SELECT id, firstName, lastName, name FROM GuestUser
+    SELECT id, firstName, lastName, displayName, name FROM GuestUser
      WHERE id NOT IN
          (SELECT DISTINCT guestId FROM SessionReportPlayer WHERE guestId IS NOT NULL)
   `;
