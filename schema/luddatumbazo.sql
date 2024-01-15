@@ -249,6 +249,8 @@ CREATE TABLE SessionReport (
     gameId INTEGER NOT NULL REFERENCES Game(id),
     gameName INTEGER NOT NULL REFERENCES GameName(id),
 
+    playType TEXT CHECK(playType in ("cardboard", "boardgamearena", "steam", "gog", "android")),
+
     sessionBegin TIME NOT NULL,
     sessionEnd TIME DEFAULT(NULL),
 

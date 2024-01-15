@@ -224,9 +224,9 @@ async function insertSessionDetails(ctx, session) {
 
     // Insert the core SessionReport record into the session table
     ctx.env.DB.prepare(`
-      INSERT INTO SessionReport (gameId, gameName, sessionBegin, sessionEnd, isLearning)
-          VALUES (?1, ?2, ?3, ?4, ?5)
-    `).bind(session.gameId, session.nameId, session.sessionBegin,
+      INSERT INTO SessionReport (gameId, gameName, playType, sessionBegin, sessionEnd, isLearning)
+          VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+    `).bind(session.gameId, session.nameId, session.playType, session.sessionBegin,
             session.sessionEnd, int(session.isLearning)),
 
     //-----------
@@ -578,6 +578,7 @@ export async function getSessionList(ctx, gameIdList, reverse) {
            A.gameId,
            D.bggId,
            B.name as name,
+           A.playType,
            D.slug,
            D.imagePath,
            A.sessionBegin,
@@ -618,6 +619,7 @@ export async function getSessionDetails(ctx, sessionId) {
            A.gameId,
            D.bggId,
            B.name as name,
+           A.playType,
            D.slug,
            D.imagePath,
            A.sessionBegin,

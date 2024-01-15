@@ -37,6 +37,15 @@
   const session = id => baseLink.replaceAll(':id', id);
   const game = slug => gameLink.replaceAll(':slug', slug);
 
+  // The different types of games.
+  const gameTypeIcons = {
+    "cardboard": "box",
+    "boardgamearena": "world-www",
+    "steam": "brand-steam",
+    "gog": "device-desktop",
+    "android": "brand-andriod"
+  }
+
   // ---------------------------------------------------------------------------
 
   // Fetch the list of data that we need from the back end API, and return
@@ -66,12 +75,16 @@
     <svelte:fragment slot="header">
       <Th w="64px" sort={sorts.natural("id")}>ID</Th>
       <Th w="32px"></Th>
+      <Th w="32px"></Th>
       <Th filter={filters.text("title")} sort={sorts.natural("title")}>Name</Th>
       <Th sort={dateSort("sessionBegin")} w="64px">Date</Th>
       <Th w="64px">Game</Th>
     </svelte:fragment>
     <svelte:fragment slot="row" let:row>
       <td>{row.id}</td>
+      <td>
+        <Icon c="&primary" name={gameTypeIcons[row.playType] ?? 'question-mark'}></Icon>
+      </td>
       <td>
         {#if row.isLearning}
           <Icon c="&secondary" name="school"></Icon>

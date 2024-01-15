@@ -25,6 +25,15 @@
 
   export let gameLink = '#/game/:slug';
 
+  // The different types of games.
+  const gameTypeMap = {
+    "cardboard": "Physical Game",
+    "boardgamearena": "BoardGameArena",
+    "steam": "Computer (Steam)",
+    "gog": "Computer (GOG)",
+    "android": "Mobile"
+  }
+
   // Default to an empty game and a session title that is the id paramter;
   // these will be laoded when the session loads.
   // Default the name on the page to the sessionId that was used to load it,
@@ -89,6 +98,7 @@
     {#if result.isLearning}
       <Chip color="accent" fill>Learning Game!</Chip>
     {/if}
+    <Chip color="accent" fill>{gameTypeMap[result.playType] ?? 'Unknown'}</Chip>
     <Chip color="secondary" fill>
       Played {result.sessionBegin.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)}
 

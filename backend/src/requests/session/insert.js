@@ -21,6 +21,10 @@ export const NewSessionReportSchema = z.object({
     z.number().optional(),
   ).default([]),
 
+  // The type of game that is being played; there are a specific set of values
+  // to choose from.
+  playType: z.enum(["cardboard", "boardgamearena", "steam", "gog", "android"]),
+
   // The time the session began and the time that it ended; the end time is
   // optional and can be NULL if the session is stil open
   sessionBegin: z.string().datetime(),

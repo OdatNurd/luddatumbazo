@@ -210,12 +210,24 @@ Table GameMetadataPlacement {
 // or that scores are set, since different games work different ways.
 // -----------------------------------------------------------------------------
 
+// The distinct types of sessions that are supported by the system; using a
+// value that is not here throws a constraint error.
+enum session_play_type {
+  cardboard
+  boardgamearena
+  steam
+  gog
+  android
+}
+
+// -----------------------------------------------------------------------------
+
 Table SessionReport {
   id INTEGER [unique, increment, pk]
 
   gameID INTEGER [not null, ref: > Game.id]
   gameName INTEGER [not null, ref: > GameName.id]
-
+  playType session_play_type
   loggingPlayerId INTEGER [not null, ref: > User.userId]
 
   sessionBegin TIME [default: 'now()']
