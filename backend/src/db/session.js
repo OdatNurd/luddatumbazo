@@ -444,7 +444,7 @@ export async function addSession(ctx, sessionData) {
   // a default that displays the name of the game so that the title makes more
   // sense when viewed.
   if (sessionData.title === '') {
-    sessionData.title = `Play of ${sessionData.name}})`
+    sessionData.title = `Play of ${sessionData.name}`;
   }
 
   // Perform the actual insertion of the data, capturing the sessionId of the
