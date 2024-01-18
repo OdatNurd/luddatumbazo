@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { getSessionDetails } from '../../db/session.js';
+import { getSessionDetails } from '#db/session';
 import { success, fail } from "../common.js";
 
 

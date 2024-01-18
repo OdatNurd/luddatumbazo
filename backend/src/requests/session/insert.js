@@ -1,9 +1,8 @@
 /******************************************************************************/
 
 
-import { addSession, } from '../../db/session.js';
-import { validate } from '../common.js';
-import { success } from "../common.js";
+import { addSession, } from '#db/session';
+import { success, validate } from '../common.js';
 
 import { z } from 'zod';
 

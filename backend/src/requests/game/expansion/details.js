@@ -3,7 +3,7 @@
 
 import { success } from "../../common.js";
 
-import { getExpansionDetails } from '../../../db/expansion.js';
+import { getExpansionDetails } from '#db/expansion';
 
 
 /******************************************************************************/

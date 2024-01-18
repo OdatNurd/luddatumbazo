@@ -4,7 +4,7 @@
 import { success, makeSlug } from "../common.js";
 import { z } from 'zod';
 
-import { insertGame } from '../../db/game.js';
+import { insertGame } from '#db/game';
 
 
 /******************************************************************************/

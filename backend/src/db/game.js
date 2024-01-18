@@ -1,12 +1,12 @@
 /******************************************************************************/
 
 
-import { BGGLookupError } from './exceptions.js';
+import { BGGLookupError } from '#db/exceptions';
 
-import { cfImagesURLUpload, mapImageAssets, getImageAssetURL, getDBResult } from './common.js';
-import { metadataTypeList, updateMetadata } from './metadata.js';
-import { updateExpansionDetails, getExpansionDetails } from './expansion.js';
-import { lookupBGGGame } from "./bgg.js";
+import { cfImagesURLUpload, mapImageAssets, getImageAssetURL, getDBResult } from '#db/common';
+import { metadataTypeList, updateMetadata } from '#db/metadata';
+import { updateExpansionDetails, getExpansionDetails } from '#db/expansion';
+import { lookupBGGGame } from '#db/bgg';
 
 
 /******************************************************************************/

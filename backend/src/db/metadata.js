@@ -3,7 +3,7 @@
 
 import slug from "slug";
 
-import { mapImageAssets, getDBResult } from './common.js';
+import { mapImageAssets, getDBResult } from '#db/common';
 
 
 /******************************************************************************/

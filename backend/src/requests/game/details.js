@@ -3,7 +3,7 @@
 
 import { success, fail } from "../common.js";
 
-import { getGameDetails } from '../../db/game.js';
+import { getGameDetails } from '#db/game';
 
 
 /******************************************************************************/

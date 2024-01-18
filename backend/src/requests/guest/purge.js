@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { purgeUnusedGuests } from '../../db/guest.js';
+import { purgeUnusedGuests } from '#db/guest';
 import { success } from "../common.js";
 
 

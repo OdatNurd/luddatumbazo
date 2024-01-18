@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { getGuestList } from '../../db/guest.js';
+import { getGuestList } from '#db/guest';
 import { success } from "../common.js";
 
 

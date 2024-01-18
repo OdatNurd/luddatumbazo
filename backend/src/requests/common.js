@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { BGGLookupError } from '../db/exceptions.js';
+import { BGGLookupError } from '#db/exceptions';
 
 import { validator } from 'hono/validator';
 import { z } from 'zod';

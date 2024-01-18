@@ -4,8 +4,8 @@
 import { Hono } from 'hono'
 import { wrappedRequest as _, validate, success, asNumber } from '../common.js';
 
-import { cfImagesURLUpload } from '../../db/common.js';
-import { getTempImageList } from '../../db/image.js';
+import { cfImagesURLUpload } from '#db/common';
+import { getTempImageList } from '#db/image';
 
 import { z } from 'zod';
 

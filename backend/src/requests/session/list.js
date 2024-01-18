@@ -1,8 +1,8 @@
 /******************************************************************************/
 
 
-import { getSessionList } from '../../db/session.js';
-import { performGameLookup } from '../../db/game.js';
+import { getSessionList } from '#db/session';
+import { performGameLookup } from '#db/game';
 import { success  } from "../common.js";
 
 import { z } from 'zod';

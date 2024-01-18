@@ -5,7 +5,7 @@ import { Hono } from 'hono'
 import { wrappedRequest as _, success, fail, validate, asNumber } from '../common.js';
 import { z } from 'zod';
 
-import { lookupBGGGame } from '../../db/bgg.js';
+import { lookupBGGGame } from '#db/bgg';
 
 
 /******************************************************************************/

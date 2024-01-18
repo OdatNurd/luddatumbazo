@@ -3,7 +3,7 @@
 
 import { success, fail } from "../../common.js";
 
-import { getMetadataDetails  } from '../../../db/metadata.js';
+import { getMetadataDetails  } from '#db/metadata';
 
 
 /******************************************************************************/

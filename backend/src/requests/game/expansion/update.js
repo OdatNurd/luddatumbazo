@@ -3,7 +3,7 @@
 
 import { success } from "../../common.js";
 
-import { updateExpansionDetails } from '../../../db/expansion.js';
+import { updateExpansionDetails } from '#db/expansion';
 
 
 /******************************************************************************/

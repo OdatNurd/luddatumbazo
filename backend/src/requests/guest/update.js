@@ -1,8 +1,8 @@
 /******************************************************************************/
 
 
-import { updateGuests } from '../../db/guest.js';
-import { makeDisplayName } from '../../db/common.js';
+import { updateGuests } from '#db/guest';
+import { makeDisplayName } from '#db/common';
 import { success } from "../common.js";
 import { z } from 'zod';
 

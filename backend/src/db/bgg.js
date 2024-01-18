@@ -5,7 +5,7 @@ import parseXML from "@axel669/sanic-xml/parse";
 import { decodeHTML } from "entities";
 import slug from "slug";
 
-import { BGGLookupError } from '../db/exceptions.js';
+import { BGGLookupError } from '#db/exceptions';
 
 
 /******************************************************************************/

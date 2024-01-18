@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { getDBResult, makeDisplayName } from './common.js';
+import { getDBResult, makeDisplayName } from '#db/common';
 
 
 /******************************************************************************/

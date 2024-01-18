@@ -4,7 +4,7 @@
 import { success } from "../common.js";
 import { z } from 'zod';
 
-import { performGameLookup } from '../../db/game.js';
+import { performGameLookup } from '#db/game';
 
 
 /******************************************************************************/

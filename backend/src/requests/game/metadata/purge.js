@@ -3,7 +3,7 @@
 
 import { success } from "../../common.js";
 
-import { purgeUnusedMetadata } from '../../../db/metadata.js';
+import { purgeUnusedMetadata } from '#db/metadata';
 
 
 /******************************************************************************/

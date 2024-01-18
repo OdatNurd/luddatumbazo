@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { updateSession } from '../../db/session.js';
+import { updateSession } from '#db/session';
 import { success, fail } from "../common.js";
 
 import { z } from 'zod';

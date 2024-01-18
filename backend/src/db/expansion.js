@@ -1,10 +1,10 @@
 /******************************************************************************/
 
 
-import { BGGLookupError } from './exceptions.js';
+import { BGGLookupError } from '#db/exceptions';
 
-import { getDBResult, ensureRequiredKeys } from './common.js';
-import { lookupBGGGame } from "./bgg.js";
+import { getDBResult, ensureRequiredKeys } from '#db/common';
+import { lookupBGGGame } from "#db/bgg";
 
 
 /******************************************************************************/
