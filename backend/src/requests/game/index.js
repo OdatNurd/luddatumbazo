@@ -12,6 +12,15 @@ import { performGameLookupReq, GameLookupIDListSchema } from './lookup.js';
 import { gameListReq } from './list.js';
 import { gameDetailsReq } from './details.js';
 
+import { getExpansionDetailsReq } from './expansion/details.js';
+import { updateExpansionDetailsReq } from './expansion/update.js';
+import { updateExpansionDetailsBggReq } from './expansion/updateBGG.js'
+
+import { metadataUpdateReq } from './metadata/update.js';
+import { metadataListReq } from './metadata/list.js';
+import { metadataPurgeReq } from './metadata/purge.js';
+import { metadataQueryReq } from './metadata/query.js';
+
 import { BGGGameIDSchema } from '../bgg/index.js';
 
 /******************************************************************************/
@@ -48,6 +57,36 @@ game.post('/lookup', validate('json', GameLookupIDListSchema), ctx => _(ctx, per
 // game that the system knows about.
 game.get('/list', ctx => _(ctx, gameListReq));
 game.get('/:idOrSlug', validate('param', GameLookupIDSchema), ctx => _(ctx, gameDetailsReq));
+
+// Given a set of input records, try to establish game expansion links in the
+// database. The second variation looks up the data for the game in BGG in
+// order to provide the update; for games that are added without expansion info.
+game.put('/data/expansions/update', ctx => _(ctx, updateExpansionDetailsReq));
+game.get('/data/expansions/update/bgg/:bggGameId{[0-9]+}', ctx => _(ctx, updateExpansionDetailsBggReq));
+
+// Given a gameId (and not a slug), look up the data that indicates the list of
+// expansions and base games that associate with that game. In this parlance,
+// expansions are games that expand this game if it is a base game, and base
+// games are games that this game would expand, if this game was an expansion.
+game.get('/data/expansions/list/:gameId', ctx => _(ctx, getExpansionDetailsReq));
+
+// Given a list of metadata objects, try to insert any that are not currently in
+// the database, and then return back a complete list of our internal records
+// for all of the specified items.
+game.put('/meta/:metaType/update', ctx => _(ctx, metadataUpdateReq));
+
+// Get the complete list of records for a specific type of metadata. T
+game.get('/meta/:metaType/list', ctx => _(ctx, metadataListReq));
+
+// Find all of the metadata entries of the given type that have no references to
+// them by any game currently in the database and purge them away to clean up
+// the lists.
+game.delete('/meta/:metaType/purge', ctx => _(ctx, metadataPurgeReq));
+
+// Gather information about a specific metadata type, which includes the name
+// and slug. This takes an optional "game" query argument, which will cause it
+// to return details on each game that associates with that metadata item.
+game.get('/meta/:metaType/:slug', ctx => _(ctx, metadataQueryReq));
 
 
 /******************************************************************************/
