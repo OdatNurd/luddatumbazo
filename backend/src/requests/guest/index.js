@@ -2,11 +2,11 @@
 
 
 import { Hono } from 'hono'
-import { wrappedRequest as _, validate } from '../common.js';
+import { wrappedRequest as _, validate } from '#requests/common';
 
-import { guestListReq } from './list.js';
-import { updateGuestsReq, NewGuestSchema } from './update.js';
-import { purgeGuestsReq } from './purge.js';
+import { guestListReq } from '#requests/guest/list';
+import { updateGuestsReq, NewGuestSchema } from '#requests/guest/update';
+import { purgeGuestsReq } from '#requests/guest/purge';
 
 
 /******************************************************************************/

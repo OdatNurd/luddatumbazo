@@ -3,7 +3,7 @@
 
 import { updateGuests } from '#db/guest';
 import { makeDisplayName } from '#db/common';
-import { success } from "../common.js";
+import { success } from "#requests/common";
 import { z } from 'zod';
 
 

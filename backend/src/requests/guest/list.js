@@ -2,7 +2,7 @@
 
 
 import { getGuestList } from '#db/guest';
-import { success } from "../common.js";
+import { success } from "#requests/common";
 
 
 /******************************************************************************/

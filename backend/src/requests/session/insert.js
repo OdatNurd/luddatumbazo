@@ -2,7 +2,7 @@
 
 
 import { addSession, } from '#db/session';
-import { success, validate } from '../common.js';
+import { success, validate } from '#requests/common';
 
 import { z } from 'zod';
 

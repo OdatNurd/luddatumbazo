@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { success, fail } from "../common.js";
+import { success, fail } from "#requests/common";
 
 import { getGameDetails } from '#db/game';
 

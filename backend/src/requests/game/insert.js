@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { success, makeSlug } from "../common.js";
+import { success, makeSlug } from "#requests/common";
 import { z } from 'zod';
 
 import { insertGame } from '#db/game';

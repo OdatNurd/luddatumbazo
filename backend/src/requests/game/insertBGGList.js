@@ -2,7 +2,7 @@
 
 
 import { BGGLookupError } from '#db/exceptions';
-import { success } from "../common.js";
+import { success } from "#requests/common";
 import { z } from 'zod';
 
 import { insertBGGGame } from '#db/game';

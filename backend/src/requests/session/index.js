@@ -2,13 +2,13 @@
 
 
 import { Hono } from 'hono'
-import { wrappedRequest as _, validate, asNumber } from '../common.js';
+import { wrappedRequest as _, validate, asNumber } from '#requests/common';
 import { z } from 'zod';
 
-import { sessionAddReq, NewSessionReportSchema } from './insert.js';
-import { sessionUpdateReq, UpdateSessionReportSchema } from './update.js';
-import { sessionListReq, SessionListParamSchema } from './list.js';
-import { sessionDetailsReq } from './details.js';
+import { sessionAddReq, NewSessionReportSchema } from '#requests/session/insert';
+import { sessionUpdateReq, UpdateSessionReportSchema } from '#requests/session/update';
+import { sessionListReq, SessionListParamSchema } from '#requests/session/list';
+import { sessionDetailsReq } from '#requests/session/details';
 
 
 /******************************************************************************/

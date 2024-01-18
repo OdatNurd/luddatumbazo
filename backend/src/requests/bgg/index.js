@@ -2,7 +2,7 @@
 
 
 import { Hono } from 'hono'
-import { wrappedRequest as _, success, fail, validate, asNumber } from '../common.js';
+import { wrappedRequest as _, success, fail, validate, asNumber } from '#requests/common';
 import { z } from 'zod';
 
 import { lookupBGGGame } from '#db/bgg';

@@ -2,26 +2,26 @@
 
 
 import { Hono } from 'hono'
-import { wrappedRequest as _, validate, asNumber, numberOrString } from '../common.js';
+import { wrappedRequest as _, validate, asNumber, numberOrString } from '#requests/common';
 import { z } from 'zod';
 
-import { insertGameReq, NewGameSchema } from './insert.js';
-import { insertBGGGameReq } from './insertBGG.js';
-import { insertBGGGameListReq, BGGGameIDListSchema } from './insertBGGList.js';
-import { performGameLookupReq, GameLookupIDListSchema } from './lookup.js';
-import { gameListReq } from './list.js';
-import { gameDetailsReq } from './details.js';
+import { insertGameReq, NewGameSchema } from '#requests/game/insert';
+import { insertBGGGameReq } from '#requests/game/insertBGG';
+import { insertBGGGameListReq, BGGGameIDListSchema } from '#requests/game/insertBGGList';
+import { performGameLookupReq, GameLookupIDListSchema } from '#requests/game/lookup';
+import { gameListReq } from '#requests/game/list';
+import { gameDetailsReq } from '#requests/game/details';
 
-import { getExpansionDetailsReq } from './expansion/details.js';
-import { updateExpansionDetailsReq } from './expansion/update.js';
-import { updateExpansionDetailsBggReq } from './expansion/updateBGG.js'
+import { getExpansionDetailsReq } from '#requests/game/expansion/details';
+import { updateExpansionDetailsReq } from '#requests/game/expansion/update';
+import { updateExpansionDetailsBggReq } from '#requests/game/expansion/updateBGG';
 
-import { metadataUpdateReq } from './metadata/update.js';
-import { metadataListReq } from './metadata/list.js';
-import { metadataPurgeReq } from './metadata/purge.js';
-import { metadataQueryReq } from './metadata/query.js';
+import { metadataUpdateReq } from '#requests/game/metadata/update';
+import { metadataListReq } from '#requests/game/metadata/list';
+import { metadataPurgeReq } from '#requests/game/metadata/purge';
+import { metadataQueryReq } from '#requests/game/metadata/query';
 
-import { BGGGameIDSchema } from '../bgg/index.js';
+import { BGGGameIDSchema } from '#requests/bgg/index';
 
 /******************************************************************************/
 

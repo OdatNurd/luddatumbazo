@@ -2,7 +2,7 @@
 
 
 import { getSessionDetails } from '#db/session';
-import { success, fail } from "../common.js";
+import { success, fail } from "#requests/common";
 
 
 /******************************************************************************/

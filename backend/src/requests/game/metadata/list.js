@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { success } from "../../common.js";
+import { success } from "#requests/common";
 
 import { getMetadataList } from '#db/metadata';
 

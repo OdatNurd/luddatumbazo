@@ -3,7 +3,7 @@
 
 import { getSessionList } from '#db/session';
 import { performGameLookup } from '#db/game';
-import { success  } from "../common.js";
+import { success  } from "#requests/common";
 
 import { z } from 'zod';
 

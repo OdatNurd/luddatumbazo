@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors'
 
-import { wrappedRequest as _ } from './requests/common.js';
+import { wrappedRequest as _ } from '#requests/common';
 
-import { bgg } from './requests/bgg/index.js';
-import { guest } from './requests/guest/index.js';
-import { image } from './requests/image/index.js';
-import { session } from './requests/session/index.js';
-import { game } from './requests/game/index.js'
+import { bgg } from '#requests/bgg/index';
+import { guest } from '#requests/guest/index';
+import { image } from '#requests/image/index';
+import { session } from '#requests/session/index';
+import { game } from '#requests/game/index';
 
 
 /******************************************************************************/

@@ -2,7 +2,7 @@
 
 
 import { Hono } from 'hono'
-import { wrappedRequest as _, validate, success, asNumber } from '../common.js';
+import { wrappedRequest as _, validate, success, asNumber } from '#requests/common';
 
 import { cfImagesURLUpload } from '#db/common';
 import { getTempImageList } from '#db/image';
