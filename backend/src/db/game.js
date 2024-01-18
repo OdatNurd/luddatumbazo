@@ -3,34 +3,10 @@
 
 import { BGGLookupError } from './exceptions.js';
 
-import { cfImagesURLUpload, mapImageAssets, getImageAssetURL, getDBResult, ensureRequiredKeys } from './common.js';
+import { cfImagesURLUpload, mapImageAssets, getImageAssetURL, getDBResult } from './common.js';
 import { metadataTypeList, updateMetadata } from './metadata.js';
 import { updateExpansionDetails, getExpansionDetails } from './expansion.js';
 import { lookupBGGGame } from "./bgg.js";
-
-
-/******************************************************************************/
-
-
-/* When we get a request to add a new game, these fields represent the fields
- * that are optional; if they're not specified, their values are set with the
- * values that are seen here. */
-const defaultGameFields = {
-  "bggId": 0,
-  "minPlayers": 1,
-  "maxPlayers": 1,
-  "minPlayerAge": 1,
-  "playTime": 1,
-  "minPlayTime": 1,
-  "maxPlayTime": 1,
-  "complexity": 1.0,
-  "category": [],
-  "mechanic": [],
-  "designer": [],
-  "artist": [],
-  "publisher": [],
-  "expansions": []
-}
 
 
 /******************************************************************************/
@@ -240,30 +216,14 @@ export async function getGameDetails(ctx, idOrSlug) {
  * because D1 doesn't have the concept of transactions in code paths that
  * require code between DB accesses. */
 export async function insertGame(ctx, gameData) {
-  // The incoming data strictly requires the following fields to be present;
-  // if they are not there, we will kick out an error.
-  if (ensureRequiredKeys(gameData, ["name", "slug", "published", "description"]) == false ||
-                         gameData.name.length === 0) {
-    throw new Error(`required fields are missing from the input data`);
-  }
-
-  // Combine together the defaults with the provided game record in order to
-  // come up with the final list of things to insert.
-  const details = { ...defaultGameFields };
-  for (const [key, value] of Object.entries(gameData)) {
-    if (value !== undefined) {
-      details[key] = value;
-    }
-  }
-
   // Ensure that all of the metadata that we need is available. This does not
   // run in a transaction, so if we bail later, these items will still be in
   // the database; we can look into making that smarter later.
-  details.category  = await updateMetadata(ctx, details.category,  'category');
-  details.mechanic  = await updateMetadata(ctx, details.mechanic,  'mechanic');
-  details.designer  = await updateMetadata(ctx, details.designer,  'designer');
-  details.artist    = await updateMetadata(ctx, details.artist,    'artist');
-  details.publisher = await updateMetadata(ctx, details.publisher, 'publisher');
+  gameData.category  = await updateMetadata(ctx, gameData.category,  'category');
+  gameData.mechanic  = await updateMetadata(ctx, gameData.mechanic,  'mechanic');
+  gameData.designer  = await updateMetadata(ctx, gameData.designer,  'designer');
+  gameData.artist    = await updateMetadata(ctx, gameData.artist,    'artist');
+  gameData.publisher = await updateMetadata(ctx, gameData.publisher, 'publisher');
 
   // 0. For each of category, mechanic, designer, artist and publisher, update
   // 1. Insert the raw data for this game into the database
@@ -271,19 +231,22 @@ export async function insertGame(ctx, gameData) {
   // 3. Update placements for all items in 0
   const stmt = ctx.env.DB.prepare(`INSERT INTO Game
             (bggId, slug, description, publishedIn, minPlayers, maxPlayers,
-             minPlayerAge, playtime, minPlaytime, maxPlaytime, complexity)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
-    details.bggId,
-    details.slug,
-    details.description,
-    details.published,
-    details.minPlayers,
-    details.maxPlayers,
-    details.minPlayerAge,
-    details.playTime,
-    details.minPlayTime,
-    details.maxPlayTime,
-    details.complexity
+             minPlayerAge, playtime, minPlaytime, maxPlaytime, complexitym
+             officialUrl, teachingUrl)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
+    gameData.bggId,
+    gameData.slug,
+    gameData.description,
+    gameData.published,
+    gameData.minPlayers,
+    gameData.maxPlayers,
+    gameData.minPlayerAge,
+    gameData.playTime,
+    gameData.minPlayTime,
+    gameData.maxPlayTime,
+    gameData.complexity,
+    gameData.officialUrl,
+    gameData.teachingUrl
   );
 
   // Grab the result that falls out of the DB; this must be a success because
@@ -300,8 +263,8 @@ export async function insertGame(ctx, gameData) {
   // now that it's irrevocably inserted into the database.
   //
   // This returns insertion status information, which is not useful to us here.
-  if (details.expansions.length !== 0) {
-    const ops = await updateExpansionDetails(ctx, id, details.bggId, details.expansions);
+  if (gameData.expansions.length !== 0) {
+    const ops = await updateExpansionDetails(ctx, id, gameData.bggId, gameData.expansions);
     console.log(`new game expansion records: inserted=${ops.inserted}, updated=${ops.updated}, skipped=${ops.skipped}`);
   }
 
@@ -338,7 +301,7 @@ export async function insertGame(ctx, gameData) {
     VALUES (NULL, ?1, ?2, ?3)
   `);
   for (const metatype of metadataTypeList) {
-    for (const item of details[metatype]) {
+    for (const item of gameData[metatype]) {
       batch.push(update.bind(id, metatype, item.id) )
     }
   }
@@ -349,10 +312,10 @@ export async function insertGame(ctx, gameData) {
     INSERT INTO GameName
     VALUES (NULL, ?1, ?2, ?3)
   `);
-  for (const idx in details.name) {
+  for (const idx in gameData.name) {
     // This is dumb because I'm dumb, D1 is Dumb, and JavaScript is dumb.
     // WHY SO DUMB?!
-    batch.push(addName.bind(id, details.name[idx], idx === '0' ? 1 : 0))
+    batch.push(addName.bind(id, gameData.name[idx], idx === '0' ? 1 : 0))
   }
 
   // Trigger the batch; we don't need to see the results of this since it is
@@ -364,9 +327,9 @@ export async function insertGame(ctx, gameData) {
   // added.
   return {
     id,
-    bggId: details.bggId,
-    name: details.name[0],
-    slug: details.slug
+    bggId: gameData.bggId,
+    name: gameData.name[0],
+    slug: gameData.slug
   }
 }
 

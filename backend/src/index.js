@@ -2,8 +2,6 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors'
 
 import { wrappedRequest as _ } from './requests/common.js';
-import { insertGameReq, insertBGGGameReq, insertBGGGameListReq,
-         gameListReq, gameDetailsReq, performGameLookupReq } from './requests/game.js';
 import { updateExpansionDetailsReq, updateExpansionDetailsBggReq,
          getExpansionDetailsReq } from './requests/expansion.js';
 import { metadataUpdateReq, metadataQueryReq,
@@ -13,6 +11,7 @@ import { bgg } from './requests/bgg/index.js';
 import { guest } from './requests/guest/index.js';
 import { image } from './requests/image/index.js';
 import { session } from './requests/session/index.js';
+import { game } from './requests/game/index.js'
 
 
 /******************************************************************************/
@@ -62,24 +61,6 @@ app.delete(`${APIV1}/game/meta/:metaType/purge`, ctx => _(ctx, metadataPurgeReq)
 // to return details on each game that associates with that metadata item.
 app.get(`${APIV1}/game/meta/:metaType/:slug`, ctx => _(ctx, metadataQueryReq));
 
-// Add a game or games to the database.
-//
-// The first of these takes an object that describes the game, the second looks
-// up a game on BoardGameGeek and inserts the game based on that data, and the
-// third takes a list of BGG game ID's and inserts them all.
-app.put(`${APIV1}/game/data/details/add`, ctx => _(ctx, insertGameReq));
-app.put(`${APIV1}/game/data/details/bgg/add/:bggGameId{[0-9]+}`, ctx => _(ctx, insertBGGGameReq));
-app.put(`${APIV1}/game/data/details/bgg/add/list`, ctx => _(ctx, insertBGGGameListReq));
-
-// Given an array of values that are a mix of id values and/or slugs, perform a
-// short lookup to tell you the id and slug of all matches.
-app.post(`${APIV1}/game/lookup`, ctx => _(ctx, performGameLookupReq));
-
-// Get a list of all games known to the system, or the details of a specific
-// game that the system knows about.
-app.get(`${APIV1}/game/list`, ctx => _(ctx, gameListReq));
-app.get(`${APIV1}/game/:idOrSlug`, ctx => _(ctx, gameDetailsReq));
-
 // Given a set of input records, try to establish game expansion links in the
 // database. The second variation looks up the data for the game in BGG in
 // order to provide the update; for games that are added without expansion info.
@@ -91,6 +72,8 @@ app.get(`${APIV1}/game/data/expansions/update/bgg/:bggGameId{[0-9]+}`, ctx => _(
 // expansions are games that expand this game if it is a base game, and base
 // games are games that this game would expand, if this game was an expansion.
 app.get(`${APIV1}/game/data/expansions/list/:gameId`, ctx => _(ctx, getExpansionDetailsReq));
+
+app.route(`${APIV1}/game`, game);
 
 
 /*******************************************************************************
