@@ -1,5 +1,5 @@
 name = "luddatumbazo-api"
-main = "src/index.js"
+main = "src/luddatumbazo.js"
 compatibility_date = "2023-12-01"
 
 # Dev versions should have no route; production versions go directly to our
