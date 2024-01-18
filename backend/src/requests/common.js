@@ -73,11 +73,17 @@ export const validate = (dataType, schemaObj) => validator(dataType, async (valu
   //       for the sanitization.
   // console.log(JSON.stringify(result.error, null, 2));
   const errors = result.error.flatten();
-  const field = Object.keys(errors.fieldErrors)[0];
 
-  // Return failure, indicating an issue with the first field with an error in
-  // the return (in cases where there is more than one).
-  return fail(ctx, `error in ${field}: ${errors.fieldErrors[field][0]}`);
+  // If there are any field errors, then handle those by saying what is wrong.
+  const keys = Object.keys(errors.fieldErrors);
+  if (keys.length !== 0) {
+    const field = keys[0];
+    return fail(ctx, `error in ${field}: ${errors.fieldErrors[field][0]}`);
+  }
+
+  // If there is not a field error, then there has to be a form error instead,
+  // which gives us more structural information on the error.
+  return fail(ctx, errors.formErrors[0]);
 });
 
 
