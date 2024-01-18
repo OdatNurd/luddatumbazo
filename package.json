@@ -20,6 +20,6 @@
     "db:dump": "node ./schema/dump/dumpLocalDB.js"
   },
   "devDependencies": {
-    "wrangler": "^3.22.3"
+    "wrangler": "^3.22.5"
   }
 }
