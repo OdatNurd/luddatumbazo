@@ -5,8 +5,10 @@ import { Hono } from 'hono'
 import { wrappedRequest as _, validate } from '#requests/common';
 
 import { guestListReq } from '#requests/guest/list';
-import { updateGuestsReq, NewGuestSchema } from '#requests/guest/update';
+import { updateGuestsReq } from '#requests/guest/update';
 import { purgeGuestsReq } from '#requests/guest/purge';
+
+import { NewGuestSchema } from '#schema/guest';
 
 
 /******************************************************************************/

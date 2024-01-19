@@ -5,39 +5,6 @@ import { getSessionList } from '#db/session';
 import { performGameLookup } from '#db/game';
 import { success  } from "#requests/common";
 
-import { z } from 'zod';
-
-
-/******************************************************************************/
-
-
-/* Updated session reports can adjust a few of the values in the session to
- * "Close" it; the core details, such as the game played or the people that
- * did the playing are static once they are entered. To adjust those, you need
- * to delete and then re-create the session. */
-export const SessionListParamSchema = z.object({
-  // The presence of this key with any value is true, anything else is false
-  reverse: z.any().transform((value, zCtx) => value !== undefined),
-
-  // Optionally either a comma separated string of numbers and slugs, or an
-  // array of same (by using the same parameter multiple times as one ought).
-  //
-  // When the value is a string, convert it into an array, so that the value is
-  // always an array. Since this is a union and the string version has a default
-  // this paramter will always end up as an empty array when it's missing.
-  games: z.union([
-    z.string().default(''),
-    z.array(z.string().or(z.number())).default([])
-  ]).transform((value, zCtx) => {
-    // If it's not an array, turn it into one
-    if (Array.isArray(value) === false) {
-      value = value.split(',').map(e => e.trim()).filter(e => e !== '')
-    }
-
-    return value;
-  })
-});
-
 
 /******************************************************************************/
 

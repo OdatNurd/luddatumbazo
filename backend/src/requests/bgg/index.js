@@ -2,20 +2,11 @@
 
 
 import { Hono } from 'hono'
-import { wrappedRequest as _, success, fail, validate, asNumber } from '#requests/common';
-import { z } from 'zod';
+import { wrappedRequest as _, success, fail, validate } from '#requests/common';
+
+import { BGGGameIDSchema } from '#schema/bgg';
 
 import { lookupBGGGame } from '#db/bgg';
-
-
-/******************************************************************************/
-
-
-/* When making a request, a valid BoardGameGeek ID is required, or the request
- * does not know what data to ask for. */
-export const BGGGameIDSchema = z.object({
-  bggId: z.string().transform(asNumber(true))
-});
 
 
 /******************************************************************************/

@@ -4,31 +4,6 @@
 import { updateSession } from '#db/session';
 import { success, fail } from "#requests/common";
 
-import { z } from 'zod';
-
-
-/******************************************************************************/
-
-
-/* Updated session reports can adjust a few of the values in the session to
- * "Close" it; the core details, such as the game played or the people that
- * did the playing are static once they are entered. To adjust those, you need
- * to delete and then re-create the session. */
-export const UpdateSessionReportSchema = z.object({
-  // The session end time can be updated, or moved back into an open state.
-  sessionEnd: z.string().datetime().nullable().default(null),
-
-  // Games marked as learning games are excluded from some statistics, such as
-  // average game length or for the purposes of calculating aggregate scores,
-  // since such sessions are predicated on one or more players learning how to
-  // play, which skews results.
-  isLearning: z.boolean().default(false),
-
-  // The title of the session report, and the textual descriptive content.
-  title: z.string().default(''),
-  content: z.string().default(''),
-});
-
 
 /******************************************************************************/
 

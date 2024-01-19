@@ -3,16 +3,8 @@
 
 import { BGGLookupError } from '#db/exceptions';
 import { success } from "#requests/common";
-import { z } from 'zod';
 
 import { insertBGGGame } from '#db/game';
-
-
-/******************************************************************************/
-
-
-/* Operations to insert lists of games accept a list of BGG ID Values. */
-export const BGGGameIDListSchema = z.array(z.number());
 
 
 /******************************************************************************/

@@ -12,7 +12,8 @@
   },
   "imports": {
     "#db/*": "./src/db/*.js",
-    "#requests/*": "./src/requests/*.js"
+    "#requests/*": "./src/requests/*.js",
+    "#schema/*": "./src/schema/*.js"
   },
   "dependencies": {
     "@axel669/sanic-xml": "^0.1.2",

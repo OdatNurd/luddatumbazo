@@ -2,13 +2,12 @@
 
 
 import { Hono } from 'hono'
-import { wrappedRequest as _, validate, asNumber, numberOrString } from '#requests/common';
-import { z } from 'zod';
+import { wrappedRequest as _, validate } from '#requests/common';
 
-import { insertGameReq, NewGameSchema } from '#requests/game/insert';
+import { insertGameReq } from '#requests/game/insert';
 import { insertBGGGameReq } from '#requests/game/insertBGG';
-import { insertBGGGameListReq, BGGGameIDListSchema } from '#requests/game/insertBGGList';
-import { performGameLookupReq, GameLookupIDListSchema } from '#requests/game/lookup';
+import { insertBGGGameListReq } from '#requests/game/insertBGGList';
+import { performGameLookupReq } from '#requests/game/lookup';
 import { gameListReq } from '#requests/game/list';
 import { gameDetailsReq } from '#requests/game/details';
 
@@ -21,16 +20,9 @@ import { metadataListReq } from '#requests/game/metadata/list';
 import { metadataPurgeReq } from '#requests/game/metadata/purge';
 import { metadataQueryReq } from '#requests/game/metadata/query';
 
-import { BGGGameIDSchema } from '#requests/bgg/index';
-
-/******************************************************************************/
-
-
-/* Operations to look up games can take as a search parameter either a numeric
- * id value of the game, or a string slug. */
-export const GameLookupIDSchema = z.object({
-  idOrSlug: z.string().transform(numberOrString)
-});
+import { BGGGameIDSchema } from '#schema/bgg';
+import { GameLookupIDSchema, NewGameSchema, BGGGameIDListSchema,
+         GameLookupIDListSchema } from '#schema/game';
 
 
 /******************************************************************************/

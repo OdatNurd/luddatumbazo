@@ -2,19 +2,8 @@
 
 
 import { success } from "#requests/common";
-import { z } from 'zod';
 
 import { performGameLookup } from '#db/game';
-
-
-/******************************************************************************/
-
-
-/* Operations to look up games can take as a search parameter either a numeric
- * id value of the game, or a string slug. */
-export const GameLookupIDListSchema = z.array(
-  z.string().or(z.number())
-);
 
 
 /******************************************************************************/

@@ -2,23 +2,15 @@
 
 
 import { Hono } from 'hono'
-import { wrappedRequest as _, validate, asNumber } from '#requests/common';
-import { z } from 'zod';
+import { wrappedRequest as _, validate } from '#requests/common';
 
-import { sessionAddReq, NewSessionReportSchema } from '#requests/session/insert';
-import { sessionUpdateReq, UpdateSessionReportSchema } from '#requests/session/update';
-import { sessionListReq, SessionListParamSchema } from '#requests/session/list';
+import { sessionAddReq } from '#requests/session/insert';
+import { sessionUpdateReq } from '#requests/session/update';
+import { sessionListReq } from '#requests/session/list';
 import { sessionDetailsReq } from '#requests/session/details';
 
-
-/******************************************************************************/
-
-
-/* Queries that manipulate specific sessions or get their details must provide
- * a valid numeric sessionId as a part of the request. */
-const SessionIDSchema = z.object({
-  sessionId: z.string().optional().transform(asNumber(true))
-});
+import { SessionIDSchema, NewSessionReportSchema, UpdateSessionReportSchema,
+         SessionListParamSchema } from '#schema/session';
 
 
 /******************************************************************************/

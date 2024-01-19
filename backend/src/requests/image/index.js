@@ -2,24 +2,12 @@
 
 
 import { Hono } from 'hono'
-import { wrappedRequest as _, validate, success, asNumber } from '#requests/common';
+import { wrappedRequest as _, validate, success } from '#requests/common';
 
 import { cfImagesURLUpload } from '#db/common';
 import { getTempImageList } from '#db/image';
 
-import { z } from 'zod';
-
-
-/******************************************************************************/
-
-
-/* When running the image endpoint, the only paramter is an optional BGG Game ID
- * to be used to determine how many images should be uploaded.
- *
- * If the value is not present, it is returned as undefined instead. */
-export const OptionalBGGGameIDSchema = z.object({
-  bggId: z.string().optional().transform(asNumber(false))
-});
+import { OptionalBGGGameIDSchema } from '#schema/bgg';
 
 
 /******************************************************************************/
