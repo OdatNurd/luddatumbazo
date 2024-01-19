@@ -17,51 +17,8 @@ import { mapImageAssets, getDBResult } from '#db/common';
  *     that the type of metadata is known
  *   - in the metadata table itself to flag what kind of data each row is
  *   - in generic calls to metadata functions to flag what kind of metadata
- *     to operation on.*/
+ *     to operation on. */
 export const metadataTypeList = ["designer", "artist", "publisher"  , "category", "mechanic", ];
-
-
-/* A simple helper for metadata validation; returns true or false to indicate
- * if the passed in metadata type is one of the valid, known types or not. */
-const isValidMetadataType = metatype => metadataTypeList.indexOf(metatype) !== -1;
-
-
-/******************************************************************************/
-
-
-/* Given a list of metadata objects of the form:
- *    {
- *      "bggId": 1027,
- *      "name": "Trivia",
- *      "slug": "trivia"
- *    }
- *
- * In which only the name field is strictly required, return back a mapped
- * version that has all of the fields in it.
- *
- * A missing bggID will be populated with 0 (no such ID); a missing slug will be
- * populated from the name.
- *
- * This will work for any of the metadata that appears in the metadataTableMap,
- * which all use the same structure and differ only in the table into which
- * they store their data. */
-const prepareMetadata = data => data.map(el => {
-  if (el?.name === undefined) {
-    throw Error("metadata element is missing the 'name' field");
-  }
-
-  // Ensure that there is a BGG; no ID means this isn't something that tracks
-  // on BGG.
-  if (el?.bggId === undefined) {
-    el.bggId = 0;
-  }
-
-  // Ensure that there is a slug; if there's not, create one from the name.
-  if (el?.slug === undefined) {
-    el.slug = slug(el.name);
-  }
-  return el;
-});
 
 
 /******************************************************************************/
@@ -84,21 +41,12 @@ const prepareMetadata = data => data.map(el => {
  * the internal ID's of the items associated returned back. These could be new
  * ID's, or they could be the result of that data always having been there. */
 export async function updateMetadata(ctx, inputMetadata, metaType) {
-  // Make sure that the metadata type we got is correct.
-  if (isValidMetadataType(metaType) === false) {
-    throw Error(`unknown metadata type ${metaType}`);
-  }
-
-  // Fill out any fields in the metadata that are required but not currently
-  // present.
-  const metadata = prepareMetadata(inputMetadata);
-
   // Grab from the list of items all of the slugs so we can see which ones
   // already exist in the table.
   //
   // TODO: This should check to see if any slugs overlap and bitch about it,
   //       because we won't add them and someone will surely be confused.
-  const slugs = metadata.map(el => el.slug);
+  const slugs = inputMetadata.map(el => el.slug);
 
   // Query the database to see which of the included slugs already have entries
   // in the table; we don't want to try to insert those.
@@ -122,7 +70,7 @@ export async function updateMetadata(ctx, inputMetadata, metaType) {
   // Gather from the input metadata all of the records whose slugs don't appear
   // in the list of existing slugs; those are the items that we need to insert
   // records for.
-  const insertMetadata = metadata.filter(el => existingSlugs.indexOf(el.slug) === -1);
+  const insertMetadata = inputMetadata.filter(el => existingSlugs.indexOf(el.slug) === -1);
 
   // Construct an insert statement that we can use to insert a new record when
   // needed.
@@ -163,11 +111,6 @@ export async function updateMetadata(ctx, inputMetadata, metaType) {
  * This may raise exceptions if there are issues talking to the database, or if
  * the metaType is not valid. */
 export async function getMetadataDetails(ctx, metaType, idOrSlug, includeGames) {
-  // Make sure that the metadata type we got is correct.
-  if (isValidMetadataType(metaType) === false) {
-    throw Error(`unknown metadata type ${metaType}`);
-  }
-
   // Try to find a metadata item of this type.
   const metadata = await ctx.env.DB.prepare(`
     SELECT id, bggId, slug, name, metatype FROM GameMetadata
@@ -217,11 +160,6 @@ export async function getMetadataDetails(ctx, metaType, idOrSlug, includeGames) 
  * This may raise exceptions if there are issues talking to the database, or if
  * the metaType is not valid. */
 export async function getMetadataList(ctx, metaType) {
-  // Make sure that the metadata type we got is correct.
-  if (isValidMetadataType(metaType) === false) {
-    throw Error(`unknown metadata type ${metaType}`);
-  }
-
   // Try to find all metadata item of this type.
   const metadata = await ctx.env.DB.prepare(`
     SELECT id, bggId, slug, name from GameMetadata
@@ -241,11 +179,6 @@ export async function getMetadataList(ctx, metaType) {
  * This may raise exceptions if there are issues talking to the database, or if
  * the metaType is not valid. */
 export async function purgeUnusedMetadata(ctx, metaType, doPurge) {
-  // Make sure that the metadata type we got is correct.
-  if (isValidMetadataType(metaType) === false) {
-    throw Error(`unknown metadata type ${metaType}`);
-  }
-
   // Find all of the unused metadata entries of the given type
   const findSQL = `
     SELECT id, metatype, name, slug FROM GameMetadata

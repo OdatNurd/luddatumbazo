@@ -4,6 +4,8 @@
 import { z } from 'zod';
 import { asNumber, numberOrString, makeSlug } from '#schema/common';
 
+import { metadataTypeList } from '#db/metadata';
+
 
 /******************************************************************************/
 
@@ -171,5 +173,57 @@ export const ExpansionUpdateSchema = z.object({
   // The list of expansions to update with
   expansions: GameExpansionSchema,
 });
+
+
+/******************************************************************************/
+
+
+/* All of the requests that adjust metadata require, at a minimum, a metaType
+ * somewhere in their request parameter that tells us which of the various
+ * metadata groups it is adjusting; they all take the same data otherwise. */
+export const MetadataTypeSchema = z.enum(metadataTypeList);
+
+
+/******************************************************************************/
+
+
+/* For use in requests whose body and parameters are wholly within either the
+ * JSON body or within query parameters. Requests of this variety require that
+ * their path contains a metaType key that selects the data set to be operated
+ * on. */
+export const MetadataTypeSelectSchema = z.object({
+  metaType: MetadataTypeSchema
+})
+
+
+/******************************************************************************/
+
+
+/* For use in requests whose body and parameters are wholly within either the
+ * JSON body or within query parameters. Requests of this variety require that
+ * their path contains a metaType key that selects the data set to be operated
+ * on. */
+export const MetadataQuerySchema = z.object({
+  // The metatype of the data to query
+  metaType: MetadataTypeSchema,
+
+  // The incoming query can contain either a numeric ID or a textual slug name.
+  idOrSlug: z.string().transform(numberOrString)
+})
+
+
+/******************************************************************************/
+
+
+/* When making some metadata queries, query parameters are allowed to control
+ * how the query proceeds. These generally fall into the realm of a value that
+ * is either present or not as a boolean, with any value being true and no
+ * value being false. */
+export const MetaDataQueryParamsSchema = z.object({
+  // When present, this value in the query string will cause cause a list of
+  // games associated with that metadata to be included in the returned result.
+  games: z.any().transform((value, zCtx) => value !== undefined),
+});
+
 
 /******************************************************************************/

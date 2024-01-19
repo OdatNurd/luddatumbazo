@@ -22,7 +22,9 @@ import { metadataQueryReq } from '#requests/game/metadata/query';
 
 import { BGGGameIDSchema } from '#schema/bgg';
 import { GameIDSchema, GameLookupIDSchema, NewGameSchema, BGGGameIDListSchema,
-         GameLookupIDListSchema, ExpansionUpdateSchema } from '#schema/game';
+         GameLookupIDListSchema, ExpansionUpdateSchema,
+         MetadataTypeSelectSchema, MetadataQuerySchema, MetaDataQueryParamsSchema,
+         GameMetadataSchema } from '#schema/game';
 
 
 /******************************************************************************/
@@ -65,20 +67,23 @@ game.get('/data/expansions/list/:gameId', validate('param', GameIDSchema), ctx =
 // Given a list of metadata objects, try to insert any that are not currently in
 // the database, and then return back a complete list of our internal records
 // for all of the specified items.
-game.put('/meta/:metaType/update', ctx => _(ctx, metadataUpdateReq));
+game.put('/meta/:metaType/update', validate('param', MetadataTypeSelectSchema),
+                                   validate('json', GameMetadataSchema), ctx => _(ctx, metadataUpdateReq));
 
 // Get the complete list of records for a specific type of metadata. T
-game.get('/meta/:metaType/list', ctx => _(ctx, metadataListReq));
+game.get('/meta/:metaType/list', validate('param', MetadataTypeSelectSchema), ctx => _(ctx, metadataListReq));
 
 // Find all of the metadata entries of the given type that have no references to
 // them by any game currently in the database and purge them away to clean up
 // the lists.
-game.delete('/meta/:metaType/purge', ctx => _(ctx, metadataPurgeReq));
+game.get('/meta/:metaType/purge', validate('param', MetadataTypeSelectSchema), ctx => _(ctx, metadataPurgeReq));
+game.delete('/meta/:metaType/purge', validate('param', MetadataTypeSelectSchema), ctx => _(ctx, metadataPurgeReq));
 
 // Gather information about a specific metadata type, which includes the name
 // and slug. This takes an optional "game" query argument, which will cause it
 // to return details on each game that associates with that metadata item.
-game.get('/meta/:metaType/:slug', ctx => _(ctx, metadataQueryReq));
+game.get('/meta/:metaType/:idOrSlug', validate('param', MetadataQuerySchema),
+                                      validate('query', MetaDataQueryParamsSchema), ctx => _(ctx, metadataQueryReq));
 
 
 /******************************************************************************/

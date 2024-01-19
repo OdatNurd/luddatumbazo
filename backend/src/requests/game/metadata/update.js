@@ -37,10 +37,11 @@ import { updateMetadata } from '#db/metadata';
  *
  * The result is currently the native D1 result of the query. */
 export async function metadataUpdateReq(ctx) {
-  const { metaType } = ctx.req.param();
+  const { metaType } = ctx.req.valid('param');
+  const updateData = ctx.req.valid('json');
 
   // Prepare the Metadata update and execute it
-  const result = await updateMetadata(ctx, await ctx.req.json(), metaType);
+  const result = await updateMetadata(ctx, updateData, metaType);
 
   return success(ctx, `updated some ${metaType} records` , result);
 }
