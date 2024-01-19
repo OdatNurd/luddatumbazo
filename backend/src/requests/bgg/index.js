@@ -2,6 +2,7 @@
 
 
 import { Hono } from 'hono'
+
 import { wrappedRequest as _, success, fail, validate } from '#requests/common';
 
 import { BGGGameIDSchema } from '#schema/bgg';
@@ -45,7 +46,9 @@ async function lookupBGGGameReq(ctx) {
 export const bgg = new Hono();
 
 
-bgg.get('/boardgame/:bggId', validate('param', BGGGameIDSchema), ctx => _(ctx, lookupBGGGameReq));
+bgg.get('/boardgame/:bggId',
+        validate('param', BGGGameIDSchema),
+        ctx => _(ctx, lookupBGGGameReq));
 
 
 /******************************************************************************/

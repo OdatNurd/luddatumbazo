@@ -4,7 +4,7 @@
 import { BGGLookupError } from '#db/exceptions';
 
 import { getDBResult } from '#db/common';
-import { lookupBGGGame } from "#db/bgg";
+import { lookupBGGGame } from '#db/bgg';
 
 
 /******************************************************************************/

@@ -1,8 +1,9 @@
 /******************************************************************************/
 
 
+import { success, fail } from '#requests/common';
+
 import { getSessionDetails } from '#db/session';
-import { success, fail } from "#requests/common";
 
 
 /******************************************************************************/

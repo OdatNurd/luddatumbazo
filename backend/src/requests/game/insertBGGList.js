@@ -1,9 +1,9 @@
 /******************************************************************************/
 
 
-import { BGGLookupError } from '#db/exceptions';
-import { success } from "#requests/common";
+import { success } from '#requests/common';
 
+import { BGGLookupError } from '#db/exceptions';
 import { insertBGGGame } from '#db/game';
 
 

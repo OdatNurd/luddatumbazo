@@ -2,12 +2,13 @@
 
 
 import { Hono } from 'hono'
+
 import { wrappedRequest as _, validate, success } from '#requests/common';
+
+import { OptionalBGGGameIDSchema } from '#schema/bgg';
 
 import { cfImagesURLUpload } from '#db/common';
 import { getTempImageList } from '#db/image';
-
-import { OptionalBGGGameIDSchema } from '#schema/bgg';
 
 
 /******************************************************************************/
@@ -74,4 +75,9 @@ export async function imageDetailsReq(ctx) {
 export const image = new Hono();
 
 
-image.get('/:bggId?', validate('param', OptionalBGGGameIDSchema), ctx => _(ctx, imageDetailsReq));
+image.get('/:bggId?',
+          validate('param', OptionalBGGGameIDSchema),
+          ctx => _(ctx, imageDetailsReq));
+
+
+/******************************************************************************/

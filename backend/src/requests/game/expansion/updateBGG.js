@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { success } from "#requests/common";
+import { success } from '#requests/common';
 
 import { updateExpansionDetailsByBGG } from '#db/expansion';
 

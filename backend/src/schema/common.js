@@ -2,7 +2,7 @@
 
 
 import { z } from 'zod';
-import slug from "slug";
+import slug from 'slug';
 
 
 /******************************************************************************/

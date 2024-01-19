@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { success, fail } from "#requests/common";
+import { success, fail } from '#requests/common';
 
 import { getMetadataDetails  } from '#db/metadata';
 
