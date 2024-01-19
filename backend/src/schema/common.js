@@ -48,7 +48,7 @@ export function asNumber(isRequired) {
 
 /* During parsing of data, this can be used as part of a transform stage in a
  * schema to coerce the value into a number if possible, falling back to a
- * string value if the value is ot a number.
+ * string value if the value is not a number.
  *
  * The return value is always either a number or a string; number is only ever
  * returned for input fields that can be coerced directly to a number. */

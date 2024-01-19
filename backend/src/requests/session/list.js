@@ -13,8 +13,8 @@ import { success  } from "#requests/common";
  * the system, optionally also filtering based on gameId's for games in the
  * session.
  *
- * In the future this will provide itger various filters to control which items
- * are returned, but at time of writing (during devember) this is more
+ * In the future this will provide other various filters to control which items
+ * are returned, but at time of writing (during Devember) this is more
  * simplistic than that and only supports gameId filters. */
 export async function sessionListReq(ctx) {
   // The query can contain a flag to tell us that we should reverse the sort,

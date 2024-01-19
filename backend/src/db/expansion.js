@@ -300,7 +300,7 @@ export async function updateExpansionDetailsByBGG(ctx, bggId) {
 export async function getExpansionDetails(ctx, gameId) {
   // This query will find all of the entries in the expansions table that expand
   // upon the game with the gameId provided (i.e. it treats the gameId as the
-  // base game); there are two queries that are unioned together.
+  // base game); there are two queries that are union-ed together.
   //
   // The first gathers the list of items that are complete, and thus can have
   // their names plucked from the Name table, and the second is for items that

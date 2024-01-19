@@ -14,7 +14,7 @@ export async function sessionDetailsReq(ctx) {
   // Get the session ID
   const { sessionId } = ctx.req.valid('param');
 
-  // Look up the session; if we don't fiond one, then report that it does not
+  // Look up the session; if we don't find one, then report that it does not
   // exist.
   const result = await getSessionDetails(ctx, sessionId);
   if (result === null) {

@@ -53,7 +53,7 @@ export async function updateGuests(ctx, inputGuestList) {
   // see what needs to be added.
   const existingNames = existing.map(el => el.name);
 
-  // Gather from the input all of the recvords whose names don't appear in the
+  // Gather from the input all of the records whose names don't appear in the
   // list of existing guests; these are the ones we need to add.
   const insertMetadata = guests.filter(el => existingNames.indexOf(el.name) === -1);
 

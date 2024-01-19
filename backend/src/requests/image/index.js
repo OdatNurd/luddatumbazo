@@ -29,7 +29,7 @@ import { OptionalBGGGameIDSchema } from '#schema/bgg';
  * the given ID. The bggId is used as a part of the metadata on the image.
  *
  * This is a production based API endpoint and is only here to help with bulk
- * backfills of images when scafolding out new installations.
+ * back-fills of images when scaffolding out new installations.
  *
  * The result is a list of information on the uploaded images:
  *

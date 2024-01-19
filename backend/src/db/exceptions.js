@@ -6,7 +6,7 @@
  * into our normalized JSON format.
  *
  * This exception carries with it not only the error message, but also the
- * status code that should be returned back if this exception occured as a
+ * status code that should be returned back if this exception occurred as a
  * result of a query. */
 export class BGGLookupError extends Error {
   constructor(message = "", status, ...args) {

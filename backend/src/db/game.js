@@ -78,19 +78,19 @@ export async function getGameSynopsis(ctx, gameId, imageType, includeNameId) {
 /* Given an array of identifiers that can be either gameId numbers or game slug
  * values, return back a short list that provides a list of all matching games.
  *
- * The retutrn will always return a list, though the list may be empty. Each
+ * The return will always return a list, though the list may be empty. Each
  * item in the list is a pair of id and slug values that represent a looked up
  * game. */
 export async function performGameLookup(ctx, identifiers) {
-  // Short circut the lookup if we were not given any identifiers to look up.
+  // Short circuit the lookup if we were not given any identifiers to look up.
   if (identifiers.length === 0) {
     return [];
   }
 
-  // TODO: The subselects here cost writes and reads because the back end uses
-  //       a vtable instance for them; could maybe be made smarter if we want to
+  // TODO: The sub-selects here cost writes and reads because the back end uses
+  //       a vTable instance for them; could maybe be made smarter if we want to
   //       try to only look up integers in one and strings in the other to cut
-  //       potiential ops.
+  //       potential ops.
   const filter = JSON.stringify(identifiers);
   const idValues = await ctx.env.DB.prepare(`
     SELECT id, slug

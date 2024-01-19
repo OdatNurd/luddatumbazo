@@ -99,7 +99,7 @@ async function validateGameData(ctx, sessionData) {
     throw new BGGLookupError(`not all expansions provided exist`, 400);
   }
 
-  // All lookups have succeeded, so insert the found game information into the
+  // All look-ups have succeeded, so insert the found game information into the
   // session data.
   sessionData.gameId = gameData.id;
   sessionData.bggId = gameData.bggId;
@@ -331,7 +331,7 @@ function prepareSessionUpdate(sessionData, updateData) {
   sessionData.title = updateData.title;
   sessionData.content = updateData.content;
 
-  // If the update doesn't contain and player data, there's nothign else to
+  // If the update doesn't contain and player data, there's nothing else to
   // update so short circuit the return now.
   if (updateData.players === undefined) {
     return sessionData;
@@ -545,7 +545,7 @@ export async function getSessionList(ctx, gameIdList, reverse) {
   // If we got no flag for reversing, assume no reverse is desired.
   reverse ??= false;
 
-  // Construct the possible subquery we want to add if any gameId's were
+  // Construct the possible sub-query we want to add if any gameId's were
   // provided as filter criteria.
   const filter = JSON.stringify(gameIdList);
   const subQuery = `
@@ -586,9 +586,9 @@ export async function getSessionList(ctx, gameIdList, reverse) {
   `).all();
   const result = getDBResult('getSessionList', 'find_session', lookup);
 
-  // In each resulting object, convert all of the boolean fields to proper bools
-  // for the return, and make sure that the image URL is properly mapped so that
-  // the page can view the image.
+  // In each resulting object, convert all of the boolean fields to proper
+  // booleans for the return, and make sure that the image URL is properly
+  // mapped so that the page can view the image.
   return result.map(session => {
     session.imagePath = getImageAssetURL(ctx, session.imagePath, 'smallboxart');
     return mapIntFieldsToBool(session);

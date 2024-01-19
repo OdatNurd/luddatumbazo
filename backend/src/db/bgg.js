@@ -205,7 +205,7 @@ function makeBggGameData(gameEntry, gameId) {
  * return value is null.
  *
  * In case of any errors during this operation, we will raise an Exception that
- * allows the calling code to capture the error that occured. */
+ * allows the calling code to capture the error that occurred. */
 export async function lookupBGGGame(bggGameId) {
   // Construct the URI that we want to talk to; we need to ask for stats to get
   // extra information, and also note that there can be no trailing slash after

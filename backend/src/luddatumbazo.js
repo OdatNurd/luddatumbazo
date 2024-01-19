@@ -65,8 +65,8 @@ app.route(`${APIV1}/session`, session);
  *******************************************************************************
  *
  * Requests in this area are not meant for permanent production use, and are
- * here only for an interim period to help backfill data, run extra test queries
- * and so on.
+ * here only for an interim period to help back-fill data, run extra test
+ * queries and so on.
  ******************************************************************************/
 
 // As a temporary endpoint on the system, using an internal table that can

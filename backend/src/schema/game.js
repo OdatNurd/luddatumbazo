@@ -117,7 +117,7 @@ export const NewGameSchema = z.object({
   description: z.string(),
 
   // The year this game was published; this is required because there are many
-  // publishings of a given game, and this helps distinguish the correct one.
+  // publishing's of a given game, and this helps distinguish the correct one.
   published: z.number(),
 
   // Optional fields that track some game data; these default as a convenience
@@ -161,7 +161,7 @@ export const NewGameSchema = z.object({
  * records.
  *
  * Expansions can only be updated for games that actually exist in the DB; the
- * only unestablished links that can be created are as a result of the direct
+ * only un-established links that can be created are as a result of the direct
  * inclusion of the game that provides the other end of the expansion. */
 export const ExpansionUpdateSchema = z.object({
   // The game the expansions are for is strictly required; the BGGId is optional

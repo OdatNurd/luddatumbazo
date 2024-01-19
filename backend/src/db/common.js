@@ -183,7 +183,7 @@ export function getImageAssetURL(ctx, assetPath, imageVariant) {
 
 
 /* This takes as an argument an array of objects which have at their inputKey
- * a value that should be transformed into an asset url via getAssetURL into
+ * a value that should be transformed into an asset URL via getAssetURL into
  * a field named outputKey and returns back a list of items so modified.
  *
  * The input key will be removed and replaced with the mapped output key. */

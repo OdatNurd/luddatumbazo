@@ -31,7 +31,7 @@ export const SessionListParamSchema = z.object({
   //
   // When the value is a string, convert it into an array, so that the value is
   // always an array. Since this is a union and the string version has a default
-  // this paramter will always end up as an empty array when it's missing.
+  // this parameter will always end up as an empty array when it's missing.
   games: z.union([
     z.string().default(''),
     z.array(z.string().or(z.number())).default([])
@@ -103,7 +103,7 @@ export const NewSessionReportSchema = z.object({
     ),
 
     // Guests are identified by a combination of their first and last names,
-    // which are deduplicated into a distinct list of people.
+    // which are de-duplicated into a distinct list of people.
     guests: z.array(
       z.object({
         // The first and last name of the guest.
