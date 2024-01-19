@@ -18,7 +18,7 @@
   "dependencies": {
     "@axel669/sanic-xml": "^0.1.2",
     "entities": "^4.5.0",
-    "hono": "^3.11.7",
+    "hono": "^3.12.6",
     "slug": "^8.2.3",
     "zod": "^3.22.4"
   }
