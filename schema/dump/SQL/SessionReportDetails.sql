@@ -92,4 +92,9 @@ INSERT INTO SessionReportDetails VALUES(89,89,'Play of Turing Machine','Standard
 INSERT INTO SessionReportDetails VALUES(90,90,'Play of Turing Machine','Standard difficulty game with 6 verifiers');
 INSERT INTO SessionReportDetails VALUES(91,91,'Play of Art Society','');
 INSERT INTO SessionReportDetails VALUES(92,92,'Play of Sagrada','');
+INSERT INTO SessionReportDetails VALUES(93,93,'Play of Turing Machine','Standard difficulty game with 6 verifiers');
+INSERT INTO SessionReportDetails VALUES(94,94,'Play of Azul','');
+INSERT INTO SessionReportDetails VALUES(95,95,'Play of Azul','');
+INSERT INTO SessionReportDetails VALUES(96,96,'Play of Azul','');
+INSERT INTO SessionReportDetails VALUES(97,97,'Play of Azul','');
 COMMIT;
