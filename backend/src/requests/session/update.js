@@ -22,8 +22,6 @@ export async function sessionUpdateReq(ctx) {
   const { sessionId } = ctx.req.valid('param');
   const updateData = ctx.req.valid('json');
 
-  return success(ctx, `short circut`, { sessionId, updateData });
-
   // Update the session with the data; if there is no result from this, it is
   // because the session does not exist, so we can report as such.
   const result = await updateSession(ctx, sessionId, updateData);

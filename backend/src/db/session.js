@@ -5,8 +5,7 @@ import { BGGLookupError } from '#db/exceptions';
 import { getGameSynopsis } from '#db/game';
 import { updateGuests } from '#db/guest';
 
-import { ensureObjectStructure,
-         mapImageAssets, getImageAssetURL, getDBResult,
+import { mapImageAssets, getImageAssetURL, getDBResult,
          mapIntFieldsToBool } from '#db/common';
 
 
@@ -305,16 +304,10 @@ function prepareSessionUpdate(sessionData, updateData) {
   // them were not provided, use the value from the session data we just looked
   // up.
   //
-  // TODO: Try not to be so gross about this.
-  const defaultFields = {
-    "isLearning": updateData.isLearning ?? sessionData.isLearning,
-    "sessionEnd": updateData.sessionEnd ?? sessionData.sessionEnd,
-    "title": updateData.title ?? sessionData.title,
-    "content": updateData.content ?? sessionData.content,
-  }
-
-  // Ensure that the updateData has the fields and defaults that we want.
-  updateData = ensureObjectStructure(updateData, [], defaultFields);
+  updateData.isLearning ??= sessionData.isLearning;
+  updateData.sessionEnd ??= sessionData.sessionEnd;
+  updateData.title ??= sessionData.title;
+  updateData.content ??= sessionData.content;
 
   // Get a user or guest record from the provided update data, delete it and
   // return it back. If it's not found, return null instead.
