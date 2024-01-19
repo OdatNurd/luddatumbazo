@@ -15,8 +15,8 @@ import { getExpansionDetails } from '#db/expansion';
  *   - a list of games that are expanded by this game, if this game is an
  *     expansion */
 export async function getExpansionDetailsReq(ctx) {
-  // Get the bggGameId for the game we were given
-  const { gameId } = ctx.req.param();
+  // Get the gameId for the game we were given
+  const { gameId } = ctx.req.valid('param');
 
   // Execute the request and return the result back
   const result = await getExpansionDetails(ctx, gameId);

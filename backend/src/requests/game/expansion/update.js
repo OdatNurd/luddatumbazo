@@ -17,13 +17,7 @@ export async function updateExpansionDetailsReq(ctx) {
   // Get the body of data that allows us to perform the expansion update
   // Grab the records that give us information on the expansion information that
   // we want to update.
-  const expansionUpdate = await ctx.req.json();
-
-  // Pull out the keys and verify that they all exist; if not, raise an error.
-  const { gameId, bggId, expansions } = expansionUpdate;
-  if ([gameId, expansions].indexOf(undefined) !== -1) {
-    throw new Error(`request has missing fields`);
-  }
+  const { gameId, bggId, expansions } = ctx.req.valid('json');
 
   // Execute the request and return the result back.
   const result = await updateExpansionDetails(ctx, gameId, bggId, expansions);

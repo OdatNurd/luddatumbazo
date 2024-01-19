@@ -3,7 +3,7 @@
 
 import { BGGLookupError } from '#db/exceptions';
 
-import { getDBResult, ensureRequiredKeys } from '#db/common';
+import { getDBResult } from '#db/common';
 import { lookupBGGGame } from "#db/bgg";
 
 
@@ -61,44 +61,6 @@ const findGame = (links, game) => links.find(link =>
 /******************************************************************************/
 
 
-/* Takes as input a list of fields of the form:
- *   {
- *      "isExpansion": false,
- *      "name": "Reef Encounter",
- *      "bggId": 12962,
- *      "gameId": null
- *   }
- *
- * and validates that they are correct. In particular, isExpansion and name must
- * be present, but if bggId or gameId are missing, they will be populated with
- * a default value.
- *
- * We enforce that if the gameId is null, the bggId must not be 0; otherwise
- * this entry is ambiguous.
- *
- * Missing fields cause an error to be thrown. */
-const validateExpansionDetails = data => data.filter(record => {
-  if (ensureRequiredKeys(record, ["isExpansion", "name"]) == false) {
-    throw new Error(`required fields are missing from the input expansion data`);
-  }
-
-  // Insert any ID's that are missing with their default values.
-  record.gameId ??= null;
-  record.bggId ??= 0;
-
-  // If the gameId is null and we don't have a bggId, then this entry is useless
-  // because it's ambiguous; raise an error.
-  if (record.gameId === null && record.bggId === 0) {
-    throw new Error(`one of gameId and bggId must be provided in the input expansion data`);
-  }
-
-  return record;
-});
-
-
-/******************************************************************************/
-
-
 /* This accepts as input a combination of gameId and bggGameId that represents
  * some game *that exists in the database* whose expansion data we want to
  * adjust, and an array of items of the shape:
@@ -147,20 +109,14 @@ export async function updateExpansionDetails(ctx, gameId, bggId, expansionList) 
     skipped: 0
   };
 
-  // Create a game that represents the gameId and bggId that we were given; if
-  // there was no bggId, then we can infer that it's 0.
-  const myGame = makeGame(gameId, bggId ?? 0);
-
-  // Fully fill out all of the records in the expansions list. All records are
-  // required to include the appropriate fields, though some will have defaults
-  // if they're not set.
-  //
-  // If we end up with no records, then there is nothing to do, so just return
-  // back.
-  const expansions = validateExpansionDetails(expansionList);
-  if (expansions.length === 0) {
+  // If there are no expansions to update, then we don't have to do anything
+  // here.
+  if (expansionList.length === 0) {
     return result;
   }
+
+  // Create a game that represents the gameId and bggId that we were given.
+  const myGame = makeGame(gameId, bggId);
 
   // Find all of the entries in the GameExpansion table where our data is one
   // complete side of the link and the other side of the relation has a null
@@ -222,7 +178,7 @@ export async function updateExpansionDetails(ctx, gameId, bggId, expansionList) 
   const batch = [];
 
   // Iterate all of the input expansions to see what kind of update is needed.
-  for (const entry of expansions) {
+  for (const entry of expansionList) {
     const entryGame = makeGame(entry.gameId, entry.bggId);
 
     // Find the existing entry that contains this game, if any.

@@ -2,7 +2,17 @@
 
 
 import { z } from 'zod';
-import { numberOrString, makeSlug } from '#schema/common';
+import { asNumber, numberOrString, makeSlug } from '#schema/common';
+
+
+/******************************************************************************/
+
+
+/* Operations to get at some core data can only search via a numeric gameId and
+ * via a combination of an ID value or a Slug. */
+export const GameIDSchema = z.object({
+  gameId: z.string().transform(asNumber(true))
+});
 
 
 /******************************************************************************/
@@ -87,8 +97,8 @@ export const GameExpansionSchema = z.array(
 /******************************************************************************/
 
 
-/* New session reports that are added to the system require that their data
- * conform to the following schema, or the request will fail. */
+/* New games that are added to the system require that their data conform to the
+ * following schema, or the request will fail. */
 export const NewGameSchema = z.object({
   // Games can be associated with their BoardGameGeek ID value; this is optional
   // and can be 0 to indicate that this is a game that BGG doesn't know about.
@@ -140,5 +150,26 @@ export const NewGameSchema = z.object({
   image: z.string().default('')
 });
 
+
+/******************************************************************************/
+
+
+/* When updating session data, the request requires the id of the game whose
+ * expansions are being updated, a potential BGGId, and a list of the expansion
+ * records.
+ *
+ * Expansions can only be updated for games that actually exist in the DB; the
+ * only unestablished links that can be created are as a result of the direct
+ * inclusion of the game that provides the other end of the expansion. */
+export const ExpansionUpdateSchema = z.object({
+  // The game the expansions are for is strictly required; the BGGId is optional
+  // for this portion, since the relation requires at least one side and we
+  // enforce that the gameId is valid.
+  gameId: z.number(),
+  bggId: z.number().default(0),
+
+  // The list of expansions to update with
+  expansions: GameExpansionSchema,
+});
 
 /******************************************************************************/

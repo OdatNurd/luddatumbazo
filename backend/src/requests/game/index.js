@@ -21,8 +21,8 @@ import { metadataPurgeReq } from '#requests/game/metadata/purge';
 import { metadataQueryReq } from '#requests/game/metadata/query';
 
 import { BGGGameIDSchema } from '#schema/bgg';
-import { GameLookupIDSchema, NewGameSchema, BGGGameIDListSchema,
-         GameLookupIDListSchema } from '#schema/game';
+import { GameIDSchema, GameLookupIDSchema, NewGameSchema, BGGGameIDListSchema,
+         GameLookupIDListSchema, ExpansionUpdateSchema } from '#schema/game';
 
 
 /******************************************************************************/
@@ -53,14 +53,14 @@ game.get('/:idOrSlug', validate('param', GameLookupIDSchema), ctx => _(ctx, game
 // Given a set of input records, try to establish game expansion links in the
 // database. The second variation looks up the data for the game in BGG in
 // order to provide the update; for games that are added without expansion info.
-game.put('/data/expansions/update', ctx => _(ctx, updateExpansionDetailsReq));
-game.get('/data/expansions/update/bgg/:bggGameId{[0-9]+}', ctx => _(ctx, updateExpansionDetailsBggReq));
+game.put('/data/expansions/update', validate('json', ExpansionUpdateSchema), ctx => _(ctx, updateExpansionDetailsReq));
+game.get('/data/expansions/update/bgg/:bggId', validate('param', BGGGameIDSchema), ctx => _(ctx, updateExpansionDetailsBggReq));
 
 // Given a gameId (and not a slug), look up the data that indicates the list of
 // expansions and base games that associate with that game. In this parlance,
 // expansions are games that expand this game if it is a base game, and base
 // games are games that this game would expand, if this game was an expansion.
-game.get('/data/expansions/list/:gameId', ctx => _(ctx, getExpansionDetailsReq));
+game.get('/data/expansions/list/:gameId', validate('param', GameIDSchema), ctx => _(ctx, getExpansionDetailsReq));
 
 // Given a list of metadata objects, try to insert any that are not currently in
 // the database, and then return back a complete list of our internal records

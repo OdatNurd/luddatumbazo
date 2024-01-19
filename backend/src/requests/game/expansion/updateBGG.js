@@ -16,10 +16,10 @@ import { updateExpansionDetailsByBGG } from '#db/expansion';
  * perform the expansion update as the other method would. */
 export async function updateExpansionDetailsBggReq(ctx) {
   // Get the bggGameId for the game we were given
-  const { bggGameId } = ctx.req.param();
+  const { bggId } = ctx.req.valid('param');
 
   // Execute the request and return the result back.
-  const result = await updateExpansionDetailsByBGG(ctx, bggGameId);
+  const result = await updateExpansionDetailsByBGG(ctx, bggId);
 
   return success(ctx, `updated expansion links`, result);
 }
