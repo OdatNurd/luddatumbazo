@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 
-import { asNumber } from '#schema/common';
+import { asNumber, numberOrString } from '#schema/common';
 
 
 /******************************************************************************/
@@ -30,19 +30,25 @@ export const SessionListParamSchema = z.object({
   // Optionally either a comma separated string of numbers and slugs, or an
   // array of same (by using the same parameter multiple times as one ought).
   //
-  // When the value is a string, convert it into an array, so that the value is
-  // always an array. Since this is a union and the string version has a default
-  // this parameter will always end up as an empty array when it's missing.
+  // Here we accept either a string or an array of strings, and the transform
+  // will split a string into an array, and also filter the array so that all
+  // numbers are numbers and not strings.
+  //
+  // Since this is a union and the string version has a default this parameter
+  // will always end up as an empty array when it's missing.
   games: z.union([
     z.string().default(''),
-    z.array(z.string().or(z.number())).default([])
+    z.array(z.string()).default([])
   ]).transform((value, zCtx) => {
     // If it's not an array, turn it into one
     if (Array.isArray(value) === false) {
       value = value.split(',').map(e => e.trim()).filter(e => e !== '')
     }
 
-    return value;
+    // The array will always contain strings because the data came from the
+    // query string; return a version that filters to turn numbers into actual
+    // numbers and not strings.
+    return value.map(el => numberOrString(el));
   })
 });
 
