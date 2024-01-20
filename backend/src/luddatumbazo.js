@@ -62,15 +62,13 @@ app.route(`${APIV1}/session`, session);
 
 
 /*******************************************************************************
- * Temporary Requests
+ * Image Requests
  *******************************************************************************
+ * Items in this section are related to looking up information on images within
+ * the system and uploading them.
  *
- * Requests in this area are not meant for permanent production use, and are
- * here only for an interim period to help back-fill data, run extra test
- * queries and so on.
- *
- * This does not include all such requests, just those that are top level; any
- * set of API's can have a set of interim API's as well.
+ * Some of the requests in this section are currently for development use only
+ * and will be redacted once the full API is complete.
  ******************************************************************************/
 
 app.route(`${APIV1}/images`, image);

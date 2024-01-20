@@ -3,7 +3,8 @@
 
 import { BGGLookupError } from '#db/exceptions';
 
-import { cfImagesURLUpload, mapImageAssets, getImageAssetURL, getDBResult } from '#db/common';
+import { getDBResult } from '#db/common';
+import { cfImagesURLUpload, mapImageAssets, getImageAssetURL  } from '#db/image';
 import { metadataTypeList, updateMetadata } from '#db/metadata';
 import { updateExpansionDetails, getExpansionDetails } from '#db/expansion';
 import { lookupBGGGame } from '#db/bgg';

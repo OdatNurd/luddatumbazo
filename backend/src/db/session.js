@@ -1,9 +1,9 @@
 /******************************************************************************/
 
 
-import { mapImageAssets, getImageAssetURL, getDBResult,
-         mapIntFieldsToBool } from '#db/common';
+import { getDBResult, mapIntFieldsToBool } from '#db/common';
 
+import { mapImageAssets, getImageAssetURL } from '#db/image';
 import { BGGLookupError } from '#db/exceptions';
 import { performGameLookup } from '#db/game';
 import { updateGuests } from '#db/guest';

@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import { asNumber, numberOrString, makeSlug } from '#schema/common';
 
-import { imageVariantMap } from '#db/common';
+import { imageVariantMap } from '#db/image';
 import { metadataTypeList } from '#db/metadata';
 
 
