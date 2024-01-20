@@ -13,7 +13,7 @@ import { BGGLookupError } from '#db/exceptions';
  * The keys in this list are the internal string names for the image types that
  * we want to use, and the values are the names of the environment variables
  * that tell us what names to use. */
-const variantMap = {
+export const imageVariantMap = {
   'boxart': 'CF_VARIANT_BOXART',
   'smallboxart': 'CF_VARIANT_SMALLBOXART',
   'thumbnail': 'CF_VARIANT_THUMB',
@@ -145,7 +145,7 @@ export function getImageAssetURL(ctx, assetPath, imageVariant) {
 
   // Look up the image variant we were given to see what environment variable
   // we should look in; fail if this does not map.
-  const variantEnvName = variantMap[imageVariant];
+  const variantEnvName = imageVariantMap[imageVariant];
   if (variantEnvName === undefined) {
     throw new Error(`unknown image variant '${imageVariant}`);
   }

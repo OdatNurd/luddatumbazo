@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { asNumber, numberOrString, makeSlug } from '#schema/common';
 
+import { imageVariantMap } from '#db/common';
 import { metadataTypeList } from '#db/metadata';
 
 
@@ -43,6 +44,17 @@ export const BGGGameIDListSchema = z.array(z.number());
 export const GameLookupIDListSchema = z.array(
   z.string().or(z.number())
 );
+
+
+/******************************************************************************/
+
+
+/* When doing a game lookup, the query can include a query field that requests
+ * that an image for the game looked up be returned; if provided, this needs to
+ * be one of the valid image types. */
+export const GameLookupParamSchema = z.object({
+  imageType: z.enum(Object.keys(imageVariantMap)).optional(),
+});
 
 
 /******************************************************************************/

@@ -75,32 +75,115 @@ export async function getGameSynopsis(ctx, gameId, imageType, includeNameId) {
 /******************************************************************************/
 
 
-/* Given an array of identifiers that can be either gameId numbers or game slug
- * values, return back a short list that provides a list of all matching games.
+/* Takes either a single game identifier or an array of identifiers, where an
+ * identifier is either a textual slug or a numeric game ID, and searches for
+ * data on those games. The result is an object or objects with the brief
+ * details of each game:
+ *   - id
+ *   - bggId
+ *   - slug
+ *   - name
+ *   - imagePath
  *
- * The return will always return a list, though the list may be empty. Each
- * item in the list is a pair of id and slug values that represent a looked up
- * game. */
-export async function performGameLookup(ctx, identifiers) {
-  // Short circuit the lookup if we were not given any identifiers to look up.
-  if (identifiers.length === 0) {
-    return [];
+ * imageType can be one of the valid image types, or undefined to indicate that
+ * no image is desired. The resulting object will either have no imagePath field
+ * or will have the URL to the image of the desired dimension based on the
+ * passed in type.
+ *
+ * includeNameId indicates wether the resulting lookups should also contain the
+ * nameId field that shows what name value was selected from the name table
+ * (when true) or if that is not desired (when false); the name field will be
+ * present in either case.
+ *
+ * If the identifier provided is a single id, the return value is either the
+ * object that represents that game, or null if it could not be found.
+ *
+ * If the identifier provided is a list of ID's, the return value is an array,
+ * which may be shorter than the input array of not all of the items were
+ * found. */
+export async function performGameLookup(ctx, gameId, imageType, includeNameId) {
+  // Get the list of ID's that we are going to search for.
+  const searchIds = Array.isArray(gameId) ? gameId : [gameId];
+
+  // Filter the incoming list of identifiers into two lists; one for which we
+  // can look up based on the ID value, and the other based on a slug value.
+  //
+  // We do these operations distinct because every usage of json_each() costs
+  // reads and writes due to it being implemented with a vTable. Thus we can
+  // cut usage in half by only using it once per query rather than twice.
+  const idValues = searchIds.filter(el => typeof el !== "string");
+  const slugValues = searchIds.filter(el => typeof el === "string");
+
+  // If we got any numeric ID queries, queue up a request to look up those
+  // games.
+  const queries = [];
+  if (idValues.length !== 0) {
+    queries.push(
+      ctx.env.DB.prepare(`
+        SELECT A.id, A.bggId, A.slug, B.name, A.imagePath, B.id as nameId
+          FROM Game as A, GameName as B
+         WHERE A.id == B.gameId and B.isPrimary = 1
+           AND A.id in (SELECT value from json_each('${JSON.stringify(idValues)}'))
+      `).all()
+    );
   }
 
-  // TODO: The sub-selects here cost writes and reads because the back end uses
-  //       a vTable instance for them; could maybe be made smarter if we want to
-  //       try to only look up integers in one and strings in the other to cut
-  //       potential ops.
-  const filter = JSON.stringify(identifiers);
-  const idValues = await ctx.env.DB.prepare(`
-    SELECT id, slug
-      FROM Game
-      WHERE id IN (SELECT value from json_each('${filter}'))
-         OR slug in (SELECT value from json_each('${filter}'))
-  `).all();
+  // If we got any textual slug queries, queue up a request to perform the same
+  // query by slug instead.
+  if (slugValues.length !== 0) {
+    queries.push(
+      ctx.env.DB.prepare(`
+        SELECT A.id, A.bggId, A.slug, B.name, A.imagePath, B.id as nameId
+          FROM Game as A, GameName as B
+         WHERE A.id == B.gameId and B.isPrimary = 1
+           AND A.slug in (SELECT value from json_each('${JSON.stringify(slugValues)}'))
+      `).all()
+    );
+  }
 
-  return getDBResult('performGameLookup', 'lookup_ids', idValues);
+  // Wait for both queries to resolve now
+  const preResults = await Promise.all(queries);
+
+  // Fetch out the actual results; we combine these into a single array of
+  // values.
+  const combined = [];
+  for (const item of preResults) {
+    combined.push(...getDBResult('performGameLookup', 'lookup', item));
+  }
+
+  // Map the final result that will be returned.
+  const result = combined.map(game => {
+    // If we were not given an imageType, then remove the imagePath field;
+    // otherwise populate it with the appropriate image URL.
+    if (imageType === undefined) {
+      delete game.imagePath;
+    } else {
+      game.imagePath = getImageAssetURL(ctx, game.imagePath, imageType);
+    }
+
+    // If we were not asked to include the nameId, remove it from the object.
+    if (includeNameId !== true) {
+      delete game.nameId;
+    }
+
+    return game;
+  });
+
+  // What we do here depends on whether the input was an array or not; if it was
+  // an array, we want to return all values; otherwise, we want to return just
+  // the first value.
+  if (Array.isArray(gameId)) {
+    return result;
+  } else {
+    // If the list is empty, return NULL; there is no such game.
+    if (result.length === 0) {
+      return null;
+    }
+
+    return result[0];
+  }
 }
+
 
 /******************************************************************************/
 

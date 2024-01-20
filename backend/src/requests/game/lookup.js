@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { success } from '#requests/common';
+import { success, fail } from '#requests/common';
 
 import { performGameLookup } from '#db/game';
 
@@ -13,10 +13,21 @@ import { performGameLookup } from '#db/game';
  * names, and returns back a list of objects that tell you the id and slug
  * values for all matched games. */
 export async function performGameLookupReq(ctx) {
-  const filterList = await ctx.req.valid('json');
+  const filterList = ctx.req.valid('json');
+  const { imageType } = ctx.req.valid('query');
 
-  const result = await performGameLookup(ctx, filterList);
-  return success(ctx, `looked up ${result.length} games`, result);
+  // Do the lookup; for our purposes here, we never want the nameId.
+  const result = await performGameLookup(ctx, filterList, imageType, false);
+  if (result === null) {
+    return fail(ctx, `unable to locate game: ${filterList[0]}`, 404)
+  }
+
+  // Construct an appropriate message.
+  const msg = Array.isArray(result)
+      ? `looked up ${result.length} games`
+      : 'located game details';
+
+  return success(ctx, msg, result);
 }
 
 
