@@ -9,4 +9,4 @@ node_modules/
 client/public/
 
 # Backup databases
-/*.sqlite
+/backups/
