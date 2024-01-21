@@ -78,9 +78,11 @@ const getFloatOf = (input, name) => {
 const getAllItemsOf = (input, name) => getChildrenNamed(input, name)
   .filter(el => el.children.length > 0 && el.attr?.objectid !== undefined)
   .map(el => {
+    const name = decodeHTML(el.children[0].text);
     return {
+      name,
       "bggId": parseInt(el.attr.objectid),
-      "name": decodeHTML(el.children[0].text)
+      "slug": slug(name)
     }
   });
 
@@ -164,6 +166,11 @@ function makeBggGameData(gameEntry, gameId) {
   output.description = decodeHTML(getTextOf(gameEntry, 'description'));
   output.thumbnail = getTextOf(gameEntry, 'thumbnail');
   output.image = getTextOf(gameEntry, 'image');
+
+  // This data is not in the BGG database, but we strictly require it in order
+  // to perform inserts later.
+  output.officialUrl = '';
+  output.teachingUrl = '';
 
   // Get the core game details.
   output.published = getIntOf(gameEntry, 'yearpublished');

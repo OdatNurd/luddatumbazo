@@ -252,7 +252,7 @@ export async function insertGame(ctx, gameData) {
   // 3. Update placements for all items in 0
   const stmt = ctx.env.DB.prepare(`INSERT INTO Game
             (bggId, slug, description, publishedIn, minPlayers, maxPlayers,
-             minPlayerAge, playtime, minPlaytime, maxPlaytime, complexitym
+             minPlayerAge, playtime, minPlaytime, maxPlaytime, complexity,
              officialUrl, teachingUrl)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
     gameData.bggId,
