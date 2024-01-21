@@ -1323,4 +1323,7 @@ INSERT INTO GameMetadata VALUES(1393,'designer',110951,'peter-mcpherson','Peter 
 INSERT INTO GameMetadata VALUES(1394,'artist',122536,'gong-studios','Gong Studios');
 INSERT INTO GameMetadata VALUES(1395,'publisher',40047,'all-in-games','All In Games');
 INSERT INTO GameMetadata VALUES(1396,'publisher',36401,'arrakis-games','Arrakis Games');
+INSERT INTO GameMetadata VALUES(1397,'designer',103599,'katharine-chapman','Katharine Chapman');
+INSERT INTO GameMetadata VALUES(1398,'publisher',5215,'cartamundi','Cartamundi');
+INSERT INTO GameMetadata VALUES(1399,'publisher',9401,'funskool-games','Funskool Games');
 COMMIT;
