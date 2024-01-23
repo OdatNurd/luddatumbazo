@@ -17,9 +17,12 @@
     "client:build": "cd client && npm run build",
     "backend:run": "cd backend && wrangler dev",
     "backend:deploy": "cd backend && wrangler deploy",
-    "db:dump": "node ./tools/dumpLocalDB.js"
+    "db:dump": "node ./tools/dumpLocalDB.js",
+    "jwt:create": "node ./tools/makeJwt.js"
   },
   "devDependencies": {
+    "jose": "^5.2.0",
+    "toml": "^3.0.0",
     "wrangler": "^3.23.0"
   }
 }

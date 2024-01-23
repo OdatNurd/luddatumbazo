@@ -5,8 +5,8 @@ compatibility_date = "2023-12-01"
 # Dev versions should have no route; production versions go directly to our
 # customized route instead.
 #
-# Here the zone_id comes from the API section of the overview page of a site
-# in the CF Dashboard.
+# Here the zone_id comes from the API section of the overview page of a site in
+# the CF Dashboard.
 workers_dev = false
 route = { pattern = "luddatumbazo.odatnurd.net/api/*", zone_id="228f86abc5bc8b04719dc4671eb09dc0" }
 
@@ -28,9 +28,10 @@ route = { pattern = "luddatumbazo.odatnurd.net/api/*", zone_id="228f86abc5bc8b04
 #   https://luddatumbazo.odatnurd.net/cdn-cgi/imagedelivery/Dx4jrYPNAcY0IcNpYD9HJA/<IMAGEID>/<VARIANT-NAME>
 #   https://imagedelivery.net/Dx4jrYPNAcY0IcNpYD9HJA/<IMAGEID>/<VARIANT-NAME>
 #
-# The first two of these are gated behind any IAM, but the third ia always
-# public unless the image is not public (in which case the request will require
-# a key).
+# The first two of these are gated behind any IAM on the main application
+# domain, but the third is always public unless the image is not public (in
+# which case the request will require a key to be provided; the app currently
+# makes all images public however).
 
 # Bind our database; the name and ID come from the D1 page and are visible when
 # you create DB or go back to look at one.
@@ -46,37 +47,115 @@ binding = "BUCKET"
 bucket_name = "luddatumbazo-assets"
 
 [vars]
+
+################################################################################
+# G E N E R A L
+################################################################################
+
 # The Account ID of the CF account that is running the worker; this is visible
 # from the same place as the zone_id for the worker router; it's specific to an
 # account and not a domain.
+#
+# This is used in all requests to the Cloudflare API, which requires as a path
+# parameter the account ID of the account the API is being invoked for.
 CF_ACCOUNT_ID = 'd8cc4339c920f6d32079a5b483603063'
 
-# These variables are used to configure which Cloudflare image variants should
-# be used when generating images of specific types.
+# This is actually for the UI and not for the worker, but this is here as a
+# reminder that it should be set for the UI build.
+#
+# It specifies the full URI to the API that this worker runs at and it used at
+# build time to tell the UI code where it should talk to.
+#
+# See client/.env.template for a template you can copy to a .env file to set
+# this up.
+# GAME_API_ROOT_URI = http://localhost:8000
+
+################################################################################
+# A U T H E N T I C A T I O N
+################################################################################
+
+# When you set up Cloudflare Access, you set up a team name; your application
+# portal is then rooted at that domain.
+#
+# The domain is used to mark the issuer of the authentication JWT, and the
+# incoming JWT is validated to be issued by this domain.
+CF_TEAM_DOMAIN = 'https://odatnurd.cloudflareaccess.com'
+
+# All CLoudflare Access accounts have a JWKS that is used to provide the public
+# keys needs to validate that the incoming JWT is authentic.
+#
+# This is always the team domain with a specific suburl attached to the end,
+# which is common to all accounts.
+CF_TEAM_JWKS = 'https://odatnurd.cloudflareaccess.com/cdn-cgi/access/certs'
+
+# The Audience Tag for the application, which comes from the Overview tab of the
+# Application in Cloudflare Access.
+#
+# This is used in the JWT to mark the audience that the token is for, and like
+# the team domain above the JWT is validated to be directed at this audience.
+CF_AUD_TAG = 'b8cb09d687d967fbd2d5541b0fa8502dffe66532eb8a4d964834a04e389347fc'
+
+
+################################################################################
+# I M A G E S
+################################################################################
+
+# When generating URLs for Cloudflare images, this is the template that is used
+# to inject the internal image path and the name of the variant in order to
+# arrive at the final image URL delivered to the browser.
+#
+# See the Images section above; this can be set to the secured domain or to the
+# public one. In this URL, the imagePath is the imageId of the image.
+#
+# You may want to override this value in the .dev.vars file to point to the
+# public version of the URL so that the development version's UI can display
+# images without you having to log into the deployed production application
+# first.
+CF_IMAGEURL_TEMPLATE = 'https://luddatumbazo.odatnurd.net/images/{imagePath}/{variant}'
+
+# Cloudflare images provides you the ability to have one or more variants, but
+# they are not namespaced to a particular project.
+#
+# This values are used to make our internal names for the image sizes we want
+# (whose names are visible in the CF_VARIANT names) to the actual variant name.
+#
+# For example, a request for a 'boxart' image consults CF_VARIANT_BOXART and
+# determines that the variant name to use is 'cover'.
 CF_VARIANT_THUMB = 'thumb'
 CF_VARIANT_BOXART = 'cover'
 CF_VARIANT_SMALLBOXART = 'entry'
 
-# When generating URLs for Cloudflare images, use this template to inject the
-# image path and desired variant in order to get a fully working URL.
-CF_IMAGEURL_TEMPLATE = 'https://luddatumbazo.odatnurd.net/images/{imagePath}/{variant}'
 
-# The code that interacts with Cloudflare images needs to have an access token
-# to use in its requests that has the ability to read and edit the CF Images
-# data; this one is not here in this file since that would be a horrible, really
-# bad leak.
+################################################################################
+# T O K E N S
+################################################################################
+
+# In order to access the Cloudflare Images API, a token is needed with claims:
+#    "Cloudflare Images: Read"
+#    "Cloudflare Images: Edit"
+#    "Account Analytics: Read"
 #
-# You should do that in the dashboard, and encrypt the variable; this is just
-# here as a reminder that the variable needs to exist.
+# This is used in requests to upload images as well as to gather data about
+# images being served and such.
+#
+# This value should *NEVER* be set here; set it via the dashboard and encrypt
+# it. This is just here as a reminder that the variable needs to exist,
+# including in the .dev.vars file (if you want local code to work).
 #CF_IMAGES_TOKEN=secrettokenhere
 
-# The UI code needs to know what URI we're running at, which it gets from an
-# environment variable like so (does not need to be set here in the worker,
-# since the worker knows where it lives).
+# In order to access information about the currently logged in user, a token
+# is needed with claims:
+#     "Access: Audit Logs"
 #
-# You can use the packed in .env.template to create your own .env file for local
-# work; when you deploy, make sure your pages deployment sets this value.
-# GAME_API_ROOT_URI = http://localhost:8000
+# This is used when an authorization request is made but the UUID of the user
+# does not exist in the database; we can reach out with to the API to determine
+# session details and get the information that we need in order to automatically
+# add the new user to the system.
+#
+# This value should *NEVER* be set here; set it via the dashboard and encrypt
+# it. This is just here as a reminder that the variable needs to exist,
+# including in the .dev.vars file (if you want local code to work).
+# CF_ACCESS_TOKEN = 'putsecrettokenhere'
 
 
 # Local dev server settings
