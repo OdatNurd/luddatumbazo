@@ -107,7 +107,7 @@ function getSqliteDBFilename() {
  * The database filename and the Database table are expected to exist on entry
  * to the function. */
 async function dumpDBTable(dbFileName, dbTableName) {
-  const cmdLine = `echo ".dump ${dbTableName}" | sqlite3 ${dbFileName} > schema/dump/SQL/${dbTableName}.sql`;
+  const cmdLine = `echo ".dump ${dbTableName}" | sqlite3 ${dbFileName} > data/dump/SQL/${dbTableName}.sql`;
 
   // Execute it.
   const { stdout, stderr } = await exec(cmdLine);

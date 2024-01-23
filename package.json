@@ -17,7 +17,7 @@
     "client:build": "cd client && npm run build",
     "backend:run": "cd backend && wrangler dev",
     "backend:deploy": "cd backend && wrangler deploy",
-    "db:dump": "node ./schema/dump/dumpLocalDB.js"
+    "db:dump": "node ./tools/dumpLocalDB.js"
   },
   "devDependencies": {
     "wrangler": "^3.23.0"
