@@ -95,6 +95,31 @@ CF_TEAM_JWKS = 'https://odatnurd.cloudflareaccess.com/cdn-cgi/access/certs'
 # the team domain above the JWT is validated to be directed at this audience.
 CF_AUD_TAG = 'b8cb09d687d967fbd2d5541b0fa8502dffe66532eb8a4d964834a04e389347fc'
 
+# The production version of the API supports being accessed remotely via test or
+# command line tools via a configured service token.
+#
+# The values here specify the clientID of the service token that should have
+# access, what the uuid of the internal user (which must be previously known to
+# the system) to map it to.
+#
+# The authorization code uses the two of them to validate that the token is the
+# expected one, and to mock the actual user that underlies the token.
+CF_SERVICE_CLIENTID = '9a23b214dd414ae8f91105343fd4f4b7.access'
+CF_SERVICE_USER = 'be916285-a022-5a5f-8006-82bd2e6b097d'
+
+# Authentication in the application requires that all requests that require auth
+# contain a a JWT whose claims contain the details of the user. The code uses
+# the keys in the above JWKS to validate the token.
+#
+# If this value is set (which should **NEVER** happen in a real deployment), the
+# token is decoded but not validated. This allows local code to work with a
+# structurally intact token without requiring it to be signed. The value of the
+# variable is inconsequential; just being set to anything is an indication of
+# development mode.
+#
+# This should only ever be set in the .dev.vars file.
+#CF_DEV_MODE = 'true'
+
 
 ################################################################################
 # I M A G E S

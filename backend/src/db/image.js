@@ -218,8 +218,8 @@ export async function cfImagesGetVariants(ctx) {
   // ID.
   const variantURI = `https://api.cloudflare.com/client/v4/accounts/${ctx.env.CF_ACCOUNT_ID}/images/v1/variants`;
 
-  // To upload the image we need to create an authorized POST request with the
-  // form body that indicates where the data should come from.
+  // To obtain the list of image variants we need to create an authorized GET
+  // request.
   const options = {
     method: 'GET',
     headers: {
@@ -227,8 +227,8 @@ export async function cfImagesGetVariants(ctx) {
     }
   };
 
-  // Request that Cloudflare ingest the image; this will only reject if there is
-  // a network issue, which will be caught by the caller.
+  // Fetch the list of variants. This will only reject if there is a network
+  // issue, which will be caught by the caller.
   const res = await fetch(variantURI, options);
   const lookup = await res.json();
 
