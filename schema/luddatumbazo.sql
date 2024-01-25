@@ -108,7 +108,6 @@ CREATE TABLE User (
     emailAddress TEXT NOT NULL
 );
 CREATE INDEX idx_user_ext ON User(externalId);
-CREATE UNIQUE INDEX idx_user_name ON User(firstName, lastName);
 
 DROP TABLE IF EXISTS Household;
 CREATE TABLE Household (

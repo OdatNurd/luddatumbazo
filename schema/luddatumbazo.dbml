@@ -41,7 +41,6 @@ Table User {
 
   indexes {
     externalId [name: 'idx_user_ext']
-    (firstName, lastName) [name: 'idx_user_name']
   }
 
   Note: 'A known user in the system; associates an external authentication ID with a specific user'

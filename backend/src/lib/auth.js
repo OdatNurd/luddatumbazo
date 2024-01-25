@@ -5,6 +5,7 @@ import { getCookie } from 'hono/cookie';
 import * as jose from 'jose';
 
 import { getDBResult } from '#db/common';
+import { insertUser, findUserExternal } from '#db/user';
 
 
 /******************************************************************************/
@@ -171,40 +172,25 @@ export async function getAuthorizedUser(ctx) {
 
   // Either we were accessed via a service token and it was mapped to a user,
   // or we have an actual user. Either way, look up the user in the database.
-  const userLookup = await ctx.env.DB.prepare(`
-    SELECT * FROM User WHERE externalId = ?
-  `).bind(tokenInfo.sub).all();
-  const userInfo = getDBResult('getAuthorizedUser', 'find_user', userLookup);
+  const userInfo = await findUserExternal(ctx, tokenInfo.sub);
 
   // If there was no data for this user, then we need to first validate the
   // session and insert such a user; this can only ever happen when a user
   // accesses us. If a service token is used, this call will fail since there is
   // no session associated with it. This is a local configuration error because
   // the configured service user must exist.
-  if (userInfo.length === 0) {
+  if (userInfo === null) {
     const sessionDetails = await cfGetUserSession(ctx, tokenInfo.sub, tokenInfo.identity_nonce);
     if (sessionDetails === null) {
-      console.log(`unable to look up session details for user`)
+      console.log(`unable to look up session details for user; cannot add new user`);
       return null;
     }
 
-    // TODO: Make this actually insert the user instead of lying like a sack of
-    //       crap. In particular, the first and last name need to be split from
-    //       the single name field; the display name should indeed inherit the
-    //       full name, which does not need to (and cannot be) inserted into the
-    //       DB because it's a generated column.
-    return {
-      id: 10000000,
-      externalId: sessionDetails.user_uuid,
-      firstName: 'Poopy',
-      lastName: 'Pants',
-      name: sessionDetails.name,
-      displayName: sessionDetails.Name,
-      email: sessionDetails.email,
-    }
+    // Insert a new user based on the session data.
+    return await insertUser(ctx, sessionDetails);
   }
 
-  return userInfo[0];
+  return userInfo;
 }
 
 /******************************************************************************/
