@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors'
 
 import { auth } from '#requests/auth/index';
+import { user } from '#requests/user/index';
 import { bgg } from '#requests/bgg/index';
 import { guest } from '#requests/guest/index';
 import { image } from '#requests/image/index';
@@ -35,6 +36,18 @@ app.use('/api/*', cors())
 
 app.route(`${APIV1}/auth`, auth);
 
+
+/*******************************************************************************
+ * User API
+ *******************************************************************************
+ * The items in this section are related to searching the list of users for
+ * specific users, getting lists, and making modifications to existing users.
+ *
+ * There is no endpoint here for inserting a user; that happens implictly as a
+ * part of auth requests.
+ ******************************************************************************/
+
+app.route(`${APIV1}/user`, user);
 
 
 /*******************************************************************************

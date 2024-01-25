@@ -87,3 +87,19 @@ export async function insertUser(ctx, newUserInfo) {
 
 
 /******************************************************************************/
+
+
+/* Search for and return a list of all of the users that are known to the
+ * system.
+ *
+ * This provides a subset of potential user information, since some fields are
+ * meant for internal use only. */
+export async function getUserList(ctx) {
+  const result = await ctx.env.DB.prepare(`
+    SELECT id, name, displayName, emailAddress From User
+  `).all();
+  return getDBResult('getUserList', 'list_users', result);
+}
+
+
+/******************************************************************************/
