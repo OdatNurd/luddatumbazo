@@ -323,7 +323,8 @@ Table UserHousehold {
   householdId INTEGER [not null, ref: < Household.id]
 
   indexes {
-    (userId, householdId) [name: 'idx_user_household']
+    (userId, householdId) [name: 'idx_user_household_combo']
+    householdId [name: 'idx_user_household']
   }
 
   Note: 'Register that a specific user resides in a specific household'

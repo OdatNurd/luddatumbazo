@@ -129,7 +129,8 @@ CREATE TABLE UserHousehold (
     userId INTEGER NOT NULL REFERENCES User(id),
     householdId INTEGER NOT NULL REFERENCES Household(id)
 );
-CREATE UNIQUE INDEX idx_user_household ON UserHousehold(userId, householdId);
+CREATE UNIQUE INDEX idx_user_household_combo ON UserHousehold(userId, householdId);
+CREATE INDEX idx_user_household ON UserHousehold(householdId);
 
 
 --------------------------------------------------------------------------------

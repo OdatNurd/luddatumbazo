@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 
 import { auth } from '#requests/auth/index';
 import { user } from '#requests/user/index';
+import { household } from '#requests/household/index';
 import { bgg } from '#requests/bgg/index';
 import { guest } from '#requests/guest/index';
 import { image } from '#requests/image/index';
@@ -48,6 +49,7 @@ app.route(`${APIV1}/auth`, auth);
  ******************************************************************************/
 
 app.route(`${APIV1}/user`, user);
+app.route(`${APIV1}/household`, household);
 
 
 /*******************************************************************************
