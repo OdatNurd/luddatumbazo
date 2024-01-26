@@ -15,7 +15,7 @@ export async function userDetailsReq(ctx) {
   const { userId } = ctx.req.valid('param');
 
   // Try to find the user in question
-  const user = await findUserInternal(ctx, userId);
+  const user = await findUserInternal(ctx, userId, true);
   if (user === null) {
     return fail(ctx, `unable to locate user with id ${userId}`, 404);
   }

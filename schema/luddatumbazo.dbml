@@ -321,6 +321,7 @@ Table UserHousehold {
 
   userId INTEGER [not null, ref: < User.userId]
   householdId INTEGER [not null, ref: < Household.id]
+  isPrimary BOOLEAN [default: false, note: 'The primary household for this user']
 
   indexes {
     (userId, householdId) [name: 'idx_user_household_combo']

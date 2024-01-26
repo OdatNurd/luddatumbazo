@@ -24,3 +24,24 @@ export async function getHouseholdUsers(ctx, householdId) {
 
 
 /******************************************************************************/
+
+
+/* Given a userId, return all of the households that that user belongs to; this
+ * may be an empty list.
+ *
+ * The list may also contain a single household which is marked as the primary,
+ * although this is also not a requirement. */
+export async function getUserHouseholds(ctx, userId) {
+  const householdLookup = await ctx.env.DB.prepare(`
+    SELECT A.*, B.isPrimary
+      FROM Household as A, UserHousehold as B
+     WHERE A.id = B.householdId
+       AND B.userId = ?
+  `).bind(userId).all();
+
+  return getDBResult('getUserHouseholds', 'find_households', householdLookup);
+}
+
+
+/******************************************************************************/
+

@@ -2,6 +2,32 @@
 
 
 import { getDBResult } from '#db/common';
+import { getUserHouseholds } from '#db/userhousehold';
+
+
+/******************************************************************************/
+
+
+/* Given a userInfo record, look up and attach to it the list of households the
+ * user is a part of, as well as an alias for the primary household (if any).
+ *
+ * If the provided value is undefined or null, null is returned back and no
+ * further action is taken. */
+async function addHouseholds(ctx, userInfo) {
+  // If we got no user, return back directly.
+  if (userInfo === null || userInfo === undefined) {
+    return null;
+  }
+
+  // Look up the list of households this user is a part of.
+  const households = await getUserHouseholds(ctx, userInfo.id);
+
+  // Set in the primary (if any), and the overall list.
+  userInfo.household = households.find(h => h.isPrimary === 1) ?? null;
+  userInfo.households = households
+
+  return userInfo;
+}
 
 
 /******************************************************************************/
@@ -10,17 +36,24 @@ import { getDBResult } from '#db/common';
 /* Search the database for the user with the given external ID; if such a user
  * is found, the full details object for that user is returned; otherwise, null
  * is returned instead. */
-export async function findUserExternal(ctx, externalId) {
+export async function findUserExternal(ctx, externalId, includeHouseholds) {
+  // If not specified, do not include households.
+  includeHouseholds ??= false;
+
   const userLookup = await ctx.env.DB.prepare(`
-    SELECT * FROM User WHERE externalId = ?
+    SELECT id, firstName, lastName, displayName, name, emailAddress
+      FROM User
+     WHERE externalId = ?
   `).bind(externalId).all();
   const userInfo = getDBResult('findUserExternal', 'find_user', userLookup);
 
-  if (userInfo.length === 0) {
-    return null;
+  // If we're not supposed to include households, then we are done.
+  if (includeHouseholds === false) {
+    return userInfo[0] ?? null;
   }
 
-  return userInfo[0];
+  // Look up and include household information.
+  return addHouseholds(ctx, userInfo[0]);
 }
 
 
@@ -30,17 +63,24 @@ export async function findUserExternal(ctx, externalId) {
 /* Search the database for the user with the given internal ID; if such a user
  * is found, the full details object for that user is returned; otherwise, null
  * is returned instead. */
-export async function findUserInternal(ctx, userId) {
+export async function findUserInternal(ctx, userId, includeHouseholds) {
+  // If not specified, do not include households.
+  includeHouseholds ??= false;
+
   const userLookup = await ctx.env.DB.prepare(`
-    SELECT * FROM User WHERE id = ?
+    SELECT id, firstName, lastName, displayName, name, emailAddress
+      FROM User
+     WHERE id = ?
   `).bind(userId).all();
   const userInfo = getDBResult('findUserInternal', 'find_user', userLookup);
 
-  if (userInfo.length === 0) {
-    return null;
+  // If we're not supposed to include households, then we are done.
+  if (includeHouseholds === false) {
+    return userInfo[0] ?? null;
   }
 
-  return userInfo[0];
+  // Look up and include household information.
+  return addHouseholds(ctx, userInfo[0]);
 }
 
 

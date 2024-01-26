@@ -127,7 +127,9 @@ CREATE TABLE UserHousehold (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
     userId INTEGER NOT NULL REFERENCES User(id),
-    householdId INTEGER NOT NULL REFERENCES Household(id)
+    householdId INTEGER NOT NULL REFERENCES Household(id),
+
+    isPrimary INTEGER DEFAULT(false)
 );
 CREATE UNIQUE INDEX idx_user_household_combo ON UserHousehold(userId, householdId);
 CREATE INDEX idx_user_household ON UserHousehold(householdId);
