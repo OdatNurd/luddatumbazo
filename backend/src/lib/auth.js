@@ -20,6 +20,18 @@ import { insertUser, findUserExternal } from '#db/user';
 let JWKS = undefined;
 
 
+/* This object is used to cache logins for users while the system is running.
+ *
+ * The keys are the underlying UUID's of users and the values are the internal
+ * userId values for those users.
+ *
+ * The UUID's are invariant and can never change once they're assigned by
+ * Cloudflare Access, and invalidation of user access happens upstream of us,
+ * so this cache is persistent and never needs to be updated while the worker
+ * is actively running. */
+const userIdCache = {};
+
+
 /******************************************************************************/
 
 
@@ -139,6 +151,54 @@ export async function getAuthorizationJWT(ctx) {
 /******************************************************************************/
 
 
+/* Given the subject and identity nonce of a valid JWT that represents a user of
+ * the system, return back their internal userId value.
+ *
+ * In the case that such a user does not exist in the database yet, a new base
+ * entry for that user will be inserted and the new userId is returned.
+ *
+ * This uses a cache to ensure that database lookups to map the external UUID of
+ * users with their internal ID are as minimal as possible.
+ *
+ * In the unlikely event that a new user is provided but they cannot be added to
+ * the database, this will return null instead after logging an error. */
+async function getUnderlyingUser(ctx, subject, nonce) {
+  // If this user is in the cache, then we can just return directly.
+  let userId = userIdCache[subject];
+  if (userId !== undefined) {
+    return userId;
+  }
+
+  // The user isn't in the cache yet, so look them up in the database based on
+  // their external ID, which is the subject of the incoming JWT.
+  let userInfo = await findUserExternal(ctx, subject);
+
+  // If we don't find a user in the database, then we need to insert a new
+  // record instead. This only happens once per user, at the time of their
+  // first access to the system.
+  if (userInfo === null) {
+    // Get the current login session details for this user; if that fails, we
+    // cannot continue.
+    const sessionDetails = await cfGetUserSession(ctx, subject, nonce);
+    if (sessionDetails === null) {
+      console.log(`unable to look up session details for user; cannot add new user`);
+      return null;
+    }
+
+    // Insert a new user based on the session data we looked up.
+    userInfo = await insertUser(ctx, sessionDetails);
+  }
+
+  // We either looked up a user, or we added one to the database. Either way,
+  // update the cache and return the new ID.
+  userIdCache[subject] = userInfo.id;
+  return userInfo.id;
+}
+
+
+/******************************************************************************/
+
+
 /* Given a request context for an incoming request, this will fetch from it the
  * authorization JWT that indicates who the currently active user is for this
  * connection, verify the signature on the JWT, and then return back details on
@@ -170,27 +230,9 @@ export async function getAuthorizedUser(ctx) {
     tokenInfo.identity_nonce = 'NotANonce';
   }
 
-  // Either we were accessed via a service token and it was mapped to a user,
-  // or we have an actual user. Either way, look up the user in the database.
-  const userInfo = await findUserExternal(ctx, tokenInfo.sub);
-
-  // If there was no data for this user, then we need to first validate the
-  // session and insert such a user; this can only ever happen when a user
-  // accesses us. If a service token is used, this call will fail since there is
-  // no session associated with it. This is a local configuration error because
-  // the configured service user must exist.
-  if (userInfo === null) {
-    const sessionDetails = await cfGetUserSession(ctx, tokenInfo.sub, tokenInfo.identity_nonce);
-    if (sessionDetails === null) {
-      console.log(`unable to look up session details for user; cannot add new user`);
-      return null;
-    }
-
-    // Insert a new user based on the session data.
-    return await insertUser(ctx, sessionDetails);
-  }
-
-  return userInfo;
+  // Using the token information, get the current userId; this will pull from
+  // a cache for speed.
+  return await getUnderlyingUser(ctx, tokenInfo.sub, tokenInfo.identity_nonce);
 }
 
 /******************************************************************************/
