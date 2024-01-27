@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors'
 
-import { auth } from '#requests/auth/index';
 import { user } from '#requests/user/index';
 import { household } from '#requests/household/index';
 import { bgg } from '#requests/bgg/index';
@@ -24,18 +23,6 @@ const APIV1 = '/api/v1'
 
 /* Ensure that the application can talk to the API. */
 app.use('/api/*', cors())
-
-
-/*******************************************************************************
- * Authorization API
- *******************************************************************************
- * The items in this section are used for our authorization system. This is
- * largely handled for us by Cloudflare, so the items here do not concern
- * themselves with whether or not the user SHOULD be able to access things, but
- * instead concern themselves with HOW.
- ******************************************************************************/
-
-app.route(`${APIV1}/auth`, auth);
 
 
 /*******************************************************************************
