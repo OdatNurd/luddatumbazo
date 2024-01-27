@@ -6,6 +6,7 @@
   import GameImage from '$components/GameImage.svelte';
   import SlugList from '$components/SlugList.svelte';
 
+  import { api } from '$lib/fetch.js';
   import { DateTime, Interval } from 'luxon';
 
 
@@ -19,9 +20,6 @@
   export let params = {};
 
   // ---------------------------------------------------------------------------
-
-  // The base link to the API
-  const API = `${process.env.GAME_API_ROOT_URI}/api/v1`;
 
   export let gameLink = '#/game/:slug';
 
@@ -49,9 +47,9 @@
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
   const loadData = async () => {
-    const dataURI = `${API}/session/${params.id}`;
+    const dataURI = `/session/${params.id}`;
 
-    const response = await fetch(dataURI);
+    const response = await api(dataURI);
     const result = await response.json();
 
     name = result.data.name;

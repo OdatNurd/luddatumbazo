@@ -4,10 +4,7 @@
 
   import GameImage from '$components/GameImage.svelte';
 
-  // ---------------------------------------------------------------------------
-
-  // The base link to the API
-  const API = `${process.env.GAME_API_ROOT_URI}/api/v1`;
+  import { api } from '$lib/fetch.js';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -51,9 +48,7 @@
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
   const loadData = async () => {
-    const dataURI = `${API}${query}`;
-
-    const response = await fetch(dataURI);
+    const response = await api(query);
     const result = await response.json();
 
     return filter(result);

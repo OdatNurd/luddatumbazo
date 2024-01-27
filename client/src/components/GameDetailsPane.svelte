@@ -6,6 +6,8 @@
   import BGGLink from '$components/BGGLink.svelte';
   import GameImage from '$components/GameImage.svelte';
 
+  import { api } from '$lib/fetch.js';
+
   // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
@@ -15,9 +17,6 @@
   export let slug;
 
   // ---------------------------------------------------------------------------
-
-  // The base link to the API
-  const API = `${process.env.GAME_API_ROOT_URI}/api/v1`;
 
   // Cause the router to jump to the list of sessions for this particular
   // game.
@@ -38,9 +37,9 @@
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
   const loadData = async () => {
-    const dataURI = `${API}/game/${slug}`;
+    const dataURI = `/game/${slug}`;
 
-    const response = await fetch(dataURI);
+    const response = await api(dataURI);
     const result = await response.json();
 
     return result.data;
