@@ -9,6 +9,8 @@ import { image } from '#requests/image/index';
 import { session } from '#requests/session/index';
 import { game } from '#requests/game/index';
 
+import { authorization } from '#lib/middleware';
+
 
 /******************************************************************************/
 
@@ -23,6 +25,10 @@ const APIV1 = '/api/v1'
 
 /* Ensure that the application can talk to the API. */
 app.use('/api/*', cors())
+
+/* Ensure that all requests get authenticated based on the user in the token
+ * that is given to us by Cloudflare Access. */
+app.use('/api/*', authorization);
 
 
 /*******************************************************************************

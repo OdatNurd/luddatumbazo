@@ -9,6 +9,7 @@ import { UserIDSchema } from '#schema/user';
 
 import { userListReq } from '#requests/user/list';
 import { userDetailsReq } from '#requests/user/details';
+import { currentUserDetailsReq } from '#requests/user/current';
 
 
 /******************************************************************************/
@@ -20,6 +21,8 @@ export const user = new Hono();
 
 
 user.get('/list', ctx => _(ctx, userListReq));
+
+user.get('/current', ctx => _(ctx, currentUserDetailsReq));
 
 user.get('/details/:userId',
          validate('param', UserIDSchema),
