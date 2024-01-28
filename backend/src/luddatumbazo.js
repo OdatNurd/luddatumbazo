@@ -23,8 +23,19 @@ const app = new Hono();
 /* The current API version; this prefixes all of our routes. */
 const APIV1 = '/api/v1'
 
-/* Ensure that the application can talk to the API. */
-app.use('/api/*', cors())
+/* Ensure that the application can talk to the API. The value for the variable
+ * is generally '*' in production, but needs to be the local URL of the UI in
+ * development, or the dev UI can't talk to the API. */
+app.use('/api/*', (ctx, next) => {
+    // The environment is only available from inside of an active request.
+    const validCors = cors({
+        origin: ctx.env.GAME_UI_ORIGIN,
+        credentials: true
+    });
+
+    return validCors(ctx, next);
+})
+
 
 /* Ensure that all requests get authenticated based on the user in the token
  * that is given to us by Cloudflare Access. */

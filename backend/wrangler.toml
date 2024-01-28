@@ -70,6 +70,17 @@ CF_ACCOUNT_ID = 'd8cc4339c920f6d32079a5b483603063'
 # this up.
 # GAME_API_ROOT_URI = http://localhost:8000
 
+# The frontend code needs to access us as the API, but it may be running on a
+# different hostname than we are (particulary during development). This sets
+# what the CORS origin header is set to, indicating what hosts are allowed to
+# talk to us.
+#
+# The default value here only works for cases where the Worker and the Pages
+# sites are both at the same origin (e.g. production); for localhost, this needs
+# to be overridden in .dev.vars instead.
+GAME_UI_ORIGIN = '*'
+
+
 ################################################################################
 # A U T H E N T I C A T I O N
 ################################################################################
