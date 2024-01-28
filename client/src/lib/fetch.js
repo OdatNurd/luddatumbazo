@@ -25,7 +25,6 @@ const baseOptions = (() => {
     credentials: (local.origin === remote.origin) ? 'same-origin' : 'include'
   }
 
-  console.log(`base options are: ${JSON.stringify(options)}`);
   return options;
 })();
 
