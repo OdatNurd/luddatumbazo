@@ -94,10 +94,10 @@
   </Grid>
   <Flex gap="16px" fl.wr="wrap" direction="row">
     {#if result.isLearning}
-      <Chip color="accent" fill>Learning Game!</Chip>
+      <Chip color="@accent" fill>Learning Game!</Chip>
     {/if}
-    <Chip color="accent" fill>{gameTypeMap[result.playType] ?? 'Unknown'}</Chip>
-    <Chip color="secondary" fill>
+    <Chip color="@accent" fill>{gameTypeMap[result.playType] ?? 'Unknown'}</Chip>
+    <Chip color="@secondary" fill>
       Played {result.sessionBegin.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)}
 
       @
@@ -109,24 +109,24 @@
     </Chip>
   </Flex>
 
-  <Table data={result.players} fillHeader color="primary">
+  <Table data={result.players} fillHeader color="@primary">
     <tr slot="header">
-      <th ws-x="w[64px]">ID</th>
-      <th ws-x="w[16px]"></th>
-      <th ws-x="w[16px]"></th>
+      <th ws-x="[w 128px]">ID</th>
+      <th ws-x="[w 16px]"></th>
+      <th ws-x="[w 16px]"></th>
       <th>Name</th>
-      <th ws-x="w[16px]">Score</th>
+      <th ws-x="[w 16px]">Score</th>
     </tr>
     <tr slot="row" let:row>
       <td>{row.userId}</td>
       <td>
         {#if row.isStartingPlayer}
-          <Icon name="flag-2-filled" c="&primary"></Icon>
+          <Icon name="flag-2-filled" c="@primary"></Icon>
         {/if}
       </td>
       <td>
         {#if row.isWinner}
-          <Icon name="trophy-filled" c="&secondary"></Icon>
+          <Icon name="trophy-filled" c="@secondary"></Icon>
         {/if}
       </td>
       <td>
@@ -139,11 +139,11 @@
   </Table>
 
   {#if result.expansions.length > 0}
-  <Table data={result.expansions} fillHeader color="secondary">
+  <Table data={result.expansions} fillHeader color="@secondary">
     <tr slot="header">
-      <th ws-x="w[64px]">ID</th>
+      <th ws-x="[w 128px]">ID</th>
       <th>Expansion</th>
-      <th ws-x="w[16px]">Ext</th>
+      <th ws-x="[w 16px]">Ext</th>
     </tr>
     <tr slot="row" let:row>
       <td>

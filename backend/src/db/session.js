@@ -590,7 +590,7 @@ export async function getSessionList(ctx, gameIdList, reverse) {
   // booleans for the return, and make sure that the image URL is properly
   // mapped so that the page can view the image.
   return result.map(session => {
-    session.imagePath = getImageAssetURL(ctx, session.imagePath, 'smallboxart');
+    session.imagePath = getImageAssetURL(ctx, session.imagePath, 'thumbnail');
     return mapIntFieldsToBool(session);
   });
 }

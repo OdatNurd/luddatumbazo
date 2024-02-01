@@ -1,5 +1,5 @@
 <script>
-  import { Link, Icon, LoadZone, DataTable, Th, sorts, filters } from "@axel669/zephyr";
+  import { Link, Icon, LoadZone, DataTable, TH, sorts, filters } from "@axel669/zephyr";
   import { DateTime } from 'luxon';
 
   import GameImage from '$components/GameImage.svelte';
@@ -66,23 +66,23 @@
 
 
 <LoadZone source={loadData()} let:result>
-  <DataTable data={result} pageSize={20} color="primary">
+  <DataTable data={result} pageSize={20} color="@primary">
     <svelte:fragment slot="header">
-      <Th w="64px" sort={sorts.natural("id")}>ID</Th>
-      <Th w="32px"></Th>
-      <Th w="32px"></Th>
-      <Th filter={filters.text("title")} sort={sorts.natural("title")}>Name</Th>
-      <Th sort={dateSort("sessionBegin")} w="64px">Date</Th>
-      <Th w="64px">Game</Th>
+      <TH w="64px" sort={sorts.natural("id")}>ID</TH>
+      <TH w="32px"></TH>
+      <TH w="32px"></TH>
+      <TH filter={filters.text("title")} sort={sorts.natural("title")}>Name</TH>
+      <TH sort={dateSort("sessionBegin")} w="64px">Date</TH>
+      <TH w="64px">Game</TH>
     </svelte:fragment>
     <svelte:fragment slot="row" let:row>
       <td>{row.id}</td>
       <td>
-        <Icon c="&primary" name={gameTypeIcons[row.playType] ?? 'question-mark'}></Icon>
+        <Icon c="@primary" name={gameTypeIcons[row.playType] ?? 'question-mark'}></Icon>
       </td>
       <td>
         {#if row.isLearning}
-          <Icon c="&secondary" name="school"></Icon>
+          <Icon c="@secondary" name="school"></Icon>
         {/if}
       </td>
       <td>

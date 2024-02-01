@@ -10,6 +10,6 @@
 </script>
 
 
-<Button fill color="secondary" on:click={() => pop()}>
+<Button fill color="@secondary" on:click={() => pop()}>
   <Icon name="arrow-left"></Icon>
 </Button>

@@ -126,12 +126,12 @@
       </Grid>
 
       <Flex direction="row" gap="32px" fl.wr="wrap">
-        <Button fill color="secondary" disabled on:click={() => push('/')}>
+        <Button fill color="@secondary" disabled on:click={() => push('/')}>
           <Icon name="plus"></Icon>
           Log a Session
         </Button>
 
-        <Button fill color="secondary" disabled={!result.hasSessions} on:click={sessionList}>
+        <Button fill color="@secondary" disabled={!result.hasSessions} on:click={sessionList}>
           <Icon name="report-analytics"></Icon>
           {#if result.hasSessions}
             View Session Reports

@@ -1,5 +1,5 @@
 <script>
-  import { Link, Icon, LoadZone, DataTable, Th, sorts, filters } from "@axel669/zephyr";
+  import { Link, Icon, LoadZone, DataTable, TH, sorts, filters } from "@axel669/zephyr";
 
 
   import BGGLink from '$components/BGGLink.svelte';
@@ -50,11 +50,11 @@
 
 
 <LoadZone source={loadData()} let:result>
-  <DataTable data={result} pageSize={20} color="primary">
+  <DataTable data={result} pageSize={20} color="@primary">
     <svelte:fragment slot="header">
-      <Th w="64px" sort={sorts.natural("id")}>ID</Th>
-      <Th filter={filters.text("name")} sort={sorts.natural("name")}>Name</Th>
-      <Th w="64px">Ext</Th>
+      <TH w="64px" sort={sorts.natural("id")}>ID</TH>
+      <TH filter={filters.text("name")} sort={sorts.natural("name")}>Name</TH>
+      <TH w="64px">Ext</TH>
     </svelte:fragment>
     <svelte:fragment slot="row" let:row>
       <td>{row.id}</td>

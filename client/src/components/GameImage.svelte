@@ -28,7 +28,7 @@
 
   // Control Windstorm attributes based on wether or not the image is an icon
   // or not.
-  const wsx = (icon === false) ? null : "p.r[4px] w[32px] h[32px]"
+  const wsx = (icon === false) ? null : "[p.r 2px] [w 32px] [h 32px]";
 </script>
 
 

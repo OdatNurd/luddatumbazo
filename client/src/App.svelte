@@ -74,7 +74,7 @@
   }
 </script>
 
-<svelte:body use:wsx={{ "$theme": 'dark', "$app": true, "p": "8px" }} />
+<svelte:body use:wsx={{ "@theme": 'dark', "@app": true, "p": "8px" }} />
 
 <Screen>
   <Paper>
@@ -84,16 +84,16 @@
         <Text subtitle>Exactly like BoardGameGeek except not</Text>
       </Flex>
 
-      <Button m="2px" w="44px" outline slot="menu" on:click={home}>
+      <Button m="2px" w="44px" outline color="@primary" slot="menu" on:click={home}>
         <Icon name="home"></Icon>
       </Button>
 
-      <Link m="2px" w="44px" button outline slot="action" t.dec="none" href="/cdn-cgi/access/logout">
+      <Link m="2px" w="44px" button outline color="@primary" slot="action" t.dec="none" href="/cdn-cgi/access/logout">
         <Icon name="logout"></Icon>
       </Link>
     </Titlebar>
 
-    <Tabs options={tabLinks} solid bind:value={tabValue} color="primary" />
+    <Tabs options={tabLinks} solid bind:value={tabValue} color="@primary" />
 
     <Router {routes} />
 
