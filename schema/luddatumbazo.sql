@@ -149,6 +149,7 @@ CREATE TABLE GameOwners (
     gamePublisher INTEGER NOT NULL REFERENCES GameMetadata(id)
 );
 
+CREATE INDEX idx_game_owner_games ON GameOwners(gameId);
 
 --------------------------------------------------------------------------------
 

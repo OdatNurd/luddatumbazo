@@ -9,7 +9,7 @@ import { expansion } from '#requests/game/expansion/index';
 import { metadata } from '#requests/game/metadata/index';
 
 import { BGGGameIDSchema } from '#schema/bgg';
-import { GameLookupIDSchema, GameLookupParamSchema,
+import { GameLookupIDSchema, GameLookupParamSchema, GameLookupHouseholdSchema,
          NewGameSchema, BGGGameIDListSchema,
          GameLookupIDListSchema } from '#schema/game';
 
@@ -47,6 +47,7 @@ game.post('/lookup',
 game.get('/list', ctx => _(ctx, gameListReq));
 
 game.get('/:idOrSlug',
+         validate('query', GameLookupHouseholdSchema),
          validate('param', GameLookupIDSchema),
          ctx => _(ctx, gameDetailsReq));
 

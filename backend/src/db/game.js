@@ -144,11 +144,72 @@ export async function getGameList(ctx) {
 /******************************************************************************/
 
 
+/* Given a game record and a household Id that exists, check to see if that
+ * game is owned by this household and/or wishlisted by this household, and if
+ * so include that information. */
+async function getGameHouseholdDetails(ctx, gameData, householdId) {
+  // Batch out to select two sets of data from the database; whether or not this
+  // game is on the wishlist of this household, and whether or not the game is
+  // owned by this household.
+  const householdInfo = await ctx.env.DB.batch([
+    // Determine if this game is on the wishlist, and if so by what name, and
+    // who it was that added it.
+    ctx.env.DB.prepare(`
+        SELECT B.name, C.id as wishlisterId, C.displayName as wishlisterName
+          FROM Wishlist as A,
+               GameName as B,
+               User as C
+         WHERE A.gameId = ?1
+           AND A.householdId = ?2
+           AND A.addedByUserId = C.id
+           AND A.gameId = B.gameId
+           AND A.gameName = B.id
+      `).bind(gameData.id, householdId),
+
+    // Determine whether or not this game is owned, and if so under what name
+    // and by what publisher.
+    ctx.env.DB.prepare(`
+        SELECT B.name as gameName, C.id, C.bggId, C.slug, C.name, C.metaType
+          FROM GameOwners as A,
+               GameName as B,
+               GameMetadata as C
+         WHERE A.gameId = ?1
+           AND A.householdId = ?2
+           AND A.gameId = B.gameId
+           AND A.gameName = B.id
+           AND A.gamePublisher = C.id
+      `).bind(gameData.id, householdId)
+  ]);
+
+  // Grab the results; this will be an array of arrays in the order of the
+  // batch.
+  const [ wishlist, owned ] = getDBResult('getGameHouseholdDetails', 'check_household', householdInfo);
+
+  // Set the keys for wishlist/owned status. If there is no status, this will
+  // be undefined and thus the key filtered away.
+  //
+  // This allows the client side code to distinguish where special handling is
+  // needed just by testing if the object exist.
+  gameData.wishlist = wishlist[0];
+  gameData.owned = owned[0];
+
+  return gameData;
+}
+
+
+/******************************************************************************/
+
+
 /* Get the full details on the game with either the ID or slug provided. The
  * return will be null if there is no such game, otherwise the return is an
  * object that contains the full details on the game, including all of its
- * metadata. */
-export async function getGameDetails(ctx, idOrSlug) {
+ * metadata.
+ *
+ * householdId is optional; if it's provided, extra queries are completed to
+ * gather information about this game as it relates to that household, such as
+ * whether or not it's wishlisted (and if so, by who) and whether or not it is
+ * owned. */
+export async function getGameDetails(ctx, idOrSlug, householdId) {
   // Try to find the game with the value has that been provided; we check to see
   // if the provided ID is either a slug or an actual ID.
   const lookup = await ctx.env.DB.prepare(`
@@ -214,6 +275,12 @@ export async function getGameDetails(ctx, idOrSlug) {
   // want the metatype field to appear in the resulting object.
   metadataTypeList.forEach(type => gameData[type] = []);
   getDBResult('getGameDetails', 'find_meta', metadata).forEach(item => gameData[item.metatype].push({ ...item, metatype: undefined }) );
+
+  // Try to look up any household information for the household provided and
+  // add it into the object. The modified object is returned back to us.
+  if (householdId !== undefined) {
+    return await getGameHouseholdDetails(ctx, gameData, householdId);
+  }
 
   return gameData;
 }

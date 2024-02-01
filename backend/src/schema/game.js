@@ -32,6 +32,19 @@ export const GameLookupIDSchema = z.object({
 /******************************************************************************/
 
 
+/* The game details operation can take an optional query paramater to ask for
+ * additional information relating to a specific household's relationship to the
+ * game (do they own it? which publisher? what name? etc.) */
+export const GameLookupHouseholdSchema = z.object({
+  // Optional value; a numeric ID or slug of a household to look up data
+  // relations for.
+  household: z.string().optional().transform(numberOrString)
+});
+
+
+/******************************************************************************/
+
+
 /* Operations to insert lists of games accept a list of BGG ID Values. */
 export const BGGGameIDListSchema = z.array(z.number());
 
