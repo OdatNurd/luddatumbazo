@@ -15,11 +15,6 @@
   // keys: ['id', 'bggId', 'slug', 'name']
   export let query = '/session/list';
 
-  // After making the query, this function is invoked on the dataset that is
-  // returned in order to filter the data set into the list of items that should
-  // be displayed in the list.
-  export let filter = result => result.data;
-
   // ---------------------------------------------------------------------------
 
   // The links in all of the table entries link to either sessions by ID or
@@ -47,12 +42,7 @@
 
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
-  const loadData = async () => {
-    const response = await api(query);
-    const result = await response.json();
-
-    return filter(result);
-  };
+  const loadData = async () => await api.get(query);
 
   // This is a duplicate of the natural sort order from sorts.natural() but
   // based on how we may want to have incoming dates be actual dates and not
@@ -99,4 +89,8 @@
       </td>
     </svelte:fragment>
   </DataTable>
+
+  <svelte:fragment slot="error" let:error>
+    {error}
+  </svelte:fragment>
 </LoadZone>

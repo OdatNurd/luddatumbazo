@@ -47,19 +47,16 @@
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
   const loadData = async () => {
-    const dataURI = `/session/${params.id}`;
+    const result = await api.get(`/session/${params.id}`);
 
-    const response = await api(dataURI);
-    const result = await response.json();
-
-    name = result.data.name;
-    slug = result.data.slug;
-    title = result.data.title;
+    name = result.name;
+    slug = result.slug;
+    title = result.title;
 
     // Convert the incoming session begin and end into DateTime for easier
     // handling.
-    const begin = DateTime.fromISO(result.data.sessionBegin);
-    const end   = DateTime.fromISO(result.data.sessionEnd);
+    const begin = DateTime.fromISO(result.sessionBegin);
+    const end   = DateTime.fromISO(result.sessionEnd);
 
     // Calculate the duration; we want this to be in minutes unless the game
     // look at least an hour
@@ -69,20 +66,26 @@
     }
 
     // Store back now
-    result.data.sessionBegin = begin
-    result.data.sessionEnd = end
-    result.data.sessionDuration = duration;
+    result.sessionBegin = begin
+    result.sessionEnd = end
+    result.sessionDuration = duration;
 
-    return result.data;
+    return result;
   };
 </script>
 
 <Flex direction="column">
   <Flex direction="row">
     <BackButton />
-    <h3><a href="{slugLink(slug)}">{name}</a></h3>
+    {#if slug !== 'unknown'}
+      <h3><a href="{slugLink(slug)}">{name}</a></h3>
+    {:else}
+      <h3>No session data loaded</h3>
+    {/if}
   </Flex>
-  <h3>{title}</h3>
+  {#if slug !== 'unknown'}
+    <h3>{title}</h3>
+  {/if}
 </Flex>
 
 <LoadZone source={loadData()} let:result>
@@ -159,6 +162,10 @@
     </tr>
   </Table>
   {/if}
+
+  <svelte:fragment slot="error" let:error>
+    {error}
+  </svelte:fragment>
 </LoadZone>
 
 <style>

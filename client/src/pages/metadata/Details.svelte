@@ -31,11 +31,11 @@
   // data down so the slug list can ingest it.
   const gameFilter = result => {
     // Set the name field so the page updates.
-    name = result.data.name;
+    name = result.name;
 
     // The records to display are in the games list, where we need to adjust the
     // ID field to match what the slug list wants.
-    return result.data.games.map(game => {
+    return result.games.map(game => {
       game.id = game.gameId;
       return game;
     });

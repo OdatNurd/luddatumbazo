@@ -28,7 +28,7 @@
   // After making the query, this function is invoked on the dataset that is
   // returned in order to filter the data set into the list of items that should
   // be displayed in the list.
-  export let filter = result => result.data;
+  export let filter = result => result;
 
   // ---------------------------------------------------------------------------
 
@@ -40,12 +40,7 @@
 
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
-  const loadData = async () => {
-    const response = await api(query);
-    const result = await response.json();
-
-    return filter(result);
-  };
+  const loadData = async () => filter(await api.get(query));
 </script>
 
 
@@ -67,4 +62,8 @@
       </td>
     </svelte:fragment>
   </DataTable>
+
+  <svelte:fragment slot="error" let:error>
+    {error}
+  </svelte:fragment>
 </LoadZone>

@@ -36,14 +36,7 @@
 
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
-  const loadData = async () => {
-    const dataURI = `/game/${slug}`;
-
-    const response = await api(dataURI);
-    const result = await response.json();
-
-    return result.data;
-  };
+  const loadData = async () => await api.get(`/game/${slug}`);
 </script>
 
 
@@ -178,6 +171,9 @@
     </Flex>
   </Paper>
 
+  <svelte:fragment slot="error" let:error>
+    {error}
+  </svelte:fragment>
 </LoadZone>
 
 
