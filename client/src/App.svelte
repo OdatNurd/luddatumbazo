@@ -15,6 +15,9 @@
   import GameDetails from '$pages/games/Details.svelte';
   import GameSessionList from '$pages/games/Sessions.svelte';
 
+  import OwnedGameList from '$pages/games/OwnedList.svelte';
+  import WishlistedGameList from '$pages/games/Wishlist.svelte';
+
   import SessionList from '$pages/sessions/List.svelte';
   import SessionDetails from '$pages/sessions/Details.svelte';
 
@@ -29,6 +32,9 @@
     '/games': GameList,
     '/game/:slug': GameDetails,
     '/game/:slug/sessions': GameSessionList,
+
+    '/games/owned': OwnedGameList,
+    '/games/wishlisted': WishlistedGameList,
 
     '/sessions': SessionList,
     '/session/:id': SessionDetails,

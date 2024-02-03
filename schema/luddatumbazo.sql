@@ -150,6 +150,8 @@ CREATE TABLE GameOwners (
 );
 
 CREATE INDEX idx_game_owner_games ON GameOwners(gameId);
+CREATE INDEX idx_game_owner_list ON GameOwners(householdId, gameId, gameName);
+
 
 --------------------------------------------------------------------------------
 
@@ -179,6 +181,7 @@ CREATE TABLE Wishlist (
 
     addedByUserId INTEGER NOT NULL REFERENCES User(id)
 );
+CREATE INDEX idx_game_wishlist ON Wishlist(householdId, gameId, gameName);
 
 
 --------------------------------------------------------------------------------

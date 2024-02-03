@@ -23,8 +23,8 @@
   // The list of links that are available in the profile menu on the page. Items
   // with dashed labels are separators.
   const links = [
-    { label: "Owned Games",               value: "#/games" },
-    { label: "Wishlisted Games",          value: "#/games" },
+    { label: "Owned Games",               value: "#/games/owned" },
+    { label: "Wishlisted Games",          value: "#/games/wishlisted" },
     { label: "---"},
     { label: "Session Reports", value: "#/sessions" },
     { label: "---"},

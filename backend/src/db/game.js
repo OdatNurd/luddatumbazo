@@ -129,14 +129,54 @@ export async function performGameLookup(ctx, gameId, imageType, includeNameId) {
 /* Get a list of all of the games known to the database, including their slug
  * and the primary name associated with each of them. */
 export async function getGameList(ctx) {
-  // Try to find all metadata item of this type.
+  // Try to find all games.
   const gameList = await ctx.env.DB.prepare(`
     SELECT A.id, A.bggId, A.slug, B.name, A.imagePath
       FROM Game as A, GameName as B
-     WHERE A.id == B.gameId and B.isPrimary = 1
+     WHERE A.id = B.gameId AND B.isPrimary = 1
   `).all();
 
   const result = getDBResult('getGameList', 'find_games', gameList);
+  return mapImageAssets(ctx, result, 'imagePath', 'thumbnail');
+}
+
+
+/******************************************************************************/
+
+
+/* This works as per getGameList(), except that it requires a householdId and
+ * will return only games owned by that household. In addition, the names that
+ * fall out will be the version of the name that is "owned". */
+export async function getHouseholdGameList(ctx, householdId) {
+  // Try to find all games owned by this household.
+  const gameList = await ctx.env.DB.prepare(`
+    SELECT A.id, A.bggId, A.slug, B.name, A.imagePath
+      FROM Game as A, GameName as B, GameOwners as C
+     WHERE A.id = B.gameId AND A.id = C.gameId AND
+           B.id = C.gameName AND C.householdId = ?1
+  `).bind(householdId).all();
+
+  const result = getDBResult('getHouseholdGameList', 'find_games', gameList);
+  return mapImageAssets(ctx, result, 'imagePath', 'thumbnail');
+}
+
+
+/******************************************************************************/
+
+
+/* This works as per getGameList(), except that it requires a householdId and
+ * will return only games wished for by that household. In addition, the names
+ * that fall out will be the version of the name that is "wished for". */
+export async function getWishlistGameList(ctx, householdId) {
+  // Try to find all games wished for by this household.
+  const gameList = await ctx.env.DB.prepare(`
+    SELECT A.id, A.bggId, A.slug, B.name, A.imagePath
+      FROM Game as A, GameName as B, Wishlist as C
+     WHERE A.id = B.gameId AND A.id = C.gameId AND
+           B.id = C.gameName AND C.householdId = ?1
+  `).bind(householdId).all();
+
+  const result = getDBResult('getWishlistGameList', 'find_games', gameList);
   return mapImageAssets(ctx, result, 'imagePath', 'thumbnail');
 }
 
