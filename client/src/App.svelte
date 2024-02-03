@@ -1,12 +1,14 @@
 <script>
   import { wsx } from "@axel669/zephyr";
-  import { LoadZone, Screen, Paper, Grid, Flex, Titlebar, Tabs, Text, Link, Button, Icon } from "@axel669/zephyr";
+  import { LoadZone, Screen, Modal, Paper, Grid, Flex, Titlebar, Text, Link, EntryButton, Icon } from "@axel669/zephyr";
 
   import { user } from '$stores/user';
 
   import Router from 'svelte-spa-router';
-  import { location, push } from 'svelte-spa-router'
   import { wrap } from 'svelte-spa-router/wrap'
+
+  import NavDrawer from '$components/NavDrawer.svelte';
+  import ProfileDrawer from '$components/ProfileDrawer.svelte';
 
   import Home from '$pages/Home.svelte';
   import GameList from '$pages/games/List.svelte';
@@ -18,27 +20,6 @@
 
   import MetaList from '$pages/metadata/List.svelte';
   import MetaDetails from '$pages/metadata/Details.svelte';
-
-  // The list of tabs that are visible on the main page, and the links that they
-  // correspond to. At any given point, the tab contorl can have a single value,
-  // and that value represents one of the values seen in this table.
-  const tabLinks = [
-    { label: "Games",      value: "/games" },
-    { label: "Categories", value: "/categories" },
-    { label: "Mechanics",  value: "/mechanics" },
-    { label: "Designers",  value: "/designers" },
-    { label: "Artists",    value: "/artists" },
-    { label: "Publishers", value: "/publishers" },
-    { label: "Sessions",   value: "/sessions" },
-  ];
-
-  // A value from one of the tabLinks entries, which represents which of the
-  // tabs in the display (if any) are currently selected. A value of undefined
-  // means that no tab is selected.
-  //
-  // This value is automatically changed whenever the user interacts with the
-  // tab.
-  let tabValue = undefined;
 
   // The list of routes that control what pages in the application exist, and
   // what page fragments should be rendered when that path is active.
@@ -64,16 +45,6 @@
     '/artist/:slug':    wrap({ component: MetaDetails, props: { metaType: 'artist'    } }),
     '/publisher/:slug': wrap({ component: MetaDetails, props: { metaType: 'publisher' } }),
   };
-
-  // Cause the router to jump directly to the root route.
-  const home = () => push('/')
-
-  $: {
-    // When the value changes, go to the new location.
-    if (tabValue && tabValue.startsWith('/')) {
-      push(tabValue);
-    }
-  }
 </script>
 
 <svelte:body use:wsx={{ "@theme": 'dark', "@app": true, "p": "8px" }} />
@@ -83,19 +54,20 @@
     <Titlebar slot="header">
       <Flex p="0px" gap="0px" slot="title">
         <Text title> Luddatumbazo! </Text>
-        <Text subtitle>Exactly like BoardGameGeek except not</Text>
+        <Text subtitle>Current User: {$user.displayName ?? 'Unknown'}</Text>
       </Flex>
 
-      <Button m="2px" w="44px" color="@primary" slot="menu" disabled={$user.name === undefined} on:click={home}>
-        <Icon name="home"></Icon>
-      </Button>
+      <EntryButton this={Modal} component={NavDrawer} m="2px" w="44px" color="@primary" slot="menu" disabled={$user.name === undefined}>
+        <Icon name="dice-3-filled"></Icon>
+      </EntryButton>
 
-      <Link m="2px" w="44px" button color="@primary" slot="action" t.dec="none" href="/cdn-cgi/access/logout">
-        <Icon name="logout"></Icon>
-      </Link>
+      <EntryButton this={Modal} component={ProfileDrawer} m="2px" w="44px" color="@primary" slot="action">
+        <Icon name="user"></Icon>
+      </EntryButton>
     </Titlebar>
 
-    <Tabs options={tabLinks} solid bind:value={tabValue} color="@primary" />
+    <Modal component={NavDrawer} />
+    <Modal component={ProfileDrawer} />
 
     <LoadZone source={user.init()}>
       <Router {routes} />
@@ -106,7 +78,7 @@
 
     <Titlebar slot="footer">
       <Text slot="title" title>
-        <Text subtitle>Let the turds hit the floor</Text>
+        <Text subtitle>Exactly like BoardGameGeek except not.</Text>
       </Text>
     </Titlebar>
   </Paper>
