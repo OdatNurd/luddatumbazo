@@ -2,6 +2,8 @@
   import { LoadZone, Paper, Titlebar, Link, Text,  Flex, Grid, Button, Icon } from "@axel669/zephyr";
   import { push } from 'svelte-spa-router';
 
+  import { user } from '$stores/user';
+
   import BackButton from '$components/BackButton.svelte';
   import BGGLink from '$components/BGGLink.svelte';
   import GameImage from '$components/GameImage.svelte';
@@ -34,9 +36,11 @@
 
   // ---------------------------------------------------------------------------
 
-  // Fetch the list of data that we need from the back end API, and return
-  // the result back.
-  const loadData = async () => await api.get(`/game/${slug}`);
+  // Fetch the game details; if the current user has a primary household, then
+  // this should also fetch ownership information based on that.
+  const loadData = async () => await api.get(`/game/${slug}`, {
+    household: $user?.household.slug
+  });
 </script>
 
 

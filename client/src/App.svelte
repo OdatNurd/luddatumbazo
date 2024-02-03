@@ -1,6 +1,8 @@
 <script>
   import { wsx } from "@axel669/zephyr";
-  import { Screen, Paper, Grid, Flex, Titlebar, Tabs, Text, Link, Button, Icon } from "@axel669/zephyr";
+  import { LoadZone, Screen, Paper, Grid, Flex, Titlebar, Tabs, Text, Link, Button, Icon } from "@axel669/zephyr";
+
+  import { user } from '$stores/user';
 
   import Router from 'svelte-spa-router';
   import { location, push } from 'svelte-spa-router'
@@ -84,18 +86,23 @@
         <Text subtitle>Exactly like BoardGameGeek except not</Text>
       </Flex>
 
-      <Button m="2px" w="44px" outline color="@primary" slot="menu" on:click={home}>
+      <Button m="2px" w="44px" color="@primary" slot="menu" disabled={$user.name === undefined} on:click={home}>
         <Icon name="home"></Icon>
       </Button>
 
-      <Link m="2px" w="44px" button outline color="@primary" slot="action" t.dec="none" href="/cdn-cgi/access/logout">
+      <Link m="2px" w="44px" button color="@primary" slot="action" t.dec="none" href="/cdn-cgi/access/logout">
         <Icon name="logout"></Icon>
       </Link>
     </Titlebar>
 
     <Tabs options={tabLinks} solid bind:value={tabValue} color="@primary" />
 
-    <Router {routes} />
+    <LoadZone source={user.init()}>
+      <Router {routes} />
+      <svelte:fragment slot="error" let:error>
+        {error}
+      </svelte:fragment>
+    </LoadZone>
 
     <Titlebar slot="footer">
       <Text slot="title" title>
