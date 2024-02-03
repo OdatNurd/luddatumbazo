@@ -41,6 +41,26 @@
   const loadData = async () => await api.get(`/game/${slug}`, {
     household: $user?.household.slug
   });
+
+  // Return the color to use for a metadata link based on whether or not the
+  // current user owns it; gameData is the data for the game, metaDataType is
+  // the type of metadata being displayed, and rowData is the actual metadata
+  // item.
+  const metaColor = (gameData, metaDataType, rowData) => {
+    // If the game is owned, and the metadata type being displayed is the one
+    // from the ownership record, and the ID is the ID of the item that's owned,
+    // color the text.
+    if (gameData.owned !== undefined) {
+      const { id, metatype } = gameData.owned;
+
+      if (metaDataType === metatype && rowData.id === id) {
+        return "@primary";
+      }
+    }
+
+    // Fallback; use normal text color.
+    return null;
+  }
 </script>
 
 
@@ -53,7 +73,18 @@
   <Paper>
     <Titlebar slot="header">
       <Flex p="0px" gap="0px" slot="title">
-        <Text title> {result.names[0]} ({result.publishedIn})</Text>
+        <Text title>
+          {#if result.owned !== undefined}
+            <Icon name="star-filled">{result.owned.gameName} ({result.publishedIn})</Icon>
+          {:else}
+            {#if result.wishlist !== undefined}
+              <Icon name="heart-filled">{result.wishlist.name} ({result.publishedIn}) [Added by: {result.wishlist.wishlisterName}]</Icon>
+            {:else}
+              <Icon name="star-off">{result.names[0]} ({result.publishedIn})</Icon>
+            {/if}
+          {/if}
+
+        </Text>
         <Text subtitle>
           <Flex direction="row" gap="16px" fl.wr="wrap">
             <span>
@@ -85,7 +116,7 @@
         {#if result.names.length > 1}
           <Flex direction="row" gap="8px">
             <strong>Also Known As:</strong>
-            {result.names.slice(1).join(', ')}
+            {result.names.join(', ')}
           </Flex>
         {/if}
         <Flex direction="row" gap="32px" fl.wr="wrap">
@@ -116,7 +147,7 @@
           <Flex>{metadata.title}</Flex>
           <Flex direction="row" gap="4px" fl.wr="wrap">
             {#each result[metadata.key] as row (row.id)}
-              <Link href="#/{metadata.key}/{row.slug}">{row.name}</Link>
+              <Link href="#/{metadata.key}/{row.slug}" color={metaColor(result, metadata.key, row)}>{row.name}</Link>
             {/each}
           </Flex>
         {/each}
