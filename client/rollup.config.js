@@ -24,6 +24,7 @@ export default [
           paths: {
             $pages: "src/pages",
             $components: "src/components",
+            $stores: "src/stores",
             $lib: "src/lib"
           },
           extensions: [".js", ".mjs", ".svelte", ".jsx"]
