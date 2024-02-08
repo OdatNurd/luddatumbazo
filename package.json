@@ -23,6 +23,6 @@
   "devDependencies": {
     "jose": "^5.2.0",
     "toml": "^3.0.0",
-    "wrangler": "^3.26.0"
+    "wrangler": "^3.27.0"
   }
 }
