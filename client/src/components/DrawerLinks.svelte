@@ -23,7 +23,7 @@
   {#if link.label === '---'}
     <hr />
   {:else}
-    <Link href={link.value} on:click={close}>{link.label}</Link>
+    <Link href={link.value} button outline on:click={close}>{link.label}</Link>
   {/if}
 {/each}
 

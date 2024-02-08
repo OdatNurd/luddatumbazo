@@ -23,10 +23,10 @@
   // The list of links that are available in the profile menu on the page. Items
   // with dashed labels are separators.
   const links = [
-    { label: "Owned Games",               value: "#/games/owned" },
-    { label: "Wishlisted Games",          value: "#/games/wishlisted" },
+    { label: "Collection", value: "#/games/owned" },
+    { label: "Wishlist",   value: "#/games/wishlisted" },
     { label: "---"},
-    { label: "Session Reports", value: "#/sessions" },
+    { label: "Sessions",   value: "#/sessions" },
     { label: "---"},
     { label: `Logout ${$user.firstName}`, value: "/cdn-cgi/access/logout" },
   ];
@@ -36,7 +36,7 @@
 <Drawer type="action">
   <Titlebar slot="header">
     <Text slot="title" title>
-      {$user.displayName ?? 'Unknown User'}
+      {$user.displayName ?? 'Unknown User'}: {$user?.household?.name ?? 'Unknown Household'}
     </Text>
   </Titlebar>
 

@@ -23,7 +23,7 @@
   const links = [
     { label: "Home",            value: "#/" },
     { label: "---"},
-    { label: "All Games",       value: "#/games" },
+    { label: "Games",       value: "#/games" },
     { label: "---"},
     { label: "Categories",      value: "#/categories" },
     { label: "Mechanics",       value: "#/mechanics" },
@@ -31,7 +31,7 @@
     { label: "Artists",         value: "#/artists" },
     { label: "Publishers",      value: "#/publishers" },
     { label: "---"},
-    { label: "Session Reports", value: "#/sessions" },
+    { label: "Sessions", value: "#/sessions" },
   ];
 
 </script>
@@ -39,7 +39,7 @@
 <Drawer>
   <Titlebar slot="header">
     <Text slot="title" title>
-      Global Game Data
+      Main Menu
     </Text>
   </Titlebar>
 
