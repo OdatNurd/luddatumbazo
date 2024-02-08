@@ -114,7 +114,7 @@ Table GameName {
   id INTEGER [unique, increment, pk]
   gameId INTEGER [not null, ref: > Game.id]
 
-  name TEXT [not null]
+  name TEXT [not null, note: 'this field is collate nocase']
   isPrimary BOOLEAN [default: false, note: 'The primary is the name this is best known by']
 
   Note: 'Associates alternate game names with game IDs'

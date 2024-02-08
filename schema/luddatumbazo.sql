@@ -54,11 +54,12 @@ CREATE TABLE GameName (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     gameId INTEGER NOT NULL REFERENCES Game(id),
 
-    name TEXT NOT NULL,
+    name TEXT NOT NULL COLLATE NOCASE,
     isPrimary INTEGER DEFAULT(false)
 );
 CREATE INDEX idx_gamename_id ON GameName(gameId);
 CREATE INDEX idx_gamename_primary on GameName(gameId, isPrimary) WHERE isPrimary = 1;
+CREATE INDEX idx_gamename_name on GameName(name);
 
 
 --------------------------------------------------------------------------------
