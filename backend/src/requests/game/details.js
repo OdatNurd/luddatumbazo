@@ -10,8 +10,8 @@ import { getHouseholdDetails } from '#db/household';
 /******************************************************************************/
 
 
-/* Return back a list of all of the metadata items of the given type; this may
- * be an empty list. */
+/* Return back the details on the game with the given id value or slug text;
+ * this will generate an error if the game does not exist. */
 export async function gameDetailsReq(ctx) {
   // Can be either an game ID or a slug to represent a game; the query string
   // can contain an optional household name or slug.

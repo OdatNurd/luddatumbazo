@@ -19,6 +19,7 @@ import { insertBGGGameListReq } from '#requests/game/insertBGGList';
 import { performGameLookupReq } from '#requests/game/lookup';
 import { gameListReq } from '#requests/game/list';
 import { gameDetailsReq } from '#requests/game/details';
+import { gameNamesReq } from '#requests/game/names';
 
 
 /******************************************************************************/
@@ -50,6 +51,10 @@ game.get('/:idOrSlug',
          validate('query', GameLookupHouseholdSchema),
          validate('param', GameLookupIDSchema),
          ctx => _(ctx, gameDetailsReq));
+
+game.get('/names/:idOrSlug',
+         validate('param', GameLookupIDSchema),
+         ctx => _(ctx, gameNamesReq));
 
 // Tie in the sub requests as well
 game.route('/data/expansions', expansion);

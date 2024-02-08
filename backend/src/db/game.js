@@ -3,11 +3,36 @@
 
 import { BGGLookupError } from '#db/exceptions';
 
-import { getDBResult } from '#db/common';
+import { getDBResult, mapIntFieldsToBool } from '#db/common';
 import { cfImagesURLUpload, mapImageAssets, getImageAssetURL  } from '#db/image';
 import { metadataTypeList, updateMetadata } from '#db/metadata';
 import { updateExpansionDetails, getExpansionDetails } from '#db/expansion';
 import { lookupBGGGame } from '#db/bgg';
+
+
+/******************************************************************************/
+
+
+/* Given a numeric gameId or a textual slug, look up the raw details for that
+ * game from the internal Game record and return an object back.
+ *
+ * The return will be null if there is no such game found in the database. */
+async function getRawGameRecord(ctx, idOrSlug) {
+  // Try to find the game with the value has that been provided; we check to see
+  // if the provided ID is either a slug or an actual ID.
+  const lookup = await ctx.env.DB.prepare(`
+    SELECT * FROM Game
+     WHERE (id == ?1 or slug == ?1)
+  `).bind(idOrSlug).all();
+  const result = getDBResult('getRawGameRecord', 'find_game', lookup);
+
+  // If there was no result found, then return null back to signal that.
+  if (result.length === 0) {
+    return null;
+  }
+
+  return result[0];
+}
 
 
 /******************************************************************************/
@@ -184,6 +209,36 @@ export async function getWishlistGameList(ctx, householdId) {
 /******************************************************************************/
 
 
+/* Given either a numeric ID of a game, or a textual slug that identifies the
+ * record, return back a list of all of the names that this game is known by.
+ *
+ * This list will always have at least one entry.
+ *
+ * If no such game exists, then this will return null to indicate that. */
+export async function getGameNames(ctx, idOrSlug) {
+  // Try to look up the raw game record; if this does not work, then fail out
+  // right away.
+  const game = await getRawGameRecord(ctx, idOrSlug);
+  if (game === null) {
+    return null;
+  }
+
+  // Gather the list of all of the names that this game is known by; much like
+  // when we do the insert, the primary name is brought to the top of the list.
+  const nameLookup = await ctx.env.DB.prepare(`
+    SELECT id, name, isPrimary from GameName
+     WHERE gameId = ?
+     ORDER BY isPrimary DESC;
+  `).bind(game.id).all();
+  const names = getDBResult('getGameNames', 'find_names', nameLookup);
+
+  return names.map(entry => mapIntFieldsToBool(entry))
+}
+
+
+/******************************************************************************/
+
+
 /* Given a game record and a household Id that exists, check to see if that
  * game is owned by this household and/or wishlisted by this household, and if
  * so include that information. */
@@ -251,20 +306,14 @@ async function getGameHouseholdDetails(ctx, gameData, householdId) {
  * owned. */
 export async function getGameDetails(ctx, idOrSlug, householdId) {
   // Try to find the game with the value has that been provided; we check to see
-  // if the provided ID is either a slug or an actual ID.
-  const lookup = await ctx.env.DB.prepare(`
-    SELECT * FROM Game
-     WHERE (id == ?1 or slug == ?1)
-  `).bind(idOrSlug).all();
-  const result = getDBResult('getGameDetails', 'find_game', lookup);
-
-  // If there was no result found, then return null back to signal that.
-  if (result.length === 0) {
+  // if the provided ID is either a slug or an actual ID; if this is not found,
+  // then leave.
+  const gameData = await getRawGameRecord(ctx, idOrSlug);
+  if (gameData === null) {
     return null;
   }
 
   // Set up the game data and map the game image URL.
-  const gameData = result[0];
   gameData.imagePath = getImageAssetURL(ctx, gameData.imagePath, 'boxart');
 
   // Gather the list of all of the names that this game is known by; much like
