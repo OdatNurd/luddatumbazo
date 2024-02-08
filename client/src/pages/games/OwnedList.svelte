@@ -5,4 +5,4 @@
 </script>
 
 <h3>Games owned by {$user?.household.name ?? 'Unknown'}</h3>
-<SlugList bggType='boardgame' baseLink='#/game/:slug' query='/household/games/{$user?.household.slug}' />
+<SlugList bggType='boardgame' baseLink='#/game/:slug' query='/household/collection/{$user?.household.slug}' />
