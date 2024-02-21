@@ -193,7 +193,7 @@ export async function updateExpansionDetails(ctx, gameId, bggId, expansionList) 
       result.inserted += 1;
       batch.push(
         insertStmt.bind(baseGame.gameId, baseGame.bggId,
-                        expansionGame.gameId, expansionGame.bggId,
+                        expansionGame.gameId ?? null, expansionGame.bggId,
                         entry.name));
     } else {
       // We found a record; if it's already complete on both sides then we don't
