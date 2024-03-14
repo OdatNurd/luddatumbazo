@@ -45,3 +45,43 @@ export async function getHouseholdList(ctx) {
 
 
 /******************************************************************************/
+
+
+/* Given a household, and the ID information for an interrelated set of game,
+ * name record and publisher, insert a record into the ownership table for
+ * this game.
+ *
+ * This does not validate that the game has a name with the ID provided, or that
+ * the publisher provided is a publisher of the game; it is assumed this has
+ * been pre-validated. */
+export async function addGameToHousehold(ctx, householdId, gameId, nameId, publisherId) {
+  const result = await ctx.env.DB.prepare(`
+    INSERT INTO GameOwners
+      (householdId, gameId, gameName, gamePublisher)
+    VALUES (?1, ?2, ?3, ?4);
+    `).bind(householdId, gameId, nameId, publisherId).all();
+
+  getDBResult('addGameToHousehold', 'insert', result);
+}
+
+
+
+/******************************************************************************/
+
+
+/* Given a household, and the ID information for a game, remove that record from
+ * the database.
+ *
+ * This does not validate that such an entry exists in the database; it only
+ * purges the entry if it happens to exist. */
+export async function removeGameFromHousehold(ctx, householdId, gameId) {
+  const result = await ctx.env.DB.prepare(`
+    DELETE FROM GameOwners
+     WHERE householdId = ?1 AND gameId = ?2
+    `).bind(householdId, gameId).all();
+
+  getDBResult('removeGameFromHousehold', 'delete', result);
+}
+
+
+/******************************************************************************/
