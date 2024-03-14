@@ -85,3 +85,40 @@ export async function removeGameFromHousehold(ctx, householdId, gameId) {
 
 
 /******************************************************************************/
+
+
+/* Given a household, and the ID information for an interrelated set of game and
+ * name records, insert a record into the wishlsit table for this game.
+ *
+ * This does not validate that the game has a name with the ID provided; it is
+ * assumed this has been pre-validated. */
+export async function addGameToWishlist(ctx, householdId, gameId, nameId) {
+  const result = await ctx.env.DB.prepare(`
+    INSERT INTO Wishlist
+      (householdId, gameId, gameName, addedByUserId)
+    VALUES (?1, ?2, ?3, ?4);
+    `).bind(householdId, gameId, nameId, ctx.get('userId')).all();
+
+  getDBResult('addGameToWishlist', 'insert', result);
+}
+
+
+/******************************************************************************/
+
+
+/* Given a household, and the ID information for a game, remove that record from
+ * the database.
+ *
+ * This does not validate that such an entry exists in the database; it only
+ * purges the entry if it happens to exist. */
+export async function removeGameFromWishlist(ctx, householdId, gameId) {
+  const result = await ctx.env.DB.prepare(`
+    DELETE FROM Wishlist
+     WHERE householdId = ?1 AND gameId = ?2
+    `).bind(householdId, gameId).all();
+
+  getDBResult('removeGameFromWishlist', 'delete', result);
+}
+
+
+/******************************************************************************/

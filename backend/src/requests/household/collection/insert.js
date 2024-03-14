@@ -4,7 +4,8 @@
 import { success, fail } from '#requests/common';
 
 
-import { getHouseholdDetails, addGameToHousehold } from '#db/household';
+import { getHouseholdDetails, addGameToHousehold,
+         removeGameFromWishlist } from '#db/household';
 import { getGameDetails, getGameNames } from '#db/game';
 
 
@@ -54,7 +55,14 @@ export async function householdCollectionAddReq(ctx) {
     return fail(ctx, `game ${gameInfo.slug} does not have a name with ID ${name}`, 404);
   }
 
+  // Add the game to the collection
   const result = await addGameToHousehold(ctx, householdInfo.id, gameInfo.id, nameRecord.id, publisherInfo.id);
+
+  // If the game uis currently in thw wishlist, then remove it
+  if (gameInfo.wishlist !== undefined) {
+    await removeGameFromWishlist(ctx, householdInfo.id, gameInfo.id);
+  }
+
   return success(ctx, `added ${gameInfo.slug} to the collection for ${householdInfo.slug}`, result);
 }
 

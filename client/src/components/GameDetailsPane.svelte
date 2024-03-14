@@ -83,7 +83,6 @@
               <Icon name="star-off">{result.names[0]} ({result.publishedIn})</Icon>
             {/if}
           {/if}
-
         </Text>
         <Text subtitle>
           <Flex direction="row" gap="16px" fl.wr="wrap">
@@ -154,6 +153,32 @@
       </Grid>
 
       <Flex direction="row" gap="32px" fl.wr="wrap">
+        {#if result.owned !== undefined}
+          <Button fill color="@accent" disabled on:click={() => push('/')}>
+            <Icon name="star-off"></Icon>
+            Remove from Collection
+          </Button>
+        {:else}
+          <Button fill color="@accent" disabled on:click={() => push('/')}>
+            <Icon name="star-filled"></Icon>
+            Add to Collection
+          </Button>
+        {/if}
+
+        {#if result.wishlist !== undefined}
+          <Button fill color="@accent" disabled on:click={() => push('/')}>
+            <Icon name="heart-off"></Icon>
+            Remove from Wishlist
+          </Button>
+        {:else}
+          <Button fill color="@accent" disabled on:click={() => push('/')}>
+            <Icon name="heart-filled"></Icon>
+            Add to Wishlist
+          </Button>
+        {/if}
+      </Flex>
+
+      <Flex direction="row" gap="32px" fl.wr="wrap">
         <Button fill color="@secondary" disabled on:click={() => push('/')}>
           <Icon name="plus"></Icon>
           Log a Session
@@ -168,6 +193,7 @@
           {/if}
         </Button>
       </Flex>
+
 
       <Text p="8px" b.t="1.5px solid gray" b.b="1.5px solid gray">
         {@html result.description}
