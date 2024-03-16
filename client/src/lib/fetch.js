@@ -57,6 +57,14 @@ async function api_call(method, endpoint, body, options) {
     }
   }
 
+  // If there is a body, then set a content type header and convert the body
+  // data into JSON.
+  const headers = {};
+  if (body !== undefined && method !== 'get') {
+    headers['Content-Type'] = 'application/json';
+    body = JSON.stringify(body);
+  }
+
   // If the method is GET and there is a body, this should be set as URL search
   // parameters instead.
   if (method.toUpperCase() === 'GET' && body !== undefined) {
@@ -77,6 +85,7 @@ async function api_call(method, endpoint, body, options) {
     // Store the provided method and body
     method,
     body,
+    headers,
 
     // Tack in any other options that were specifically requested
     ...options
