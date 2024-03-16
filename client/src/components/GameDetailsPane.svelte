@@ -51,9 +51,12 @@
     // from the ownership record, and the ID is the ID of the item that's owned,
     // color the text.
     if (gameData.owned !== undefined) {
-      const { id, metatype } = gameData.owned;
+      const { publisherId, metatype } = gameData.owned;
 
-      if (metaDataType === metatype && rowData.id === id) {
+      // Mild hack; the publisherId is here because this is expected to only
+      // ever color a publisher since that is the only thing in the ownership
+      // record.
+      if (metaDataType === metatype && rowData.id === publisherId) {
         return "@primary";
       }
     }

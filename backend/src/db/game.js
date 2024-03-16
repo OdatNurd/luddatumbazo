@@ -264,7 +264,7 @@ async function getGameHouseholdDetails(ctx, gameData, householdId) {
     // Determine whether or not this game is owned, and if so under what name
     // and by what publisher.
     ctx.env.DB.prepare(`
-        SELECT B.name as gameName, C.id, C.bggId, C.slug, C.name, C.metaType
+        SELECT B.name as gameName, C.id as publisherId, C.bggId, C.slug, C.name, C.metaType
           FROM GameOwners as A,
                GameName as B,
                GameMetadata as C
