@@ -242,7 +242,7 @@ export async function getGameNames(ctx, idOrSlug) {
 /* Given a game record and a household Id that exists, check to see if that
  * game is owned by this household and/or wishlisted by this household, and if
  * so include that information. */
-async function getGameHouseholdDetails(ctx, gameData, householdId) {
+export async function getGameHouseholdDetails(ctx, gameData, householdId) {
   // Batch out to select two sets of data from the database; whether or not this
   // game is on the wishlist of this household, and whether or not the game is
   // owned by this household.
