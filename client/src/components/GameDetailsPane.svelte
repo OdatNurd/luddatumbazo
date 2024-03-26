@@ -34,13 +34,22 @@
     { "key": "publisher", "title": "Publishers:" },
   ];
 
+
   // ---------------------------------------------------------------------------
+
+
+  // The loaded game data for the page; populated on page load
+  let gameData = undefined;
 
   // Fetch the game details; if the current user has a primary household, then
   // this should also fetch ownership information based on that.
-  const loadData = async () => await api.get(`/game/${slug}`, {
-    household: $user?.household.slug
-  });
+  const loadData = async () => {
+    gameData = await api.get(`/game/${slug}`, {
+      household: $user?.household.slug
+    });
+
+    console.log(gameData);
+  }
 
   // Return the color to use for a metadata link based on whether or not the
   // current user owns it; gameData is the data for the game, metaDataType is
@@ -64,6 +73,42 @@
     // Fallback; use normal text color.
     return null;
   }
+
+  // Carry out a collection action; simple helper that bundles the appropriate
+  // request to the given URI and returns what it does.
+  const action = async (doInsert, URI, game, name, publisher) => {
+    const func = (doInsert === true) ? api.put : api.delete;
+    return await func(URI, { game, name, publisher });
+  }
+
+  // Insert or remove a game from the owned collection for this household.
+  const collection = async (doInsert, game, name, publisher) => {
+    const result = await action(doInsert, `/household/collection/${$user?.household.slug}`, game, name, publisher);
+
+    if (doInsert === true) {
+      gameData.owned = result;
+      delete gameData.wishlist;
+    } else {
+      delete gameData.owned;
+    }
+
+    // Trigger a refesh.
+    gameData = gameData;
+  }
+
+  // Insert or remove a game from the wishlist for this household.
+  const wishlist = async (doInsert, game, name) => {
+    const result = await action(doInsert, `/household/wishlist/${$user?.household.slug}`, game, name);
+
+    if (doInsert === true) {
+      gameData.wishlist = result;
+    } else {
+      delete gameData.wishlist;
+    }
+
+    // Trigger a refesh.
+    gameData = gameData;
+  }
 </script>
 
 
@@ -72,18 +117,18 @@
   <h3>Game Details</h3>
 </Flex>
 
-<LoadZone source={loadData()} let:result>
+<LoadZone source={loadData()}>
   <Paper>
     <Titlebar slot="header">
       <Flex p="0px" gap="0px" slot="title">
         <Text title>
-          {#if result.owned !== undefined}
-            <Icon name="star-filled">{result.owned.gameName} ({result.publishedIn})</Icon>
+          {#if gameData.owned !== undefined}
+            <Icon name="star-filled">{gameData.owned.gameName} ({gameData.publishedIn})</Icon>
           {:else}
-            {#if result.wishlist !== undefined}
-              <Icon name="heart-filled">{result.wishlist.name} ({result.publishedIn}) [Added by: {result.wishlist.wishlisterName}]</Icon>
+            {#if gameData.wishlist !== undefined}
+              <Icon name="heart-filled">{gameData.wishlist.name} ({gameData.publishedIn}) [Added by: {gameData.wishlist.wishlisterName}]</Icon>
             {:else}
-              <Icon name="star-off">{result.names[0]} ({result.publishedIn})</Icon>
+              <Icon name="star-off">{gameData.names[0]} ({gameData.publishedIn})</Icon>
             {/if}
           {/if}
         </Text>
@@ -91,51 +136,51 @@
           <Flex direction="row" gap="16px" fl.wr="wrap">
             <span>
               <strong>Players:</strong>
-                {#if result.minPlayers === result.maxPlayers}
-                  {result.minPlayers}
+                {#if gameData.minPlayers === gameData.maxPlayers}
+                  {gameData.minPlayers}
                 {:else}
-                  {result.minPlayers}-{result.maxPlayers}
+                  {gameData.minPlayers}-{gameData.maxPlayers}
                 {/if}
             </span>
             <span>
               <strong>Play Time:</strong>
-                {#if result.minPlaytime === result.maxPlaytime}
-                  {result.minPlaytime} minutes
+                {#if gameData.minPlaytime === gameData.maxPlaytime}
+                  {gameData.minPlaytime} minutes
                 {:else}
-                  {result.minPlaytime}-{result.maxPlaytime} minutes
+                  {gameData.minPlaytime}-{gameData.maxPlaytime} minutes
                 {/if}
               </span>
-            <span><strong>Age:</strong> {result.minPlayerAge}+</span>
-            <span><strong>Weight:</strong> {result.complexity.toFixed(2)}/5</span>
+            <span><strong>Age:</strong> {gameData.minPlayerAge}+</span>
+            <span><strong>Weight:</strong> {gameData.complexity.toFixed(2)}/5</span>
           </Flex>
         </Text>
       </Flex>
     </Titlebar>
     <Flex gap="16px" fl.wr="wrap">
-      <GameImage imagePath={result.imagePath} name={result.names[0]} />
+      <GameImage imagePath={gameData.imagePath} name={gameData.names[0]} />
 
       <Text subtitle>
-        {#if result.names.length > 1}
+        {#if gameData.names.length > 1}
           <Flex direction="row" gap="8px">
             <strong>Also Known As:</strong>
-            {result.names.join(', ')}
+            {gameData.names.join(', ')}
           </Flex>
         {/if}
         <Flex direction="row" gap="32px" fl.wr="wrap">
-          <BGGLink bggId={result.bggId}>
+          <BGGLink bggId={gameData.bggId}>
             View on BoardGameGeek
             <span slot="nolink">No BGG Link available</span>
           </BGGLink>
 
-          {#if result.officialURL !== ''}
-            <Link href="{result.officialURL}" target="_blank">
+          {#if gameData.officialURL !== ''}
+            <Link href={gameData.officialURL} target="_blank">
               View Official Site <Icon name="external-link"></Icon>
             </Link>
           {:else}
             <span>No Official Site Available</span>
           {/if}
-          {#if result.teachingURL !== ''}
-            <Link href="{result.teachingURL}" target="_blank">
+          {#if gameData.teachingURL !== ''}
+            <Link href={gameData.teachingURL} target="_blank">
               Learn to Play <Icon name="external-link"></Icon>
             </Link>
           {:else}
@@ -148,38 +193,40 @@
         {#each metaKeys as metadata (metadata.key) }
           <Flex>{metadata.title}</Flex>
           <Flex direction="row" gap="4px" fl.wr="wrap">
-            {#each result[metadata.key] as row (row.id)}
-              <Link href="#/{metadata.key}/{row.slug}" color={metaColor(result, metadata.key, row)}>{row.name}</Link>
+            {#each gameData[metadata.key] as row (row.id)}
+              <Link href="#/{metadata.key}/{row.slug}" color={metaColor(gameData, metadata.key, row)}>{row.name}</Link>
             {/each}
           </Flex>
         {/each}
       </Grid>
 
-      <Flex direction="row" gap="32px" fl.wr="wrap">
-        {#if result.owned !== undefined}
-          <Button fill color="@accent" disabled on:click={() => push('/')}>
-            <Icon name="star-off"></Icon>
-            Remove from Collection
-          </Button>
-        {:else}
-          <Button fill color="@accent" disabled on:click={() => push('/')}>
-            <Icon name="star-filled"></Icon>
-            Add to Collection
-          </Button>
-        {/if}
+      {#if $user.household !== undefined}
+        <Flex direction="row" gap="32px" fl.wr="wrap">
+          {#if gameData.owned !== undefined}
+            <Button fill color="@primary" on:click={collection(false, gameData.slug, gameData.names[0], gameData.publisher[0].slug)}>
+              <Icon name="star-off"></Icon>
+              Remove from Collection
+            </Button>
+          {:else}
+            <Button fill color="@primary" on:click={collection(true, gameData.slug, gameData.names[0], gameData.publisher[0].slug)}>
+              <Icon name="star-filled"></Icon>
+              Add to Collection
+            </Button>
 
-        {#if result.wishlist !== undefined}
-          <Button fill color="@accent" disabled on:click={() => push('/')}>
-            <Icon name="heart-off"></Icon>
-            Remove from Wishlist
-          </Button>
-        {:else}
-          <Button fill color="@accent" disabled on:click={() => push('/')}>
-            <Icon name="heart-filled"></Icon>
-            Add to Wishlist
-          </Button>
-        {/if}
-      </Flex>
+            {#if gameData.wishlist !== undefined}
+              <Button fill color="@primary" on:click={wishlist(false, gameData.slug, gameData.names[0])}>
+                <Icon name="heart-off"></Icon>
+                Remove from Wishlist
+              </Button>
+            {:else}
+              <Button fill color="@primary" on:click={wishlist(true, gameData.slug, gameData.names[0])}>
+                <Icon name="heart-filled"></Icon>
+                Add to Wishlist
+              </Button>
+            {/if}
+          {/if}
+        </Flex>
+      {/if}
 
       <Flex direction="row" gap="32px" fl.wr="wrap">
         <Button fill color="@secondary" disabled on:click={() => push('/')}>
@@ -187,9 +234,9 @@
           Log a Session
         </Button>
 
-        <Button fill color="@secondary" disabled={!result.hasSessions} on:click={sessionList}>
+        <Button fill color="@secondary" disabled={!gameData.hasSessions} on:click={sessionList}>
           <Icon name="report-analytics"></Icon>
-          {#if result.hasSessions}
+          {#if gameData.hasSessions}
             View Session Reports
           {:else}
             No logged sessions
@@ -199,14 +246,14 @@
 
 
       <Text p="8px" b.t="1.5px solid gray" b.b="1.5px solid gray">
-        {@html result.description}
+        {@html gameData.description}
       </Text>
 
-      {#if result.expansionGames.length > 0}
+      {#if gameData.expansionGames.length > 0}
         <Grid cols="max-content auto" gap="8px">
           <Flex>Expansions:</Flex>
           <Flex direction="row" gap="4px" fl.wr="wrap">
-            {#each result.expansionGames as row (row.id)}
+            {#each gameData.expansionGames as row (row.id)}
               {#if row.id !== null}
                 <Link href="#/game/{row.slug}">{row.name}</Link>
               {:else}
@@ -217,11 +264,11 @@
         </Grid>
       {/if}
 
-      {#if result.baseGames.length > 0}
+      {#if gameData.baseGames.length > 0}
         <Grid cols="max-content auto" gap="8px">
           <Flex>Expands:</Flex>
           <Flex direction="row" gap="4px" fl.wr="wrap">
-            {#each result.baseGames as row (row.id)}
+            {#each gameData.baseGames as row (row.id)}
               {#if row.id !== null}
                 <Link href="#/game/{row.slug}">{row.name}</Link>
               {:else}
