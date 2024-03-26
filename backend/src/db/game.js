@@ -13,6 +13,38 @@ import { lookupBGGGame } from '#db/bgg';
 /******************************************************************************/
 
 
+/* Given an input object with any number of keys, find all of the keys which
+ * start with "sub_" and move them into a sub-object with a key named subKey.
+ *
+ * As keys are moved, the "sub_" prefix is removed from them. */
+function splitSubKeys(inputObject, subKey) {
+  // If the input object is undefined, then we don't want to do anything special
+  // here.
+  if (inputObject === undefined) {
+    return;
+  }
+
+  // Set up the object that will hold the sub keys.
+  const subObject = {}
+  subObject[subKey] = {}
+
+  // Ensure that all boolean fields represent properly/
+  inputObject = mapIntFieldsToBool(inputObject);
+  return Object.entries(inputObject).reduce((acc, [key, value]) => {
+    if (key.startsWith("sub_")) {
+      acc[subKey][key.substr(4)] = value;
+    } else {
+      acc[key] = value;
+    }
+
+    return acc;
+  }, subObject);
+}
+
+
+/******************************************************************************/
+
+
 /* Given a numeric gameId or a textual slug, look up the raw details for that
  * game from the internal Game record and return an object back.
  *
@@ -250,7 +282,8 @@ export async function getGameHouseholdDetails(ctx, gameData, householdId) {
     // Determine if this game is on the wishlist, and if so by what name, and
     // who it was that added it.
     ctx.env.DB.prepare(`
-        SELECT B.name, C.id as wishlisterId, C.displayName as wishlisterName
+        SELECT B.id, B.name, B.isPrimary,
+               C.id as sub_id, C.displayName as sub_name
           FROM Wishlist as A,
                GameName as B,
                User as C
@@ -264,7 +297,8 @@ export async function getGameHouseholdDetails(ctx, gameData, householdId) {
     // Determine whether or not this game is owned, and if so under what name
     // and by what publisher.
     ctx.env.DB.prepare(`
-        SELECT B.name as gameName, C.id as publisherId, C.bggId, C.slug, C.name, C.metaType
+        SELECT B.id, B.name, B.isPrimary, C.id as sub_id, C.bggId as sub_bggId,
+               C.slug as sub_slug, C.name as sub_name, C.metaType as sub_metaType
           FROM GameOwners as A,
                GameName as B,
                GameMetadata as C
@@ -285,8 +319,8 @@ export async function getGameHouseholdDetails(ctx, gameData, householdId) {
   //
   // This allows the client side code to distinguish where special handling is
   // needed just by testing if the object exist.
-  gameData.wishlist = wishlist[0];
-  gameData.owned = owned[0];
+  gameData.wishlist = splitSubKeys(wishlist[0], "wishlister");
+  gameData.owned = splitSubKeys(owned[0], "publisher");
 
   return gameData;
 }

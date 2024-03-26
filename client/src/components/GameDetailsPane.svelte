@@ -60,12 +60,12 @@
     // from the ownership record, and the ID is the ID of the item that's owned,
     // color the text.
     if (gameData.owned !== undefined) {
-      const { publisherId, metatype } = gameData.owned;
+      const { id, metaType } = gameData.owned.publisher;
 
       // Mild hack; the publisherId is here because this is expected to only
       // ever color a publisher since that is the only thing in the ownership
       // record.
-      if (metaDataType === metatype && rowData.id === publisherId) {
+      if (metaDataType === metaType && rowData.id === id) {
         return "@primary";
       }
     }
@@ -123,10 +123,10 @@
       <Flex p="0px" gap="0px" slot="title">
         <Text title>
           {#if gameData.owned !== undefined}
-            <Icon name="star-filled">{gameData.owned.gameName} ({gameData.publishedIn})</Icon>
+            <Icon name="star-filled">{gameData.owned.name} ({gameData.publishedIn})</Icon>
           {:else}
             {#if gameData.wishlist !== undefined}
-              <Icon name="heart-filled">{gameData.wishlist.name} ({gameData.publishedIn}) [Added by: {gameData.wishlist.wishlisterName}]</Icon>
+              <Icon name="heart-filled">{gameData.wishlist.name} ({gameData.publishedIn}) [Added by: {gameData.wishlist.wishlister.name}]</Icon>
             {:else}
               <Icon name="star-off">{gameData.primaryName} ({gameData.publishedIn})</Icon>
             {/if}
