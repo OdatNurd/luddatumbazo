@@ -128,7 +128,7 @@
             {#if gameData.wishlist !== undefined}
               <Icon name="heart-filled">{gameData.wishlist.name} ({gameData.publishedIn}) [Added by: {gameData.wishlist.wishlisterName}]</Icon>
             {:else}
-              <Icon name="star-off">{gameData.names[0]} ({gameData.publishedIn})</Icon>
+              <Icon name="star-off">{gameData.primaryName} ({gameData.publishedIn})</Icon>
             {/if}
           {/if}
         </Text>
@@ -157,13 +157,13 @@
       </Flex>
     </Titlebar>
     <Flex gap="16px" fl.wr="wrap">
-      <GameImage imagePath={gameData.imagePath} name={gameData.names[0]} />
+      <GameImage imagePath={gameData.imagePath} name={gameData.primaryName} />
 
       <Text subtitle>
         {#if gameData.names.length > 1}
           <Flex direction="row" gap="8px">
             <strong>Also Known As:</strong>
-            {gameData.names.join(', ')}
+            {gameData.names.map(el => el.name).join(', ')}
           </Flex>
         {/if}
         <Flex direction="row" gap="32px" fl.wr="wrap">
@@ -203,23 +203,23 @@
       {#if $user.household !== undefined}
         <Flex direction="row" gap="32px" fl.wr="wrap">
           {#if gameData.owned !== undefined}
-            <Button fill color="@primary" on:click={collection(false, gameData.slug, gameData.names[0], gameData.publisher[0].slug)}>
+            <Button fill color="@primary" on:click={collection(false, gameData.slug, gameData.primaryName, gameData.publisher[0].slug)}>
               <Icon name="star-off"></Icon>
               Remove from Collection
             </Button>
           {:else}
-            <Button fill color="@primary" on:click={collection(true, gameData.slug, gameData.names[0], gameData.publisher[0].slug)}>
+            <Button fill color="@primary" on:click={collection(true, gameData.slug, gameData.primaryName, gameData.publisher[0].slug)}>
               <Icon name="star-filled"></Icon>
               Add to Collection
             </Button>
 
             {#if gameData.wishlist !== undefined}
-              <Button fill color="@primary" on:click={wishlist(false, gameData.slug, gameData.names[0])}>
+              <Button fill color="@primary" on:click={wishlist(false, gameData.slug, gameData.primaryName)}>
                 <Icon name="heart-off"></Icon>
                 Remove from Wishlist
               </Button>
             {:else}
-              <Button fill color="@primary" on:click={wishlist(true, gameData.slug, gameData.names[0])}>
+              <Button fill color="@primary" on:click={wishlist(true, gameData.slug, gameData.primaryName)}>
                 <Icon name="heart-filled"></Icon>
                 Add to Wishlist
               </Button>

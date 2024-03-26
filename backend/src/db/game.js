@@ -319,11 +319,12 @@ export async function getGameDetails(ctx, idOrSlug, householdId) {
   // Gather the list of all of the names that this game is known by; much like
   // when we do the insert, the primary name is brought to the top of the list.
   const names = await ctx.env.DB.prepare(`
-    SELECT name from GameName
+    SELECT id, name, isPrimary from GameName
      WHERE gameId = ?
      ORDER BY isPrimary DESC;
   `).bind(gameData.id).all();
-  gameData.names = getDBResult('getGameDetails', 'find_names', names).map(el => el.name);
+  gameData.names = getDBResult('getGameDetails', 'find_names', names).map(el => mapIntFieldsToBool(el));
+  gameData.primaryName = gameData.names[0].name;
 
   // Gather the information on expansions for this game
   const expansionDetails = await getExpansionDetails(ctx, gameData.id);
