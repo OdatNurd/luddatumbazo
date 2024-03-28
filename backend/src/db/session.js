@@ -5,7 +5,7 @@ import { getDBResult, mapIntFieldsToBool } from '#db/common';
 
 import { mapImageAssets, getImageAssetURL } from '#db/image';
 import { BGGLookupError } from '#db/exceptions';
-import { performGameLookup } from '#db/game';
+import { dbGameLookup } from '#db/game';
 import { updateGuests } from '#db/guest';
 
 
@@ -86,7 +86,7 @@ async function validateSessionUsers(ctx, sessionData) {
 async function validateGameData(ctx, sessionData) {
   // Verify that the game that is being session logged exists; this will fetch
   // the data for it, and return null if it's not found.
-  const gameData = await performGameLookup(ctx, sessionData.gameId, 'smallboxart', true);
+  const gameData = await dbGameLookup(ctx, sessionData.gameId, 'smallboxart', true);
   if (gameData === null) {
     throw new BGGLookupError(`no game with ID ${sessionData.gameId} found`, 400);
   }
@@ -94,7 +94,7 @@ async function validateGameData(ctx, sessionData) {
   // Do the same for all expansions that are mentioned in the expansions list.
   // Once done, if the two lists don't have the same length, something must be
   // missing.
-  const expansions = await performGameLookup(ctx, sessionData.expansions, 'thumbnail', true);
+  const expansions = await dbGameLookup(ctx, sessionData.expansions, 'thumbnail', true);
   if (expansions.length !== sessionData.expansions.length) {
     throw new BGGLookupError(`not all expansions provided exist`, 400);
   }

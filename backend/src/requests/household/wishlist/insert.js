@@ -5,7 +5,7 @@ import { success, fail } from '#requests/common';
 
 
 import { getHouseholdDetails, addGameToWishlist } from '#db/household';
-import { getGameDetails, getGameNames } from '#db/game';
+import { dbGameDetails, dbGameNames } from '#db/game';
 
 
 /******************************************************************************/
@@ -25,7 +25,7 @@ export async function householdWishlistAddReq(ctx) {
   }
 
   // Look up and validate the game that was specified in the request.
-  const gameInfo = await getGameDetails(ctx, game, householdInfo.id);
+  const gameInfo = await dbGameDetails(ctx, game, householdInfo.id);
   if (gameInfo === null) {
     return fail(ctx, `unable to locate game with id ${game}`, 404);
   }
@@ -39,7 +39,7 @@ export async function householdWishlistAddReq(ctx) {
 
   // Grab the list of names that are known for this game and verify that an
   // entry with the name that we were given appears here.
-  const nameInfo = await getGameNames(ctx, gameInfo.id);
+  const nameInfo = await dbGameNames(ctx, gameInfo.id);
   const nameRecord = nameInfo.find(e => e.id === name || e.name === name)
   if (nameRecord === undefined) {
     return fail(ctx, `game ${gameInfo.slug} does not have a name with ID ${name}`, 404);

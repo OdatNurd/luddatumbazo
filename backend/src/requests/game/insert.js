@@ -3,7 +3,7 @@
 
 import { success } from '#requests/common';
 
-import { insertGame } from '#db/game';
+import { dbGameInsert } from '#db/game';
 
 
 /******************************************************************************/
@@ -20,7 +20,7 @@ export async function insertGameReq(ctx) {
   // details of the new game on success.
   const gameData = await ctx.req.valid('json');
 
-  const newGameInfo = await insertGame(ctx, gameData);
+  const newGameInfo = await dbGameInsert(ctx, gameData);
 
   // Return success back.
   return success(ctx, `added game ${newGameInfo.id}`, newGameInfo);

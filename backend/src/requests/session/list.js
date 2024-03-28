@@ -4,7 +4,7 @@
 import { success, fail } from '#requests/common';
 
 import { getSessionList } from '#db/session';
-import { performGameLookup } from '#db/game';
+import { dbGameLookup } from '#db/game';
 
 
 /******************************************************************************/
@@ -27,7 +27,7 @@ export async function sessionListReq(ctx) {
   //
   // The lookup has a variable return; a single lookup returns an object or null
   // and a list always returns an array. The session code always wants an array.
-  let lookup = await performGameLookup(ctx, games, undefined, false);
+  let lookup = await dbGameLookup(ctx, games, undefined, false);
   if (Array.isArray(lookup) === false) {
     lookup = [lookup];
   }

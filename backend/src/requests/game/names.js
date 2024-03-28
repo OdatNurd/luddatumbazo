@@ -3,7 +3,7 @@
 
 import { success, fail } from '#requests/common';
 
-import { getGameNames } from '#db/game';
+import { dbGameNames } from '#db/game';
 
 
 /******************************************************************************/
@@ -17,7 +17,7 @@ export async function gameNamesReq(ctx) {
 
   // Look up the game; if we don't find anything by that value, then this does
   // not exist.
-  const result = await getGameNames(ctx, idOrSlug);
+  const result = await dbGameNames(ctx, idOrSlug);
   if (result === null) {
     return fail(ctx, `no such game ${idOrSlug}`, 404)
   }

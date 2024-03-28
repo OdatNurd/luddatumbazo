@@ -3,7 +3,7 @@
 
 import { success, fail } from '#requests/common';
 
-import { performGameLookup } from '#db/game';
+import { dbGameLookup } from '#db/game';
 
 
 /******************************************************************************/
@@ -17,7 +17,7 @@ export async function performGameLookupReq(ctx) {
   const { imageType } = ctx.req.valid('query');
 
   // Do the lookup; for our purposes here, we never want the nameId.
-  const result = await performGameLookup(ctx, filterList, imageType, false);
+  const result = await dbGameLookup(ctx, filterList, imageType, false);
   if (result === null) {
     return fail(ctx, `unable to locate game: ${filterList[0]}`, 404)
   }

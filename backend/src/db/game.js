@@ -97,7 +97,7 @@ async function getRawGameRecord(ctx, idOrSlug) {
  * If the identifier provided is a list of ID's, the return value is an array,
  * which may be shorter than the input array of not all of the items were
  * found. */
-export async function performGameLookup(ctx, gameId, imageType, includeNameId) {
+export async function dbGameLookup(ctx, gameId, imageType, includeNameId) {
   // Get the list of ID's that we are going to search for.
   const searchIds = Array.isArray(gameId) ? gameId : [gameId];
 
@@ -144,7 +144,7 @@ export async function performGameLookup(ctx, gameId, imageType, includeNameId) {
   // values.
   const combined = [];
   for (const item of preResults) {
-    combined.push(...getDBResult('performGameLookup', 'lookup', item));
+    combined.push(...getDBResult('dbGameLookup', 'lookup', item));
   }
 
   // Map the final result that will be returned.
@@ -186,7 +186,7 @@ export async function performGameLookup(ctx, gameId, imageType, includeNameId) {
 
 /* Get a list of all of the games known to the database, including their slug
  * and the primary name associated with each of them. */
-export async function getGameList(ctx) {
+export async function dbGameList(ctx) {
   // Try to find all games.
   const gameList = await ctx.env.DB.prepare(`
     SELECT A.id, A.bggId, A.slug, B.name, A.imagePath
@@ -194,7 +194,7 @@ export async function getGameList(ctx) {
      WHERE A.id = B.gameId AND B.isPrimary = 1
   `).all();
 
-  const result = getDBResult('getGameList', 'find_games', gameList);
+  const result = getDBResult('dbGameList', 'find_games', gameList);
   return mapImageAssets(ctx, result, 'imagePath', 'thumbnail');
 }
 
@@ -202,10 +202,10 @@ export async function getGameList(ctx) {
 /******************************************************************************/
 
 
-/* This works as per getGameList(), except that it requires a householdId and
+/* This works as per dbGameList(), except that it requires a householdId and
  * will return only games owned by that household. In addition, the names that
  * fall out will be the version of the name that is "owned". */
-export async function getHouseholdGameList(ctx, householdId) {
+export async function dbGameOwnedList(ctx, householdId) {
   // Try to find all games owned by this household.
   const gameList = await ctx.env.DB.prepare(`
     SELECT A.id, A.bggId, A.slug, B.name, A.imagePath
@@ -214,7 +214,7 @@ export async function getHouseholdGameList(ctx, householdId) {
            B.id = C.gameName AND C.householdId = ?1
   `).bind(householdId).all();
 
-  const result = getDBResult('getHouseholdGameList', 'find_games', gameList);
+  const result = getDBResult('dbGameOwnedList', 'find_games', gameList);
   return mapImageAssets(ctx, result, 'imagePath', 'thumbnail');
 }
 
@@ -222,10 +222,10 @@ export async function getHouseholdGameList(ctx, householdId) {
 /******************************************************************************/
 
 
-/* This works as per getGameList(), except that it requires a householdId and
+/* This works as per dbGameList(), except that it requires a householdId and
  * will return only games wished for by that household. In addition, the names
  * that fall out will be the version of the name that is "wished for". */
-export async function getWishlistGameList(ctx, householdId) {
+export async function dbGameWishlist(ctx, householdId) {
   // Try to find all games wished for by this household.
   const gameList = await ctx.env.DB.prepare(`
     SELECT A.id, A.bggId, A.slug, B.name, A.imagePath
@@ -234,7 +234,7 @@ export async function getWishlistGameList(ctx, householdId) {
            B.id = C.gameName AND C.householdId = ?1
   `).bind(householdId).all();
 
-  const result = getDBResult('getWishlistGameList', 'find_games', gameList);
+  const result = getDBResult('dbGameWishlist', 'find_games', gameList);
   return mapImageAssets(ctx, result, 'imagePath', 'thumbnail');
 }
 
@@ -248,7 +248,7 @@ export async function getWishlistGameList(ctx, householdId) {
  * This list will always have at least one entry.
  *
  * If no such game exists, then this will return null to indicate that. */
-export async function getGameNames(ctx, idOrSlug) {
+export async function dbGameNames(ctx, idOrSlug) {
   // Try to look up the raw game record; if this does not work, then fail out
   // right away.
   const game = await getRawGameRecord(ctx, idOrSlug);
@@ -263,7 +263,7 @@ export async function getGameNames(ctx, idOrSlug) {
      WHERE gameId = ?
      ORDER BY isPrimary DESC;
   `).bind(game.id).all();
-  const names = getDBResult('getGameNames', 'find_names', nameLookup);
+  const names = getDBResult('dbGameNames', 'find_names', nameLookup);
 
   return names.map(entry => mapIntFieldsToBool(entry))
 }
@@ -272,32 +272,18 @@ export async function getGameNames(ctx, idOrSlug) {
 /******************************************************************************/
 
 
-/* Given a game record and a household Id that exists, check to see if that
- * game is owned by this household and/or wishlisted by this household, and if
- * so include that information. */
-export async function getGameHouseholdDetails(ctx, gameData, householdId) {
-  // Batch out to select two sets of data from the database; whether or not this
-  // game is on the wishlist of this household, and whether or not the game is
-  // owned by this household.
-  const householdInfo = await ctx.env.DB.batch([
-    // Determine if this game is on the wishlist, and if so by what name, and
-    // who it was that added it.
-    ctx.env.DB.prepare(`
-        SELECT B.id, B.name, B.isPrimary,
-               C.id as sub_id, C.displayName as sub_name
-          FROM Wishlist as A,
-               GameName as B,
-               User as C
-         WHERE A.gameId = ?1
-           AND A.householdId = ?2
-           AND A.addedByUserId = C.id
-           AND A.gameId = B.gameId
-           AND A.gameName = B.id
-      `).bind(gameData.id, householdId),
-
-    // Determine whether or not this game is owned, and if so under what name
-    // and by what publisher.
-    ctx.env.DB.prepare(`
+/* Given a game and a household, return the household specifics for that game.
+ *
+ * This is either the ownership record for that game or the wishlist record for
+ * that game, depending on the state of fetchOwnership.
+ *
+ * The return value is either an object with the requested data, or null if the
+ * given household doesn't have a game specific record of the given type. */
+export async function dbGameHouseholdSpecifics(ctx, fetchOwnership, gameId, householdId) {
+  const coreLookupData = [
+    {
+      subKey: 'publisher',
+      sql: `
         SELECT B.id, B.name, B.isPrimary, C.id as sub_id, C.bggId as sub_bggId,
                C.slug as sub_slug, C.name as sub_name, C.metaType as sub_metaType
           FROM GameOwners as A,
@@ -308,22 +294,33 @@ export async function getGameHouseholdDetails(ctx, gameData, householdId) {
            AND A.gameId = B.gameId
            AND A.gameName = B.id
            AND A.gamePublisher = C.id
-      `).bind(gameData.id, householdId)
-  ]);
+      `,
+      dataSpecifics: 'get_ownership'
+    },
+    {
+      subKey: 'wishlister',
+      sql: `
+        SELECT B.id, B.name, B.isPrimary,
+               C.id as sub_id, C.displayName as sub_name
+          FROM Wishlist as A,
+               GameName as B,
+               User as C
+         WHERE A.gameId = ?1
+           AND A.householdId = ?2
+           AND A.addedByUserId = C.id
+           AND A.gameId = B.gameId
+           AND A.gameName = B.id
+      `,
+      dataSpecifics: 'get_wishlist'
+    }
+  ];
 
-  // Grab the results; this will be an array of arrays in the order of the
-  // batch.
-  const [ wishlist, owned ] = getDBResult('getGameHouseholdDetails', 'check_household', householdInfo);
+  // Determine which set of data we want to look up, and then fetch it.
+  const lookup = coreLookupData[(fetchOwnership === true) ? 0 : 1];
+  const specificInfo = await ctx.env.DB.prepare(lookup.sql).bind(gameId, householdId).all();
+  const result = getDBResult('dbGameHouseholdSpecifics', lookup.dataSpecifics, specificInfo);
 
-  // Set the keys for wishlist/owned status. If there is no status, this will
-  // be undefined and thus the key filtered away.
-  //
-  // This allows the client side code to distinguish where special handling is
-  // needed just by testing if the object exist.
-  gameData.wishlist = splitSubKeys(wishlist[0], "wishlister");
-  gameData.owned = splitSubKeys(owned[0], "publisher");
-
-  return gameData;
+  return splitSubKeys(result[0], lookup.subKey) ?? null;
 }
 
 
@@ -339,7 +336,7 @@ export async function getGameHouseholdDetails(ctx, gameData, householdId) {
  * gather information about this game as it relates to that household, such as
  * whether or not it's wishlisted (and if so, by who) and whether or not it is
  * owned. */
-export async function getGameDetails(ctx, idOrSlug, householdId) {
+export async function dbGameDetails(ctx, idOrSlug, householdId) {
   // Try to find the game with the value has that been provided; we check to see
   // if the provided ID is either a slug or an actual ID; if this is not found,
   // then leave.
@@ -358,7 +355,7 @@ export async function getGameDetails(ctx, idOrSlug, householdId) {
      WHERE gameId = ?
      ORDER BY isPrimary DESC;
   `).bind(gameData.id).all();
-  gameData.names = getDBResult('getGameDetails', 'find_names', names).map(el => mapIntFieldsToBool(el));
+  gameData.names = getDBResult('dbGameDetails', 'find_names', names).map(el => mapIntFieldsToBool(el));
   gameData.primaryName = gameData.names[0].name;
 
   // Gather the information on expansions for this game
@@ -382,7 +379,7 @@ export async function getGameDetails(ctx, idOrSlug, householdId) {
      WHERE expansionId = ?1
     LIMIT 1
   `).bind(gameData.id).all();
-  const hasSession = getDBResult('getGameDetails', 'find_sessions', sessionReq);
+  const hasSession = getDBResult('dbGameDetails', 'find_sessions', sessionReq);
   gameData.hasSessions = hasSession.length !== 0;
 
   // Gather the list of all of the metadata that's associated with this game.
@@ -399,12 +396,25 @@ export async function getGameDetails(ctx, idOrSlug, householdId) {
   // set the field in the main object where this data will go, but we don't
   // want the metatype field to appear in the resulting object.
   metadataTypeList.forEach(type => gameData[type] = []);
-  getDBResult('getGameDetails', 'find_meta', metadata).forEach(item => gameData[item.metatype].push({ ...item, metatype: undefined }) );
+  getDBResult('dbGameDetails', 'find_meta', metadata).forEach(item => gameData[item.metatype].push({ ...item, metatype: undefined }) );
 
   // Try to look up any household information for the household provided and
   // add it into the object. The modified object is returned back to us.
   if (householdId !== undefined) {
-    return await getGameHouseholdDetails(ctx, gameData, householdId);
+    gameData.owned = await dbGameHouseholdSpecifics(ctx, true, gameData.id, householdId);
+    if (gameData.owned === null) {
+      gameData.wishlist = await dbGameHouseholdSpecifics(ctx, false, gameData.id, householdId);
+    }
+
+    // If either the owned key or the wishlist key are present but null, remove
+    // them from the object.
+    if (gameData.owned === null) {
+      delete gameData.owned;
+    }
+
+    if (gameData.wishlist === null) {
+      delete gameData.wishlist;
+    }
   }
 
   return gameData;
@@ -428,7 +438,7 @@ export async function getGameDetails(ctx, idOrSlug, householdId) {
  * update of core data in this record might still be applied to the database
  * because D1 doesn't have the concept of transactions in code paths that
  * require code between DB accesses. */
-export async function insertGame(ctx, gameData) {
+export async function dbGameInsert(ctx, gameData) {
   // Ensure that all of the metadata that we need is available. This does not
   // run in a transaction, so if we bail later, these items will still be in
   // the database; we can look into making that smarter later.
@@ -468,7 +478,7 @@ export async function insertGame(ctx, gameData) {
   // The last row ID in the metadata is the SQLite return for the last
   // inserted rowID, which is the ID of the item we just inserted.
   const result = await stmt.run();
-  getDBResult('insertGame', 'insert_game', result);
+  getDBResult('dbGameInsert', 'insert_game', result);
   const id = result.meta.last_row_id;
 
   // If the game data has any expansions in it, then invoke the outer function
@@ -496,7 +506,7 @@ export async function insertGame(ctx, gameData) {
         UPDATE Game SET imagePath = ?2
          WHERE id = ?1
       `).bind(id, `cfi:///${data.id}`).run();
-      getDBResult('insertGame', 'set_img_url', imgResponse);
+      getDBResult('dbGameInsert', 'set_img_url', imgResponse);
     }
   }
   catch (error) {
@@ -534,7 +544,7 @@ export async function insertGame(ctx, gameData) {
   // Trigger the batch; we don't need to see the results of this since it is
   // all insert operations on bound metadata.
   const insert = await ctx.env.DB.batch(batch);
-  getDBResult('insertGame', 'insert_details', insert);
+  getDBResult('dbGameInsert', 'insert_details', insert);
 
   // The operation succeeded; return back information on the record that was
   // added.
@@ -564,7 +574,7 @@ export async function insertGame(ctx, gameData) {
  * An exception will be raised if there is any problem gathering the game data
  * from the BGG Endpoint, or if the game can't be inserted because it already
  * exists. */
-export async function insertBGGGame(ctx, bggGameId) {
+export async function dbGameInsertByBGG(ctx, bggGameId) {
   // Look up the game in BoardGameGeek to get it's details; if the game is not
   // found, we can return NULL back.
   const gameInfo = await bggLookupGame(bggGameId);
@@ -579,7 +589,7 @@ export async function insertBGGGame(ctx, bggGameId) {
     SELECT id FROM Game
     WHERE bggId = ? or slug = ?;
   `).bind(gameInfo.bggId, gameInfo.slug).all();
-  const result = getDBResult('insertBGGGame', 'find_existing', existing);
+  const result = getDBResult('dbGameInsertByBGG', 'find_existing', existing);
 
   // If we found anything, this game can't be added because it already exists.
   if (result.length !== 0) {
@@ -587,7 +597,7 @@ export async function insertBGGGame(ctx, bggGameId) {
   }
 
   // Try to insert the game record now, and tell the caller
-  return await insertGame(ctx, gameInfo);
+  return await dbGameInsert(ctx, gameInfo);
 }
 
 

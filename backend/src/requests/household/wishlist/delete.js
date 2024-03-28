@@ -5,7 +5,7 @@ import { success, fail } from '#requests/common';
 
 
 import { getHouseholdDetails, removeGameFromWishlist } from '#db/household';
-import { getGameDetails, getGameNames } from '#db/game';
+import { dbGameDetails } from '#db/game';
 
 
 /******************************************************************************/
@@ -24,7 +24,7 @@ export async function householdWishlistDeleteReq(ctx) {
   }
 
   // Look up and validate the game that was specified in the request.
-  const gameInfo = await getGameDetails(ctx, game, householdInfo.id);
+  const gameInfo = await dbGameDetails(ctx, game, householdInfo.id);
   if (gameInfo === null) {
     return fail(ctx, `unable to locate game with id ${game}`, 404);
   }

@@ -4,7 +4,7 @@
 import { success, fail } from '#requests/common';
 
 import { BGGLookupError } from '#db/exceptions';
-import { insertBGGGame } from '#db/game';
+import { dbGameInsertByBGG } from '#db/game';
 
 
 /******************************************************************************/
@@ -21,7 +21,7 @@ import { insertBGGGame } from '#db/game';
 export async function insertBGGGameReq(ctx) {
   const { bggId } = ctx.req.valid('param');
 
-  const newGameInfo = await insertBGGGame(ctx, bggId);
+  const newGameInfo = await dbGameInsertByBGG(ctx, bggId);
   if (newGameInfo === null) {
     return fail(ctx, `BGG has no record of game with ID ${bggId}`, 404);
   }

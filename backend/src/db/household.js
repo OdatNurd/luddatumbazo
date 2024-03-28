@@ -3,7 +3,7 @@
 
 import { getDBResult } from '#db/common';
 import { getHouseholdUsers } from '#db/userhousehold';
-import { getGameHouseholdDetails } from '#db/game';
+import { dbGameHouseholdSpecifics } from '#db/game';
 
 
 /******************************************************************************/
@@ -64,9 +64,7 @@ export async function addGameToHousehold(ctx, householdId, gameId, nameId, publi
 
   getDBResult('addGameToHousehold', 'insert', result);
 
-  // TODO: This is wasteful; it does not need to pull the wishlist data if we
-  //       only want ownership data.
-  return (await getGameHouseholdDetails(ctx, { id: gameId }, householdId)).owned;
+  return await dbGameHouseholdSpecifics(ctx, true, gameId, householdId);
 }
 
 
@@ -106,9 +104,7 @@ export async function addGameToWishlist(ctx, householdId, gameId, nameId) {
 
   getDBResult('addGameToWishlist', 'insert', result);
 
-  // TODO: This is wasteful; it does not need to pull the ownership data if we
-  //       only want wishlist data.
-  return (await getGameHouseholdDetails(ctx, { id: gameId }, householdId)).wishlist;
+  return await dbGameHouseholdSpecifics(ctx, false, gameId, householdId);
 }
 
 

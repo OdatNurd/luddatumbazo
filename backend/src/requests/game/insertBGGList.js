@@ -4,7 +4,7 @@
 import { success } from '#requests/common';
 
 import { BGGLookupError } from '#db/exceptions';
-import { insertBGGGame } from '#db/game';
+import { dbGameInsertByBGG } from '#db/game';
 
 
 /******************************************************************************/
@@ -34,7 +34,7 @@ export async function insertBGGGameListReq(ctx) {
     try {
       // Try to lookup and insert this game; the result is either null if
       // there was a failure, or information on the inserted game.
-      const newGameInfo = await insertBGGGame(ctx, bggGameId);
+      const newGameInfo = await dbGameInsertByBGG(ctx, bggGameId);
       if (newGameInfo === null) {
         skipped.push({ "bggId": bggGameId, status: 404, reason: "not found" });
       } else {

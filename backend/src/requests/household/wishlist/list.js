@@ -4,7 +4,7 @@
 import { success, fail } from '#requests/common';
 
 import { getHouseholdDetails } from '#db/household';
-import { getHouseholdGameList, getWishlistGameList } from '#db/game';
+import { dbGameWishlist } from '#db/game';
 
 
 /******************************************************************************/
@@ -23,7 +23,7 @@ export async function householdWishlistReq(ctx) {
   }
 
   // Get the games associated with this household, if any.
-  const result = await getWishlistGameList(ctx, household.id);
+  const result = await dbGameWishlist(ctx, household.id);
   return success(ctx, `found ${result.length} games wished for by household ${idOrSlug}`, result);
 }
 
