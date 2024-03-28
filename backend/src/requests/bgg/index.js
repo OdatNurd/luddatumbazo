@@ -7,7 +7,7 @@ import { wrappedRequest as _, success, fail, validate } from '#requests/common';
 
 import { BGGGameIDSchema } from '#schema/bgg';
 
-import { lookupBGGGame } from '#db/bgg';
+import { bggLookupGame } from '#lib/bgg';
 
 
 /******************************************************************************/
@@ -28,7 +28,7 @@ async function lookupBGGGameReq(ctx) {
   // Try to get the game data; if this returns NULL it means that there is no
   // such game (or BGG has some other error but they use human readable text
   // for those, so we just assume they're all the same error).
-  const gameInfo = await lookupBGGGame(bggId);
+  const gameInfo = await bggLookupGame(bggId);
   if (gameInfo === null) {
     return fail(ctx, `BGG has no record of game with ID ${bggId}`, 404);
   }

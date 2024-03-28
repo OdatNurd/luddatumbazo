@@ -154,6 +154,7 @@ function makeBggGameData(gameEntry, gameId) {
   output.name = getGameNames(gameEntry);
   if (output.name.length > 0) {
     output.slug = slug(output.name[0]);
+    output.primaryName = output.name[0];
   }
 
   // There are a set of records that tell us what games we expand (if any) and
@@ -213,7 +214,7 @@ function makeBggGameData(gameEntry, gameId) {
  *
  * In case of any errors during this operation, we will raise an Exception that
  * allows the calling code to capture the error that occurred. */
-export async function lookupBGGGame(bggGameId) {
+export async function bggLookupGame(bggGameId) {
   // Construct the URI that we want to talk to; we need to ask for stats to get
   // extra information, and also note that there can be no trailing slash after
   // the game ID, or the API freaks out.

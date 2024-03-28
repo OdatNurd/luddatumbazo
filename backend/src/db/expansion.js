@@ -4,7 +4,7 @@
 import { BGGLookupError } from '#db/exceptions';
 
 import { getDBResult } from '#db/common';
-import { lookupBGGGame } from '#db/bgg';
+import { bggLookupGame } from '#lib/bgg';
 
 
 /******************************************************************************/
@@ -266,7 +266,7 @@ export async function updateExpansionDetailsByBGG(ctx, bggId) {
 
   // Call the function that will look up bgg game data for our value so that we
   // can pluck the expansions table out of it.
-  const bggData = await lookupBGGGame(bggId);
+  const bggData = await bggLookupGame(bggId);
 
   // Collect the gameId that we need for the sub call.
   const gameId =  gameData[0].id;

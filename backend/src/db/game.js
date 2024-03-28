@@ -7,7 +7,8 @@ import { getDBResult, mapIntFieldsToBool } from '#db/common';
 import { cfImagesURLUpload, mapImageAssets, getImageAssetURL  } from '#db/image';
 import { metadataTypeList, updateMetadata } from '#db/metadata';
 import { updateExpansionDetails, getExpansionDetails } from '#db/expansion';
-import { lookupBGGGame } from '#db/bgg';
+
+import { bggLookupGame } from '#lib/bgg';
 
 
 /******************************************************************************/
@@ -566,7 +567,7 @@ export async function insertGame(ctx, gameData) {
 export async function insertBGGGame(ctx, bggGameId) {
   // Look up the game in BoardGameGeek to get it's details; if the game is not
   // found, we can return NULL back.
-  const gameInfo = await lookupBGGGame(bggGameId);
+  const gameInfo = await bggLookupGame(bggGameId);
   if (gameInfo === null) {
     return null;
   }
