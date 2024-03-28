@@ -8,7 +8,7 @@
     "dev:seed-db": "wrangler d1 execute luddatumbazo-db --local --file=../schema/luddatumbazo.sql"
   },
   "devDependencies": {
-    "wrangler": "^3.27.0"
+    "wrangler": "^3.39.0"
   },
   "imports": {
     "#db/*": "./src/db/*.js",
