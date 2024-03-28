@@ -3,7 +3,7 @@
 
 import { success } from '#requests/common';
 
-import { updateExpansionDetailsByBGG } from '#db/expansion';
+import { dbExpansionUpdateByBGG } from '#db/expansion';
 
 
 /******************************************************************************/
@@ -19,7 +19,7 @@ export async function updateExpansionDetailsBggReq(ctx) {
   const { bggId } = ctx.req.valid('param');
 
   // Execute the request and return the result back.
-  const result = await updateExpansionDetailsByBGG(ctx, bggId);
+  const result = await dbExpansionUpdateByBGG(ctx, bggId);
 
   return success(ctx, `updated expansion links`, result);
 }

@@ -99,7 +99,7 @@ const findGame = (links, game) => links.find(link =>
  *
  * In the table, the supposition is one side of the relation is always populated
  * while the other may or may not be. */
-export async function updateExpansionDetails(ctx, gameId, bggId, expansionList) {
+export async function dbExpansionUpdate(ctx, gameId, bggId, expansionList) {
   // Prepare the return result, which will tell the caller how many of the
   // updates required an insert, how many updated the links in existing records
   // and how many items were skipped because they were found but already linked.
@@ -135,7 +135,7 @@ export async function updateExpansionDetails(ctx, gameId, bggId, expansionList) 
         OR (expansionGameId = ?1 AND expansionGameBggID = ?2)
         OR (expansionGameId is null AND expansionGameBggID = ?2)
   `).bind(myGame.gameId, myGame.bggId).all();
-  const existing = getDBResult('updateExpansionDetails', 'find_links',
+  const existing = getDBResult('dbExpansionUpdate', 'find_links',
                                lookup).map(el => makeLinkWrapper(el));
 
   // Inserts a new link record into the game expansion table using two sets of
@@ -233,7 +233,7 @@ export async function updateExpansionDetails(ctx, gameId, bggId, expansionList) 
   // the batch now.
   if (batch.length > 0) {
     const batchResult = await ctx.env.DB.batch(batch);
-    getDBResult('updateExpansionDetails', 'update_links', batchResult);
+    getDBResult('dbExpansionUpdate', 'update_links', batchResult);
   }
 
   return result;
@@ -253,13 +253,13 @@ export async function updateExpansionDetails(ctx, gameId, bggId, expansionList) 
  * An error is raised if the BGG ID is for a game that isn't in our database or
  * if there was an error looking up the expansion information or if an error is
  * raised by the actual update. */
-export async function updateExpansionDetailsByBGG(ctx, bggId) {
+export async function dbExpansionUpdateByBGG(ctx, bggId) {
   // Find the entry in our database for this BGG ID so that we can determine
   // what our gameID for it is; If not found, return an error back.
   const gameSearch = await ctx.env.DB.prepare(`
     SELECT * FROM Game WHERE bggId = ?
   `).bind(bggId).all();
-  const gameData = getDBResult('updateExpansionDetailsByBGG', 'find_game', gameSearch);
+  const gameData = getDBResult('dbExpansionUpdateByBGG', 'find_game', gameSearch);
   if (gameData.length === 0) {
     throw new BGGLookupError(`database does not contain game with bggId ${bggId}`, 404);
   }
@@ -274,7 +274,7 @@ export async function updateExpansionDetailsByBGG(ctx, bggId) {
   const expansionList = bggData.expansions;
 
   // Invoke the other function to do our job.
-  const result = await updateExpansionDetails(ctx, gameId, bggId, expansionList);
+  const result = await dbExpansionUpdate(ctx, gameId, bggId, expansionList);
 
   // Insert into the result our gameId and slug and the bggId so that the result
   // is easier to grok.
@@ -297,7 +297,7 @@ export async function updateExpansionDetailsByBGG(ctx, bggId) {
  * Either or both arrays could be empty or full, since it's possible for games
  * to have no expansions, for expansions to expand on more than one game, and
  * for an expansion to itself be a base for some other expansion. */
-export async function getExpansionDetails(ctx, gameId) {
+export async function dbExpansionDetails(ctx, gameId) {
   // This query will find all of the entries in the expansions table that expand
   // upon the game with the gameId provided (i.e. it treats the gameId as the
   // base game); there are two queries that are union-ed together.
@@ -356,7 +356,7 @@ export async function getExpansionDetails(ctx, gameId) {
   ]);
 
   // Pluck the results out and then return them back.
-  const result =  getDBResult('getExpansionDetails', 'get_details', query);
+  const result =  getDBResult('dbExpansionDetails', 'get_details', query);
   return {
     "baseGames": result[0],
     "expansionGames": result[1],

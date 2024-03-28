@@ -3,7 +3,7 @@
 
 import { success } from '#requests/common';
 
-import { updateExpansionDetails } from '#db/expansion';
+import { dbExpansionUpdate } from '#db/expansion';
 
 
 /******************************************************************************/
@@ -20,7 +20,7 @@ export async function updateExpansionDetailsReq(ctx) {
   const { gameId, bggId, expansions } = ctx.req.valid('json');
 
   // Execute the request and return the result back.
-  const result = await updateExpansionDetails(ctx, gameId, bggId, expansions);
+  const result = await dbExpansionUpdate(ctx, gameId, bggId, expansions);
 
   return success(ctx, `updated expansion links`, result);
 }

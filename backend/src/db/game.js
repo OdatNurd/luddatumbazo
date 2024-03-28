@@ -6,7 +6,7 @@ import { BGGLookupError } from '#db/exceptions';
 import { getDBResult, mapIntFieldsToBool } from '#db/common';
 import { cfImagesURLUpload, mapImageAssets, getImageAssetURL  } from '#db/image';
 import { metadataTypeList, updateMetadata } from '#db/metadata';
-import { updateExpansionDetails, getExpansionDetails } from '#db/expansion';
+import { dbExpansionUpdate, dbExpansionDetails } from '#db/expansion';
 
 import { bggLookupGame } from '#lib/bgg';
 
@@ -362,7 +362,7 @@ export async function getGameDetails(ctx, idOrSlug, householdId) {
   gameData.primaryName = gameData.names[0].name;
 
   // Gather the information on expansions for this game
-  const expansionDetails = await getExpansionDetails(ctx, gameData.id);
+  const expansionDetails = await dbExpansionDetails(ctx, gameData.id);
   gameData.baseGames = expansionDetails.baseGames;
   gameData.expansionGames = expansionDetails.expansionGames;
 
@@ -477,7 +477,7 @@ export async function insertGame(ctx, gameData) {
   //
   // This returns insertion status information, which is not useful to us here.
   if (gameData.expansions.length !== 0) {
-    const ops = await updateExpansionDetails(ctx, id, gameData.bggId, gameData.expansions);
+    const ops = await dbExpansionUpdate(ctx, id, gameData.bggId, gameData.expansions);
     console.log(`new game expansion records: inserted=${ops.inserted}, updated=${ops.updated}, skipped=${ops.skipped}`);
   }
 
