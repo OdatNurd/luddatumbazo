@@ -2,8 +2,26 @@
 
 
 import { getDBResult } from '#db/common';
-import { getHouseholdUsers } from '#db/userhousehold';
 import { dbGameHouseholdSpecifics } from '#db/game';
+
+
+/******************************************************************************/
+
+
+/* Return a list of all of the users that belong to a specific household; this
+ * may be an empty list for households that have no users currently. */
+export async function dbHouseholdUsers(ctx, householdId) {
+  // Find all of the users that exist in this household.
+  const userLookup = await ctx.env.DB.prepare(`
+    SELECT A.id, A.name, A.displayName, a.emailAddress
+    FROM User as A,
+         UserHousehold as B
+    WHERE A.id = B.userId
+      AND B.householdId = ?
+  `).bind(householdId).all();
+
+  return getDBResult('dbHouseholdUsers', 'find_users', userLookup);
+}
 
 
 /******************************************************************************/
@@ -26,7 +44,7 @@ export async function dbHouseholdDetails(ctx, idOrSlug) {
 
   // Collect the household and gather into it all users that exist within it.
   const household = householdInfo[0];
-  household.users = await getHouseholdUsers(ctx, household.id)
+  household.users = await dbHouseholdUsers(ctx, household.id)
 
   return household;
 }

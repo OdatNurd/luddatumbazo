@@ -2,7 +2,26 @@
 
 
 import { getDBResult } from '#db/common';
-import { getUserHouseholds } from '#db/userhousehold';
+
+
+/******************************************************************************/
+
+
+/* Given a userId, return all of the households that that user belongs to; this
+ * may be an empty list.
+ *
+ * The list may also contain a single household which is marked as the primary,
+ * although this is also not a requirement. */
+export async function dbUserHouseholds(ctx, userId) {
+  const householdLookup = await ctx.env.DB.prepare(`
+    SELECT A.*, B.isPrimary
+      FROM Household as A, UserHousehold as B
+     WHERE A.id = B.householdId
+       AND B.userId = ?
+  `).bind(userId).all();
+
+  return getDBResult('dbUserHouseholds', 'find_households', householdLookup);
+}
 
 
 /******************************************************************************/
@@ -20,7 +39,7 @@ async function addHouseholds(ctx, userInfo) {
   }
 
   // Look up the list of households this user is a part of.
-  const households = await getUserHouseholds(ctx, userInfo.id);
+  const households = await dbUserHouseholds(ctx, userInfo.id);
 
   // Set in the primary (if any), and the overall list.
   userInfo.household = households.find(h => h.isPrimary === 1) ?? null;
