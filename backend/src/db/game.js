@@ -5,7 +5,7 @@ import { BGGLookupError } from '#db/exceptions';
 
 import { getDBResult, mapIntFieldsToBool } from '#db/common';
 import { cfImagesURLUpload } from '#db/image';
-import { metadataTypeList, updateMetadata } from '#db/metadata';
+import { metadataTypeList, dbMetadataUpdate } from '#db/metadata';
 import { dbExpansionUpdate, dbExpansionDetails } from '#db/expansion';
 
 import { bggLookupGame } from '#lib/bgg';
@@ -443,11 +443,11 @@ export async function dbGameInsert(ctx, gameData) {
   // Ensure that all of the metadata that we need is available. This does not
   // run in a transaction, so if we bail later, these items will still be in
   // the database; we can look into making that smarter later.
-  gameData.category  = await updateMetadata(ctx, gameData.category,  'category');
-  gameData.mechanic  = await updateMetadata(ctx, gameData.mechanic,  'mechanic');
-  gameData.designer  = await updateMetadata(ctx, gameData.designer,  'designer');
-  gameData.artist    = await updateMetadata(ctx, gameData.artist,    'artist');
-  gameData.publisher = await updateMetadata(ctx, gameData.publisher, 'publisher');
+  gameData.category  = await dbMetadataUpdate(ctx, gameData.category,  'category');
+  gameData.mechanic  = await dbMetadataUpdate(ctx, gameData.mechanic,  'mechanic');
+  gameData.designer  = await dbMetadataUpdate(ctx, gameData.designer,  'designer');
+  gameData.artist    = await dbMetadataUpdate(ctx, gameData.artist,    'artist');
+  gameData.publisher = await dbMetadataUpdate(ctx, gameData.publisher, 'publisher');
 
   // 0. For each of category, mechanic, designer, artist and publisher, update
   // 1. Insert the raw data for this game into the database

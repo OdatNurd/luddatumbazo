@@ -3,7 +3,7 @@
 
 import { success } from '#requests/common';
 
-import { updateMetadata } from '#db/metadata';
+import { dbMetadataUpdate } from '#db/metadata';
 
 
 /******************************************************************************/
@@ -41,7 +41,7 @@ export async function metadataUpdateReq(ctx) {
   const updateData = ctx.req.valid('json');
 
   // Prepare the Metadata update and execute it
-  const result = await updateMetadata(ctx, updateData, metaType);
+  const result = await dbMetadataUpdate(ctx, updateData, metaType);
 
   return success(ctx, `updated some ${metaType} records` , result);
 }

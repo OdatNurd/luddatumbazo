@@ -42,7 +42,7 @@ export const metadataTypeList = ["designer", "artist", "publisher"  , "category"
  * The returned value is a list of dictionaries much like the input, but with
  * the internal ID's of the items associated returned back. These could be new
  * ID's, or they could be the result of that data always having been there. */
-export async function updateMetadata(ctx, inputMetadata, metaType) {
+export async function dbMetadataUpdate(ctx, inputMetadata, metaType) {
   // Grab from the list of items all of the slugs so we can see which ones
   // already exist in the table.
   //
@@ -56,7 +56,7 @@ export async function updateMetadata(ctx, inputMetadata, metaType) {
     SELECT id, bggId, name, slug from GameMetadata
     WHERE metatype = ? AND slug in (SELECT value from json_each('${JSON.stringify(slugs)}'))
   `).bind(metaType);
-  const existing = getDBResult('updateMetadata', 'find_existing', await lookupExisting.all());
+  const existing = getDBResult('dbMetadataUpdate', 'find_existing', await lookupExisting.all());
 
   // If the result that came back has the same length as the list of slugs,
   // then all of the items are already in the database, so there's no reason to
@@ -84,7 +84,7 @@ export async function updateMetadata(ctx, inputMetadata, metaType) {
   // of them have any details since they are insert statements.
   if (insertBatch.length > 0) {
     const batched = await ctx.env.DB.batch(insertBatch);
-    getDBResult('updateMetadata', 'insert_meta', batched);
+    getDBResult('dbMetadataUpdate', 'insert_meta', batched);
   }
 
   // Now look up all of the existing records based on the slugs we were given;
@@ -93,7 +93,7 @@ export async function updateMetadata(ctx, inputMetadata, metaType) {
   //   To be more resource friendly, this could look up only those items whose
   //   slugs are in the insertMetadata list, and then combine them with the
   //   initial results, rather than re-scanning for items we already found.
-  return getDBResult('updateMetadata', 'final_lookup', await lookupExisting.all())
+  return getDBResult('dbMetadataUpdate', 'final_lookup', await lookupExisting.all())
 }
 
 
@@ -112,14 +112,14 @@ export async function updateMetadata(ctx, inputMetadata, metaType) {
  *
  * This may raise exceptions if there are issues talking to the database, or if
  * the metaType is not valid. */
-export async function getMetadataDetails(ctx, metaType, idOrSlug, includeGames) {
+export async function dbMetadataDetails(ctx, metaType, idOrSlug, includeGames) {
   // Try to find a metadata item of this type.
   const metadata = await ctx.env.DB.prepare(`
     SELECT id, bggId, slug, name, metatype FROM GameMetadata
     WHERE metatype == ?1
       AND (slug == ?2 or id == ?2)
   `).bind(metaType, idOrSlug).all();
-  const result = getDBResult('getMetadataDetails', 'find_existing', metadata);
+  const result = getDBResult('dbMetadataDetails', 'find_existing', metadata);
 
   // If we didn't find anything, we can signal an error back.
   if (result.length === 0) {
@@ -144,7 +144,7 @@ export async function getMetadataDetails(ctx, metaType, idOrSlug, includeGames) 
 
     // Get the result, and then map the image path for all items into a full
     // item.
-    record.games = getDBResult('getMetadataDetails', 'find_games', gameData);
+    record.games = getDBResult('dbMetadataDetails', 'find_games', gameData);
     record.games = mapImageAssets(ctx, record.games, 'imagePath', 'thumbnail')
   }
 
@@ -161,14 +161,14 @@ export async function getMetadataDetails(ctx, metaType, idOrSlug, includeGames) 
  *
  * This may raise exceptions if there are issues talking to the database, or if
  * the metaType is not valid. */
-export async function getMetadataList(ctx, metaType) {
+export async function dbMetadataList(ctx, metaType) {
   // Try to find all metadata item of this type.
   const metadata = await ctx.env.DB.prepare(`
     SELECT id, bggId, slug, name from GameMetadata
      WHERE metatype = ?
   `).bind(metaType).all();
 
-  return getDBResult('getMetadataList', 'find_meta', metadata);
+  return getDBResult('dbMetadataList', 'find_meta', metadata);
 }
 
 
@@ -180,7 +180,7 @@ export async function getMetadataList(ctx, metaType) {
  *
  * This may raise exceptions if there are issues talking to the database, or if
  * the metaType is not valid. */
-export async function purgeUnusedMetadata(ctx, metaType, doPurge) {
+export async function dbMetadataPurge(ctx, metaType, doPurge) {
   // Find all of the unused metadata entries of the given type
   const findSQL = `
     SELECT id, metatype, name, slug FROM GameMetadata
@@ -202,7 +202,7 @@ export async function purgeUnusedMetadata(ctx, metaType, doPurge) {
   // Try to find all metadata item of this type.
   const metadata = await ctx.env.DB.prepare(stmt).bind(metaType).all();
 
-  return getDBResult('purgeUnusedMetadata', action, metadata);
+  return getDBResult('dbMetadataPurge', action, metadata);
 }
 
 

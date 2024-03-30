@@ -3,7 +3,7 @@
 
 import { success, fail } from '#requests/common';
 
-import { getMetadataDetails  } from '#db/metadata';
+import { dbMetadataDetails  } from '#db/metadata';
 
 
 /******************************************************************************/
@@ -22,7 +22,7 @@ export async function metadataQueryReq(ctx) {
 
   // Try to look up the data; if we didn't find anything we can signal an
   // error back.
-  const record = await getMetadataDetails(ctx, metaType, idOrSlug, games)
+  const record = await dbMetadataDetails(ctx, metaType, idOrSlug, games)
   if (record === null) {
     return fail(ctx, `no such ${metaType} ${idOrSlug}`, 404);
   }

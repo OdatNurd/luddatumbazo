@@ -3,7 +3,7 @@
 
 import { success } from '#requests/common';
 
-import { getMetadataList } from '#db/metadata';
+import { dbMetadataList } from '#db/metadata';
 
 
 /******************************************************************************/
@@ -16,7 +16,7 @@ export async function metadataListReq(ctx) {
 
   // Try to look up the data; if we didn't find anything we can signal an
   // error back.
-  const result = await getMetadataList(ctx, metaType);
+  const result = await dbMetadataList(ctx, metaType);
 
   return success(ctx, `found ${result.length} ${metaType} records`, result);
 }

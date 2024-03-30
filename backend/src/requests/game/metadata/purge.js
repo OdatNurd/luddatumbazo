@@ -3,7 +3,7 @@
 
 import { success } from '#requests/common';
 
-import { purgeUnusedMetadata } from '#db/metadata';
+import { dbMetadataPurge } from '#db/metadata';
 
 
 /******************************************************************************/
@@ -17,7 +17,7 @@ export async function metadataPurgeReq(ctx) {
 
   // Try to execute the request; this will either return the data, or purge it,
   // depending on the arguments we got.
-  const result = await purgeUnusedMetadata(ctx, metaType, purgeRecords);
+  const result = await dbMetadataPurge(ctx, metaType, purgeRecords);
 
   const msg = (purgeRecords === true)
                ? `purged all unused ${metaType} records`
