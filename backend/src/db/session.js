@@ -3,10 +3,11 @@
 
 import { getDBResult, mapIntFieldsToBool } from '#db/common';
 
-import { mapImageAssets, getImageAssetURL } from '#db/image';
 import { BGGLookupError } from '#db/exceptions';
 import { dbGameLookup } from '#db/game';
 import { dbGuestUpdate } from '#db/guest';
+
+import { mapImageAssets, getImageAssetURL } from '#lib/image';
 
 
 /******************************************************************************/

@@ -3,7 +3,7 @@
 
 import { success } from '#requests/common';
 
-import { getTempImageList, cfImagesURLUpload } from '#db/image';
+import { dbTempImageList, cfImagesURLUpload } from '#db/image';
 
 
 /******************************************************************************/
@@ -46,7 +46,7 @@ export async function imageUploadReq(ctx) {
 
   // Fetch the list of images from the temporary collection; this will use the
   // provided game ID (if any) to find the records.
-  const images = await getTempImageList(ctx, bggId);
+  const images = await dbTempImageList(ctx, bggId);
 
   // For each of the items that we found, perform the upload.
   const result = []

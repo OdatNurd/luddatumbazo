@@ -4,11 +4,12 @@
 import { BGGLookupError } from '#db/exceptions';
 
 import { getDBResult, mapIntFieldsToBool } from '#db/common';
-import { cfImagesURLUpload, mapImageAssets, getImageAssetURL  } from '#db/image';
+import { cfImagesURLUpload } from '#db/image';
 import { metadataTypeList, updateMetadata } from '#db/metadata';
 import { dbExpansionUpdate, dbExpansionDetails } from '#db/expansion';
 
 import { bggLookupGame } from '#lib/bgg';
+import { mapImageAssets, getImageAssetURL  } from '#lib/image';
 
 
 /******************************************************************************/

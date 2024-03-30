@@ -4,7 +4,8 @@
 import slug from 'slug';
 
 import { getDBResult } from '#db/common';
-import { mapImageAssets } from '#db/image';
+
+import { mapImageAssets } from '#lib/image';
 
 
 /******************************************************************************/
