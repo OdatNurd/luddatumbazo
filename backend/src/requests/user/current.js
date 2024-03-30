@@ -3,7 +3,7 @@
 
 import { success, fail } from '#requests/common';
 
-import { findUserInternal } from '#db/user';
+import { dbUserDetails } from '#db/user';
 
 
 /******************************************************************************/
@@ -16,7 +16,7 @@ export async function currentUserDetailsReq(ctx) {
   const userId = ctx.get('userId');
 
   // Try to find the user in question
-  const user = await findUserInternal(ctx, userId, true);
+  const user = await dbUserDetails(ctx, userId, true);
   if (user === null) {
     return fail(ctx, `missing entry for ${userId}`, 500);
   }

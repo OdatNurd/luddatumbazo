@@ -5,7 +5,7 @@ import { getCookie } from 'hono/cookie';
 import * as jose from 'jose';
 
 import { getDBResult } from '#db/common';
-import { insertUser, findUserExternal } from '#db/user';
+import { dbUserInsert, dbUserDetails } from '#db/user';
 
 
 /******************************************************************************/
@@ -171,7 +171,7 @@ async function getUnderlyingUser(ctx, subject, nonce) {
 
   // The user isn't in the cache yet, so look them up in the database based on
   // their external ID, which is the subject of the incoming JWT.
-  let userInfo = await findUserExternal(ctx, subject);
+  let userInfo = await dbUserDetails(ctx, subject);
 
   // If we don't find a user in the database, then we need to insert a new
   // record instead. This only happens once per user, at the time of their
@@ -186,7 +186,7 @@ async function getUnderlyingUser(ctx, subject, nonce) {
     }
 
     // Insert a new user based on the session data we looked up.
-    userInfo = await insertUser(ctx, sessionDetails);
+    userInfo = await dbUserInsert(ctx, sessionDetails);
   }
 
   // We either looked up a user, or we added one to the database. Either way,
