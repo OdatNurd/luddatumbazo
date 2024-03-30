@@ -3,7 +3,7 @@
 
 import { success, fail } from '#requests/common';
 
-import { getSessionDetails } from '#db/session';
+import { dbSessionDetails } from '#db/session';
 
 
 /******************************************************************************/
@@ -17,7 +17,7 @@ export async function sessionDetailsReq(ctx) {
 
   // Look up the session; if we don't find one, then report that it does not
   // exist.
-  const result = await getSessionDetails(ctx, sessionId);
+  const result = await dbSessionDetails(ctx, sessionId);
   if (result === null) {
     return fail(ctx, `no such session ${sessionId}`, 404)
   }

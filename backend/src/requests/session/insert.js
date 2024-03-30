@@ -3,7 +3,7 @@
 
 import { success } from '#requests/common';
 
-import { addSession, } from '#db/session';
+import { dbSessionInsert, } from '#db/session';
 
 
 /******************************************************************************/
@@ -12,7 +12,7 @@ import { addSession, } from '#db/session';
 /* Given an object that contains the required data to insert a new session
  * report into the system, insert the required data and ship the results back.
  *
- * For details on the actual body of the object, see the addSession() call.
+ * For details on the actual body of the object, see the dbSessionInsert() call.
  *
  * This will do all updates required to insert the record for this session
  * report; an object that contains the full details of the new report (as it
@@ -23,7 +23,7 @@ export async function sessionAddReq(ctx) {
   const sessionData = ctx.req.valid('json');
 
   // Add the session and return the result.
-  const result = await addSession(ctx, sessionData);
+  const result = await dbSessionInsert(ctx, sessionData);
 
   return success(ctx, `added new session report`, result);
 }

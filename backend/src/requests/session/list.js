@@ -3,7 +3,7 @@
 
 import { success, fail } from '#requests/common';
 
-import { getSessionList } from '#db/session';
+import { dbSessionList } from '#db/session';
 import { dbGameLookup } from '#db/game';
 
 
@@ -43,7 +43,7 @@ export async function sessionListReq(ctx) {
   }
 
   // Fetch and return the list, optionally filtering and reversing it.
-  const result = await getSessionList(ctx, lookup.map(e => e.id), reverse);
+  const result = await dbSessionList(ctx, lookup.map(e => e.id), reverse);
 
   return success(ctx, `found ${result.length} session(s)`, result);
 }

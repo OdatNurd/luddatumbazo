@@ -3,7 +3,7 @@
 
 import { success, fail } from '#requests/common';
 
-import { updateSession } from '#db/session';
+import { dbSessionUpdate } from '#db/session';
 
 
 /******************************************************************************/
@@ -25,7 +25,7 @@ export async function sessionUpdateReq(ctx) {
 
   // Update the session with the data; if there is no result from this, it is
   // because the session does not exist, so we can report as such.
-  const result = await updateSession(ctx, sessionId, updateData);
+  const result = await dbSessionUpdate(ctx, sessionId, updateData);
   if (result === null) {
     return fail(ctx, `no such session ${sessionId}`, 404)
   }
