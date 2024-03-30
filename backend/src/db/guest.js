@@ -15,7 +15,7 @@ import { getDBResult, makeDisplayName } from '#db/common';
  *
  * The result is a list of objects, including their ID values, which exist. This
  * will include not only new users but also any that previously existed. */
-export async function updateGuests(ctx, inputGuestList) {
+export async function dbGuestUpdate(ctx, inputGuestList) {
   // The input data is pre-validated to contain first and last names; it can
   // never contain a name field (which we must make). Depending on the source of
   // the data, it might not have a displayName in it (for example when a guest
@@ -41,7 +41,7 @@ export async function updateGuests(ctx, inputGuestList) {
     SELECT id, firstName, lastName, displayName, name FROM GuestUser
     WHERE name IN (SELECT value from json_each('${JSON.stringify(names)}'))
   `);
-  const existing = getDBResult('updateGuests', 'find_existing', await lookupExisting.all());
+  const existing = getDBResult('dbGuestUpdate', 'find_existing', await lookupExisting.all());
 
   // If we got the same number of items out as we put in, there's nothing new to
   // add so we can just return right now.
@@ -67,7 +67,7 @@ export async function updateGuests(ctx, inputGuestList) {
   // of them have any details since they are insert statements.
   if (insertBatch.length > 0) {
     const batched = await ctx.env.DB.batch(insertBatch);
-    getDBResult('updateGuests', 'insert_guest', batched);
+    getDBResult('dbGuestUpdate', 'insert_guest', batched);
   }
 
   // Now look up all of the existing records based on the names we were given;
@@ -76,7 +76,7 @@ export async function updateGuests(ctx, inputGuestList) {
   //   To be more resource friendly, this could look up only those items whose
   //   slugs are in the insertMetadata list, and then combine them with the
   //   initial results, rather than re-scanning for items we already found.
-  return getDBResult('updateGuests', 'final_lookup', await lookupExisting.all())
+  return getDBResult('dbGuestUpdate', 'final_lookup', await lookupExisting.all())
 }
 
 
@@ -89,13 +89,13 @@ export async function updateGuests(ctx, inputGuestList) {
  *
  * This may raise exceptions if there are issues talking to the database, or if
  * the metaType is not valid. */
-export async function getGuestList(ctx, inputGuestList) {
+export async function dbGuestList(ctx, inputGuestList) {
   // Try to find all metadata item of this type.
   const guests = await ctx.env.DB.prepare(`
     SELECT id, firstName, lastName, displayName, name from GuestUser
   `).all();
 
-  return getDBResult('getGuestList', 'find_guests', guests);
+  return getDBResult('dbGuestList', 'find_guests', guests);
 }
 
 
@@ -107,7 +107,7 @@ export async function getGuestList(ctx, inputGuestList) {
  *
  * This may raise exceptions if there are issues talking to the database, or if
  * the metaType is not valid. */
-export async function purgeUnusedGuests(ctx, doPurge) {
+export async function dbGuestPurge(ctx, doPurge) {
   // Find all of the unused guest entries
   const findSQL = `
     SELECT id, firstName, lastName, displayName, name FROM GuestUser
@@ -129,7 +129,7 @@ export async function purgeUnusedGuests(ctx, doPurge) {
   // Try to find all metadata item of this type.
   const guests = await ctx.env.DB.prepare(stmt).all();
 
-  return getDBResult('purgeUnusedGuests', action, guests);
+  return getDBResult('dbGuestPurge', action, guests);
 }
 
 

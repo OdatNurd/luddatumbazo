@@ -3,7 +3,7 @@
 
 import { success } from '#requests/common';
 
-import { purgeUnusedGuests } from '#db/guest';
+import { dbGuestPurge } from '#db/guest';
 
 
 /******************************************************************************/
@@ -17,7 +17,7 @@ export async function purgeGuestsReq(ctx) {
   // it.
   const purgeRecords = (ctx.req.method === "DELETE");
 
-  const result = await purgeUnusedGuests(ctx, purgeRecords);
+  const result = await dbGuestPurge(ctx, purgeRecords);
 
   const msg = (purgeRecords === true)
                ? `purged all unused guest records`

@@ -3,7 +3,7 @@
 
 import { success } from '#requests/common';
 
-import { getGuestList } from '#db/guest';
+import { dbGuestList } from '#db/guest';
 
 
 /******************************************************************************/
@@ -14,7 +14,7 @@ import { getGuestList } from '#db/guest';
 export async function guestListReq(ctx) {
   // Try to look up the data; if we didn't find anything we can signal an
   // error back.
-  const result = await getGuestList(ctx);
+  const result = await dbGuestList(ctx);
 
   return success(ctx, `found ${result.length} guest(s)`, result);
 }

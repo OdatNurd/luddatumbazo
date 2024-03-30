@@ -6,7 +6,7 @@ import { getDBResult, mapIntFieldsToBool } from '#db/common';
 import { mapImageAssets, getImageAssetURL } from '#db/image';
 import { BGGLookupError } from '#db/exceptions';
 import { dbGameLookup } from '#db/game';
-import { updateGuests } from '#db/guest';
+import { dbGuestUpdate } from '#db/guest';
 
 
 /******************************************************************************/
@@ -131,7 +131,7 @@ async function validateSessionGuests(ctx, sessionData) {
       lastName: guest.lastName
     }
   });
-  const playerGuests = await updateGuests(ctx, playerGuestNames);
+  const playerGuests = await dbGuestUpdate(ctx, playerGuestNames);
 
   // Map across all of the guests in the found list; for each one, find the
   // guest in the original, and copy the fields over, then return the newly

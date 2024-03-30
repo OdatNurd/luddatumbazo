@@ -3,7 +3,7 @@
 
 import { success } from '#requests/common';
 
-import { updateGuests } from '#db/guest';
+import { dbGuestUpdate } from '#db/guest';
 
 
 /******************************************************************************/
@@ -18,7 +18,7 @@ export async function updateGuestsReq(ctx) {
   const guestList = ctx.req.valid('json');
 
   // Perform the update and capture the results.
-  const result = await updateGuests(ctx, guestList);
+  const result = await dbGuestUpdate(ctx, guestList);
 
   return success(ctx, `updated guest records`, result);
 }
