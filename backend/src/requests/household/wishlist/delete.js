@@ -4,7 +4,7 @@
 import { success, fail } from '#requests/common';
 
 
-import { getHouseholdDetails, removeGameFromWishlist } from '#db/household';
+import { dbHouseholdDetails, dbHouseholdRemoveWishlisted } from '#db/household';
 import { dbGameDetails } from '#db/game';
 
 
@@ -18,7 +18,7 @@ export async function householdWishlistDeleteReq(ctx) {
   const { game } = ctx.req.valid('json');
 
   // Try to find the household we want to remove the game from.
-  const householdInfo = await getHouseholdDetails(ctx, idOrSlug);
+  const householdInfo = await dbHouseholdDetails(ctx, idOrSlug);
   if (householdInfo === null) {
     return fail(ctx, `unable to locate household with id ${idOrSlug}`, 404);
   }
@@ -35,7 +35,7 @@ export async function householdWishlistDeleteReq(ctx) {
     return fail(ctx, `game ${gameInfo.slug} is not wishlisted by ${householdInfo.slug}`, 400);
   }
 
-  const result = await removeGameFromWishlist(ctx, householdInfo.id, gameInfo.id);
+  const result = await dbHouseholdRemoveWishlisted(ctx, householdInfo.id, gameInfo.id);
   return success(ctx, `removed ${gameInfo.slug} from the wishlist for ${householdInfo.slug}`);
 }
 

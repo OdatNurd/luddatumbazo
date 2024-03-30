@@ -4,7 +4,7 @@
 import { success, fail } from '#requests/common';
 
 import { dbGameDetails } from '#db/game';
-import { getHouseholdDetails } from '#db/household';
+import { dbHouseholdDetails } from '#db/household';
 
 
 /******************************************************************************/
@@ -22,7 +22,7 @@ export async function gameDetailsReq(ctx) {
   // on that household to continue.
   let household = {}
   if (householdSlug !== undefined) {
-    household = await getHouseholdDetails(ctx, householdSlug);
+    household = await dbHouseholdDetails(ctx, householdSlug);
     if (household === null) {
       return fail(ctx, `unable to locate household with id ${householdSlug}`, 404);
     }

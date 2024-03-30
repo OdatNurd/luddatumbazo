@@ -4,8 +4,8 @@
 import { success, fail } from '#requests/common';
 
 
-import { getHouseholdDetails, addGameToHousehold,
-         removeGameFromWishlist } from '#db/household';
+import { dbHouseholdDetails, dbHouseholdInsertOwned,
+         dbHouseholdRemoveWishlisted } from '#db/household';
 import { dbGameDetails, dbGameNames } from '#db/game';
 
 
@@ -21,7 +21,7 @@ export async function householdCollectionAddReq(ctx) {
   const { game, name, publisher } = ctx.req.valid('json');
 
   // Try to find the household we want to add the game to.
-  const householdInfo = await getHouseholdDetails(ctx, idOrSlug);
+  const householdInfo = await dbHouseholdDetails(ctx, idOrSlug);
   if (householdInfo === null) {
     return fail(ctx, `unable to locate household with id ${idOrSlug}`, 404);
   }
@@ -56,11 +56,11 @@ export async function householdCollectionAddReq(ctx) {
   }
 
   // Add the game to the collection
-  const result = await addGameToHousehold(ctx, householdInfo.id, gameInfo.id, nameRecord.id, publisherInfo.id);
+  const result = await dbHouseholdInsertOwned(ctx, householdInfo.id, gameInfo.id, nameRecord.id, publisherInfo.id);
 
   // If the game uis currently in thw wishlist, then remove it
   if (gameInfo.wishlist !== undefined) {
-    await removeGameFromWishlist(ctx, householdInfo.id, gameInfo.id);
+    await dbHouseholdRemoveWishlisted(ctx, householdInfo.id, gameInfo.id);
   }
 
   return success(ctx, `added ${gameInfo.slug} to the collection for ${householdInfo.slug}`, result);
