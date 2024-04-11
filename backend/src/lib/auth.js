@@ -102,7 +102,7 @@ export async function cfGetUserSession(ctx, userUID, userNonce) {
  * This means that you cannot mix tokens between the local development
  * environment and production. If you see local tokens failing, this is likely
  * the issue. */
-export async function getAuthorizationJWT(ctx) {
+export async function authGetJWT(ctx) {
   // Regardless of the validation required, the contents of the token must
   // conform to the values set here.
   const validation = {
@@ -209,9 +209,9 @@ async function getUnderlyingUser(ctx, subject, nonce) {
  *
  * In all other cases, the return value is an object that describes the
  * authenticated user. */
-export async function getAuthorizedUser(ctx) {
+export async function authGetUser(ctx) {
   // Get and validate the incoming token.
-  const tokenInfo = await getAuthorizationJWT(ctx);
+  const tokenInfo = await authGetJWT(ctx);
   if (tokenInfo === null) {
     return null;
   }
@@ -234,5 +234,6 @@ export async function getAuthorizedUser(ctx) {
   // a cache for speed.
   return await getUnderlyingUser(ctx, tokenInfo.sub, tokenInfo.identity_nonce);
 }
+
 
 /******************************************************************************/

@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { getAuthorizedUser } from '#lib/auth';
+import { authGetUser } from '#lib/auth';
 import { fail } from '#requests/common';
 
 
@@ -20,7 +20,7 @@ import { fail } from '#requests/common';
  * use the CF Session API to look up the user details to be able to add them. */
 export async function authorization(ctx, next) {
   console.log(`[${ctx.req.method}] ${ctx.req.url}`);
-  const userId = await getAuthorizedUser(ctx);
+  const userId = await authGetUser(ctx);
 
   // Raise 401 if the user is not authorized (user details is null)
   if (userId === null) {
