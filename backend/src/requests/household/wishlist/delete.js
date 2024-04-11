@@ -13,7 +13,7 @@ import { dbGameDetails } from '#db/game';
 
 /* Given information on a game, attempt to remove that game from the wishlist
  * of a specific household.  */
-export async function householdWishlistDeleteReq(ctx) {
+export async function reqHouseholdWishlistDelete(ctx) {
   const { idOrSlug } = ctx.req.valid('param');
   const { game } = ctx.req.valid('json');
 

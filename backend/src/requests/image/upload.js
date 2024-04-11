@@ -39,7 +39,7 @@ import { dbTempImageList, cfImagesURLUpload } from '#db/image';
  *       }
  *     }
  *   ] */
-export async function imageUploadReq(ctx) {
+export async function reqImageUpload(ctx) {
   // The request can optionally contain a BGG Game ID if the caller wants to
   // ingest just a single image instead of all of them.
   const { bggId } = ctx.req.valid('param');

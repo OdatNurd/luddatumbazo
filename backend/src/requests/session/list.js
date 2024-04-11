@@ -17,7 +17,7 @@ import { dbGameLookup } from '#db/game';
  * In the future this will provide other various filters to control which items
  * are returned, but at time of writing (during Devember) this is more
  * simplistic than that and only supports gameId filters. */
-export async function sessionListReq(ctx) {
+export async function reqSessionList(ctx) {
   // The query can contain a flag to tell us that we should reverse the sort,
   // and an option list of game id's and slugs to look up sessions for.
   const { reverse, games } = ctx.req.valid('query');

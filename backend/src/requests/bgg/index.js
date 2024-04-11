@@ -22,7 +22,7 @@ import { bggLookupGame } from '#lib/bgg';
  *
  * This includes the core information on the game, as well as additional info
  * such as the list of designers, artists, and so on. */
-async function lookupBGGGameReq(ctx) {
+async function reqBggGameLookup(ctx) {
   const { bggId } = ctx.req.valid('param');
 
   // Try to get the game data; if this returns NULL it means that there is no
@@ -48,7 +48,7 @@ export const bgg = new Hono();
 
 bgg.get('/boardgame/:bggId',
         validate('param', BGGGameIDSchema),
-        ctx => _(ctx, lookupBGGGameReq));
+        ctx => _(ctx, reqBggGameLookup));
 
 
 /******************************************************************************/

@@ -18,7 +18,7 @@ import { dbGameInsertByBGG } from '#db/game';
  *
  * The result of this query is the same as adding a game by providing an
  * explicit body. */
-export async function insertBGGGameReq(ctx) {
+export async function reqInsertBGGGame(ctx) {
   const { bggId } = ctx.req.valid('param');
 
   const newGameInfo = await dbGameInsertByBGG(ctx, bggId);

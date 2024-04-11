@@ -18,7 +18,7 @@ import { dbSessionUpdate } from '#db/session';
  * The request will return data similar to an add/get, but with updated
  * details.
  */
-export async function sessionUpdateReq(ctx) {
+export async function reqSessionUpdate(ctx) {
   // Fetch the ID of the session to update and the body of the update.
   const { sessionId } = ctx.req.valid('param');
   const updateData = ctx.req.valid('json');

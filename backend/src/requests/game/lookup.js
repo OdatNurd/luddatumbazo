@@ -12,7 +12,7 @@ import { dbGameLookup } from '#db/game';
 /* Takes as a body an array of values that are either gameId values or game slug
  * names, and returns back a list of objects that tell you the id and slug
  * values for all matched games. */
-export async function performGameLookupReq(ctx) {
+export async function reqPerformGameLookup(ctx) {
   const filterList = ctx.req.valid('json');
   const { imageType } = ctx.req.valid('query');
 

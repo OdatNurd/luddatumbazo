@@ -36,7 +36,7 @@ import { dbMetadataUpdate } from '#db/metadata';
  * skip over all items that are BGG related which have previously been imported.
  *
  * The result is currently the native D1 result of the query. */
-export async function metadataUpdateReq(ctx) {
+export async function reqMetadataUpdate(ctx) {
   const { metaType } = ctx.req.valid('param');
   const updateData = ctx.req.valid('json');
 

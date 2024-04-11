@@ -13,7 +13,7 @@ import { dbGuestUpdate } from '#db/guest';
  * do not already exist in the list, skip over any that do, and return back a
  * full list (per guestListReq) that includes all of the guest users that now
  * exist as a result of the update. */
-export async function updateGuestsReq(ctx) {
+export async function reqUpdateGuests(ctx) {
   // Get the list of guest records from the input request
   const guestList = ctx.req.valid('json');
 

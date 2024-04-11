@@ -8,10 +8,10 @@ import { wrappedRequest as _, validate } from '#requests/common';
 import { MetadataTypeSelectSchema, MetadataQuerySchema, MetaDataQueryParamsSchema,
          GameMetadataSchema } from '#schema/game';
 
-import { metadataUpdateReq } from '#requests/game/metadata/update';
-import { metadataListReq } from '#requests/game/metadata/list';
-import { metadataPurgeReq } from '#requests/game/metadata/purge';
-import { metadataQueryReq } from '#requests/game/metadata/query';
+import { reqMetadataUpdate } from '#requests/game/metadata/update';
+import { reqMetadataList } from '#requests/game/metadata/list';
+import { reqMetadataPurge } from '#requests/game/metadata/purge';
+import { reqMetadataQuery } from '#requests/game/metadata/query';
 
 
 /******************************************************************************/
@@ -25,23 +25,23 @@ export const metadata = new Hono();
 metadata.put('/:metaType/update',
              validate('param', MetadataTypeSelectSchema),
              validate('json', GameMetadataSchema),
-             ctx => _(ctx, metadataUpdateReq));
+             ctx => _(ctx, reqMetadataUpdate));
 
 metadata.get('/:metaType/list',
              validate('param', MetadataTypeSelectSchema),
-             ctx => _(ctx, metadataListReq));
+             ctx => _(ctx, reqMetadataList));
 
 metadata.get('/:metaType/purge',
              validate('param', MetadataTypeSelectSchema),
-             ctx => _(ctx, metadataPurgeReq));
+             ctx => _(ctx, reqMetadataPurge));
 metadata.delete('/:metaType/purge',
                 validate('param', MetadataTypeSelectSchema),
-                ctx => _(ctx, metadataPurgeReq));
+                ctx => _(ctx, reqMetadataPurge));
 
 metadata.get('/:metaType/:idOrSlug',
               validate('param', MetadataQuerySchema),
               validate('query', MetaDataQueryParamsSchema),
-              ctx => _(ctx, metadataQueryReq));
+              ctx => _(ctx, reqMetadataQuery));
 
 
 /******************************************************************************/

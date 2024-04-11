@@ -8,10 +8,10 @@ import { wrappedRequest as _, validate } from '#requests/common';
 import { SessionIDSchema, NewSessionReportSchema, UpdateSessionReportSchema,
          SessionListParamSchema } from '#schema/session';
 
-import { sessionAddReq } from '#requests/session/insert';
-import { sessionUpdateReq } from '#requests/session/update';
-import { sessionListReq } from '#requests/session/list';
-import { sessionDetailsReq } from '#requests/session/details';
+import { reqSessionAdd } from '#requests/session/insert';
+import { reqSessionUpdate } from '#requests/session/update';
+import { reqSessionList } from '#requests/session/list';
+import { reqSessionDetails } from '#requests/session/details';
 
 
 /******************************************************************************/
@@ -24,20 +24,20 @@ export const session = new Hono();
 
 session.put('/add',
             validate('json', NewSessionReportSchema),
-            ctx => _(ctx, sessionAddReq));
+            ctx => _(ctx, reqSessionAdd));
 
 session.patch('/update/:sessionId',
               validate('param', SessionIDSchema),
               validate('json', UpdateSessionReportSchema),
-              ctx => _(ctx, sessionUpdateReq));
+              ctx => _(ctx, reqSessionUpdate));
 
 session.get('/list',
             validate('query', SessionListParamSchema),
-            ctx => _(ctx, sessionListReq));
+            ctx => _(ctx, reqSessionList));
 
 session.get('/:sessionId',
             validate('param', SessionIDSchema),
-            ctx => _(ctx, sessionDetailsReq));
+            ctx => _(ctx, reqSessionDetails));
 
 
 /******************************************************************************/

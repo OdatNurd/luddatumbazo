@@ -11,7 +11,7 @@ import { dbMetadataPurge } from '#db/metadata';
 
 /* Find all of the metadata items of the given type that do not have any
  * references to it and purge them away from the database. */
-export async function metadataPurgeReq(ctx) {
+export async function reqMetadataPurge(ctx) {
   const { metaType } = ctx.req.valid('param');
   const purgeRecords = (ctx.req.method === "DELETE");
 

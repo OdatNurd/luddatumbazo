@@ -14,7 +14,7 @@ import { dbGameDetails, dbGameNames } from '#db/game';
 /* Given information on a game, attempt to add that game to the wishlist of
  * a specific household. This requires that we also be told which of the many
  * possible names it should take. */
-export async function householdWishlistAddReq(ctx) {
+export async function reqHouseholdWishlistAdd(ctx) {
   const { idOrSlug } = ctx.req.valid('param');
   const { game, name, publisher } = ctx.req.valid('json');
 

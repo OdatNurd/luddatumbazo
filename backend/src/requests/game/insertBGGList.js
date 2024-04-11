@@ -18,7 +18,7 @@ import { dbGameInsertByBGG } from '#db/game';
  *
  * The result of this query is the same as adding a game by providing an
  * explicit body. */
-export async function insertBGGGameListReq(ctx) {
+export async function reqInsertBGGGameList(ctx) {
   // Suck in the new game data and use it to do the insert; the helper
   // function does all of the validation, and will throw on error or return
   // details of the new game on success.

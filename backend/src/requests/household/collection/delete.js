@@ -13,7 +13,7 @@ import { dbGameDetails } from '#db/game';
 
 /* Given information on a game, attempt to remove that game from the collection
  * of a specific household. */
-export async function householdCollectionDeleteReq(ctx) {
+export async function reqHouseholdCollectionDelete(ctx) {
   const { idOrSlug } = ctx.req.valid('param');
   const { game } = ctx.req.valid('json');
 

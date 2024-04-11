@@ -14,7 +14,7 @@ import { dbExpansionDetails } from '#db/expansion';
  *   - a list of games that expand this game, if this game is a base game
  *   - a list of games that are expanded by this game, if this game is an
  *     expansion */
-export async function getExpansionDetailsReq(ctx) {
+export async function reqGetExpansionDetails(ctx) {
   // Get the gameId for the game we were given
   const { gameId } = ctx.req.valid('param');
 

@@ -11,7 +11,7 @@ import { dbHouseholdDetails } from '#db/household';
 
 /* Return back details on the household whose identifier or slug are provided
  * in the call. This may result in an error if there is no such household. */
-export async function householdDetailsReq(ctx) {
+export async function reqHouseholdDetails(ctx) {
   const { idOrSlug } = ctx.req.valid('param');
 
   // Try to find the household in question

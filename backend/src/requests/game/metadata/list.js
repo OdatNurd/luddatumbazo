@@ -11,7 +11,7 @@ import { dbMetadataList } from '#db/metadata';
 
 /* Return back a list of all of the metadata items of the given type; this may
  * be an empty list. */
-export async function metadataListReq(ctx) {
+export async function reqMetadataList(ctx) {
   const { metaType } = ctx.req.valid('param');
 
   // Try to look up the data; if we didn't find anything we can signal an

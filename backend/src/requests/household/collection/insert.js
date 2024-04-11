@@ -16,7 +16,7 @@ import { dbGameDetails, dbGameNames } from '#db/game';
  * a specific household. This requires that we also be told which publisher the
  * game is to be added with, as well as which of the many possible names it
  * should take. */
-export async function householdCollectionAddReq(ctx) {
+export async function reqHouseholdCollectionAdd(ctx) {
   const { idOrSlug } = ctx.req.valid('param');
   const { game, name, publisher } = ctx.req.valid('json');
 

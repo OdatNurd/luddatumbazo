@@ -16,7 +16,7 @@ import { dbMetadataDetails  } from '#db/metadata';
  * The return value is information on that item (if any). Optionally, the query
  * can include a "games" directive to also return information on the games that
  * reference this data. */
-export async function metadataQueryReq(ctx) {
+export async function reqMetadataQuery(ctx) {
   const { idOrSlug, metaType } = ctx.req.valid('param');
   const { games } = ctx.req.valid('query');
 

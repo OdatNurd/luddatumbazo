@@ -8,9 +8,9 @@ import { wrappedRequest as _, validate } from '#requests/common';
 import { BGGGameIDSchema } from '#schema/bgg';
 import { GameIDSchema, ExpansionUpdateSchema } from '#schema/game';
 
-import { getExpansionDetailsReq } from '#requests/game/expansion/details';
-import { updateExpansionDetailsReq } from '#requests/game/expansion/update';
-import { updateExpansionDetailsBggReq } from '#requests/game/expansion/updateBGG';
+import { reqGetExpansionDetails } from '#requests/game/expansion/details';
+import { reqUpdateExpansionDetails } from '#requests/game/expansion/update';
+import { reqUpdateExpansionDetailsBgg } from '#requests/game/expansion/updateBGG';
 
 
 /******************************************************************************/
@@ -23,15 +23,15 @@ export const expansion = new Hono();
 
 expansion.put('/update',
               validate('json', ExpansionUpdateSchema),
-              ctx => _(ctx, updateExpansionDetailsReq));
+              ctx => _(ctx, reqUpdateExpansionDetails));
 
 expansion.get('/update/bgg/:bggId',
               validate('param', BGGGameIDSchema),
-              ctx => _(ctx, updateExpansionDetailsBggReq));
+              ctx => _(ctx, reqUpdateExpansionDetailsBgg));
 
 expansion.get('/list/:gameId',
               validate('param', GameIDSchema),
-              ctx => _(ctx, getExpansionDetailsReq));
+              ctx => _(ctx, reqGetExpansionDetails));
 
 
 /******************************************************************************/

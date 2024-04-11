@@ -11,7 +11,7 @@ import { dbSessionDetails } from '#db/session';
 
 /* Given a specific session report ID, return back an object with the full
  * details of that session report, if possible. */
-export async function sessionDetailsReq(ctx) {
+export async function reqSessionDetails(ctx) {
   // Get the session ID
   const { sessionId } = ctx.req.valid('param');
 

@@ -13,7 +13,7 @@ import { dbExpansionUpdate } from '#db/expansion';
  *        a particular game or something.
  *
  * This will attempt to do the stuff in the place. */
-export async function updateExpansionDetailsReq(ctx) {
+export async function reqUpdateExpansionDetails(ctx) {
   // Get the body of data that allows us to perform the expansion update
   // Grab the records that give us information on the expansion information that
   // we want to update.

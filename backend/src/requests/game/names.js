@@ -11,7 +11,7 @@ import { dbGameNames } from '#db/game';
 
 /* Return back a list of all of the names for the given game; this cannot be an
  * empty list because every game needs at least one name.  */
-export async function gameNamesReq(ctx) {
+export async function reqGameNames(ctx) {
   // Can be either an game ID or a slug to represent a game
   const { idOrSlug } = ctx.req.valid('param');
 

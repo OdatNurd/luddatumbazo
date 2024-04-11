@@ -9,8 +9,8 @@ import { collection } from '#requests/household/collection/index';
 import { wishlist } from '#requests/household/wishlist/index';
 import { HouseholdLookupIDSchema } from '#schema/household';
 
-import { householdListReq } from '#requests/household/list';
-import { householdDetailsReq } from '#requests/household/details';
+import { reqHouseholdList } from '#requests/household/list';
+import { reqHouseholdDetails } from '#requests/household/details';
 
 
 /******************************************************************************/
@@ -21,11 +21,11 @@ import { householdDetailsReq } from '#requests/household/details';
 export const household = new Hono();
 
 
-household.get('/list', ctx => _(ctx, householdListReq));
+household.get('/list', ctx => _(ctx, reqHouseholdList));
 
 household.get('/details/:idOrSlug',
          validate('param', HouseholdLookupIDSchema),
-         ctx => _(ctx, householdDetailsReq));
+         ctx => _(ctx, reqHouseholdDetails));
 
 
 household.route('/collection', collection);

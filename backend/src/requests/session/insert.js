@@ -17,7 +17,7 @@ import { dbSessionInsert, } from '#db/session';
  * This will do all updates required to insert the record for this session
  * report; an object that contains the full details of the new report (as it
  * would be returned from the details request below) is returned back. */
-export async function sessionAddReq(ctx) {
+export async function reqSessionAdd(ctx) {
   // Pull in the body of the request, which will contain the data for setting up
   // the session report.
   const sessionData = ctx.req.valid('json');

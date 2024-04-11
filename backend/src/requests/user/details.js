@@ -11,7 +11,7 @@ import { dbUserDetails } from '#db/user';
 
 /* Return back details on the user with the specific internal identifier; this
  * may return failure if no such user exists. */
-export async function userDetailsReq(ctx) {
+export async function reqUserDetails(ctx) {
   const { userId } = ctx.req.valid('param');
 
   // Try to find the user in question

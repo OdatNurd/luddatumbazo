@@ -7,9 +7,9 @@ import { wrappedRequest as _, validate } from '#requests/common';
 
 import { NewGuestSchema } from '#schema/guest';
 
-import { guestListReq } from '#requests/guest/list';
-import { updateGuestsReq } from '#requests/guest/update';
-import { purgeGuestsReq } from '#requests/guest/purge';
+import { reqGuestList } from '#requests/guest/list';
+import { reqUpdateGuests } from '#requests/guest/update';
+import { reqPurgeGuests } from '#requests/guest/purge';
 
 
 /******************************************************************************/
@@ -22,12 +22,12 @@ export const guest = new Hono();
 
 guest.put('/add',
           validate('json', NewGuestSchema),
-          ctx => _(ctx, updateGuestsReq));
+          ctx => _(ctx, reqUpdateGuests));
 
-guest.get('/list', ctx => _(ctx, guestListReq));
+guest.get('/list', ctx => _(ctx, reqGuestList));
 
-guest.get('/purge', ctx => _(ctx, purgeGuestsReq));
-guest.delete('/purge', ctx => _(ctx, purgeGuestsReq));
+guest.get('/purge', ctx => _(ctx, reqPurgeGuests));
+guest.delete('/purge', ctx => _(ctx, reqPurgeGuests));
 
 
 /******************************************************************************/

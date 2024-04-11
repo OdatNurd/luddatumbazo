@@ -8,9 +8,9 @@ import { wrappedRequest as _, validate } from '#requests/common';
 import { HouseholdLookupIDSchema } from '#schema/household';
 import { WishlistAddGameSchema, WishlistRemoveGameSchema } from '#schema/wishlist';
 
-import { householdWishlistReq } from '#requests/household/wishlist/list';
-import { householdWishlistAddReq } from '#requests/household/wishlist/insert';
-import { householdWishlistDeleteReq } from '#requests/household/wishlist/delete';
+import { reqHouseholdWishlist } from '#requests/household/wishlist/list';
+import { reqHouseholdWishlistAdd } from '#requests/household/wishlist/insert';
+import { reqHouseholdWishlistDelete } from '#requests/household/wishlist/delete';
 
 
 /******************************************************************************/
@@ -23,17 +23,17 @@ export const wishlist = new Hono();
 
 wishlist.get('/:idOrSlug',
          validate('param', HouseholdLookupIDSchema),
-         ctx => _(ctx, householdWishlistReq));
+         ctx => _(ctx, reqHouseholdWishlist));
 
 wishlist.put('/:idOrSlug',
          validate('param', HouseholdLookupIDSchema),
          validate('json', WishlistAddGameSchema),
-         ctx => _(ctx, householdWishlistAddReq));
+         ctx => _(ctx, reqHouseholdWishlistAdd));
 
 wishlist.delete('/:idOrSlug',
          validate('param', HouseholdLookupIDSchema),
          validate('json', WishlistRemoveGameSchema),
-         ctx => _(ctx, householdWishlistDeleteReq));
+         ctx => _(ctx, reqHouseholdWishlistDelete));
 
 
 /******************************************************************************/

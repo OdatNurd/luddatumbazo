@@ -11,7 +11,7 @@ import { dbGuestPurge } from '#db/guest';
 
 /* Given a list of objects that represent guest users, delete any items that
  * exist in the list, skipping any that do not currently exist. */
-export async function purgeGuestsReq(ctx) {
+export async function reqPurgeGuests(ctx) {
   // If the method is DELETE, do a purge; otherwise, this will just list things
   // instead, so that the caller can survey the potential doom before bringing
   // it.

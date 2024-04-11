@@ -14,7 +14,7 @@ import { dbExpansionUpdateByBGG } from '#db/expansion';
  * This will check that the game is in the database, and if so will reach out
  * to BGG to fetch core information, find the list of expansions, and then
  * perform the expansion update as the other method would. */
-export async function updateExpansionDetailsBggReq(ctx) {
+export async function reqUpdateExpansionDetailsBgg(ctx) {
   // Get the bggGameId for the game we were given
   const { bggId } = ctx.req.valid('param');
 

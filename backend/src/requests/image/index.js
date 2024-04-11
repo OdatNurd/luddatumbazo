@@ -7,8 +7,8 @@ import { wrappedRequest as _, validate } from '#requests/common';
 
 import { OptionalBGGGameIDSchema } from '#schema/bgg';
 
-import { imageUploadReq } from '#requests/image/upload';
-import { imageVariantsReq } from '#requests/image/variants';
+import { reqImageUpload } from '#requests/image/upload';
+import { reqImageVariants } from '#requests/image/variants';
 
 
 /******************************************************************************/
@@ -19,11 +19,11 @@ import { imageVariantsReq } from '#requests/image/variants';
 export const image = new Hono();
 
 
-image.get('/variants', ctx => _(ctx, imageVariantsReq));
+image.get('/variants', ctx => _(ctx, reqImageVariants));
 
 image.get('/:bggId?',
           validate('param', OptionalBGGGameIDSchema),
-          ctx => _(ctx, imageUploadReq));
+          ctx => _(ctx, reqImageUpload));
 
 
 /******************************************************************************/

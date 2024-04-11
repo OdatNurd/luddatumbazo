@@ -12,7 +12,7 @@ import { dbUserDetails } from '#db/user';
 /* Return back the details of the currently authenicated user; the userId for
  * that user comes in the JWT that arrives with each request, and should always
  * exist (since otherwise the middleware would not let us get here). */
-export async function currentUserDetailsReq(ctx) {
+export async function reqCurrentUserDetails(ctx) {
   const userId = ctx.get('userId');
 
   // Try to find the user in question

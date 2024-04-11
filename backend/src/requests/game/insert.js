@@ -14,7 +14,7 @@ import { dbGameInsert } from '#db/game';
  * including adding name records, adding in any of the metadata fields that are
  * not already present, and updating the placement of those items so that the
  * full game record is available. */
-export async function insertGameReq(ctx) {
+export async function reqInsertGame(ctx) {
   // Suck in the new game data and use it to do the insert; the helper
   // function does all of the validation, and will throw on error or return
   // details of the new game on success.

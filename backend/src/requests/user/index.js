@@ -7,9 +7,9 @@ import { wrappedRequest as _, validate } from '#requests/common';
 
 import { UserIDSchema } from '#schema/user';
 
-import { userListReq } from '#requests/user/list';
-import { userDetailsReq } from '#requests/user/details';
-import { currentUserDetailsReq } from '#requests/user/current';
+import { reqUserList } from '#requests/user/list';
+import { reqUserDetails } from '#requests/user/details';
+import { reqCurrentUserDetails } from '#requests/user/current';
 
 
 /******************************************************************************/
@@ -20,13 +20,13 @@ import { currentUserDetailsReq } from '#requests/user/current';
 export const user = new Hono();
 
 
-user.get('/list', ctx => _(ctx, userListReq));
+user.get('/list', ctx => _(ctx, reqUserList));
 
-user.get('/current', ctx => _(ctx, currentUserDetailsReq));
+user.get('/current', ctx => _(ctx, reqCurrentUserDetails));
 
 user.get('/details/:userId',
          validate('param', UserIDSchema),
-         ctx => _(ctx, userDetailsReq));
+         ctx => _(ctx, reqUserDetails));
 
 
 /******************************************************************************/
