@@ -25,7 +25,7 @@ export const imageVariantMap = {
  * Since many image assets are optional, this will gracefully return the input
  * value if it is not set. It will however throw an exception if the image
  * variant requested is not valid. */
-export function getImageAssetURL(ctx, assetPath, imageVariant) {
+export function imgGetAssetURL(ctx, assetPath, imageVariant) {
   // Images are optional; don't try to do anything fancy if there is no image.
   if (assetPath === '') {
     return assetPath;
@@ -75,9 +75,9 @@ export function getImageAssetURL(ctx, assetPath, imageVariant) {
  * a field named outputKey and returns back a list of items so modified.
  *
  * The input key will be removed and replaced with the mapped output key. */
-export function mapImageAssets(ctx, data, inputKey, imageVariant) {
+export function imgMapAssetListURLs(ctx, data, inputKey, imageVariant) {
   return data.map(item => {
-    item[inputKey] = getImageAssetURL(ctx, item[inputKey], imageVariant);
+    item[inputKey] = imgGetAssetURL(ctx, item[inputKey], imageVariant);
     return item;
   });
 }
@@ -98,7 +98,7 @@ export function mapImageAssets(ctx, data, inputKey, imageVariant) {
  * extension that was on the original URL (if any), so that the resulting file
  * can be disambiguated from other images in other projects while still having
  * the appropriate type. */
-export function getImageAssetPath(baseURL, assetType, baseName) {
+export function imgConstructAssetPath(baseURL, assetType, baseName) {
   // Parse the incoming URL and split the pathname part based on a period to
   // try and get the extension.
   const parts = new URL(baseURL).pathname.split('.');

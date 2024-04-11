@@ -4,7 +4,7 @@
 import { getDBResult } from '#db/common';
 import { BGGLookupError } from '#db/exceptions';
 
-import { getImageAssetPath, imageVariantMap } from '#lib/image';
+import { imgConstructAssetPath, imageVariantMap } from '#lib/image';
 
 
 /******************************************************************************/
@@ -44,7 +44,7 @@ export async function cfImagesURLUpload(ctx, image) {
 
   // Using the original BGG URL, create the full path to the file that we will
   // serve the image from under our own domain.
-  const uploadPath = getImageAssetPath(image.bggURL, 'game', `game${image.gameId}`);
+  const uploadPath = imgConstructAssetPath(image.bggURL, 'game', `game${image.gameId}`);
 
   // Store in the image metadata information about where the image came from and
   // what it represents.

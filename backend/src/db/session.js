@@ -7,7 +7,7 @@ import { BGGLookupError } from '#db/exceptions';
 import { dbGameLookup } from '#db/game';
 import { dbGuestUpdate } from '#db/guest';
 
-import { mapImageAssets, getImageAssetURL } from '#lib/image';
+import { imgMapAssetListURLs, imgGetAssetURL } from '#lib/image';
 
 
 /******************************************************************************/
@@ -591,7 +591,7 @@ export async function dbSessionList(ctx, gameIdList, reverse) {
   // booleans for the return, and make sure that the image URL is properly
   // mapped so that the page can view the image.
   return result.map(session => {
-    session.imagePath = getImageAssetURL(ctx, session.imagePath, 'thumbnail');
+    session.imagePath = imgGetAssetURL(ctx, session.imagePath, 'thumbnail');
     return mapIntFieldsToBool(session);
   });
 }
@@ -637,7 +637,7 @@ export async function dbSessionDetails(ctx, sessionId) {
   // boolean fields and add in a mapped version of the image URL that we
   // gathered.
   const sessionData = mapIntFieldsToBool(result[0]);
-  sessionData.imagePath = getImageAssetURL(ctx, sessionData.imagePath, 'smallboxart');
+  sessionData.imagePath = imgGetAssetURL(ctx, sessionData.imagePath, 'smallboxart');
 
   // Check for the list of expansions that were used to play this game.
   const expansionLookup = await ctx.env.DB.prepare(`
@@ -671,7 +671,7 @@ export async function dbSessionDetails(ctx, sessionId) {
 
   // Map the found expansions and players in; for expansions we need to get the
   // thumbnail for the expansion that was used.
-  sessionData.expansions = mapImageAssets(ctx, expansions, 'imagePath', 'thumbnail');
+  sessionData.expansions = imgMapAssetListURLs(ctx, expansions, 'imagePath', 'thumbnail');
   sessionData.players = players;
 
   return sessionData;

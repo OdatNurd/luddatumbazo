@@ -5,7 +5,7 @@ import slug from 'slug';
 
 import { getDBResult } from '#db/common';
 
-import { mapImageAssets } from '#lib/image';
+import { imgMapAssetListURLs } from '#lib/image';
 
 
 /******************************************************************************/
@@ -145,7 +145,7 @@ export async function dbMetadataDetails(ctx, metaType, idOrSlug, includeGames) {
     // Get the result, and then map the image path for all items into a full
     // item.
     record.games = getDBResult('dbMetadataDetails', 'find_games', gameData);
-    record.games = mapImageAssets(ctx, record.games, 'imagePath', 'thumbnail')
+    record.games = imgMapAssetListURLs(ctx, record.games, 'imagePath', 'thumbnail')
   }
 
   return record;

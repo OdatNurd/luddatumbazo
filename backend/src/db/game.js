@@ -9,7 +9,7 @@ import { metadataTypeList, dbMetadataUpdate } from '#db/metadata';
 import { dbExpansionUpdate, dbExpansionDetails } from '#db/expansion';
 
 import { bggLookupGame } from '#lib/bgg';
-import { mapImageAssets, getImageAssetURL  } from '#lib/image';
+import { imgMapAssetListURLs, imgGetAssetURL  } from '#lib/image';
 
 
 /******************************************************************************/
@@ -155,7 +155,7 @@ export async function dbGameLookup(ctx, gameId, imageType, includeNameId) {
     if (imageType === undefined) {
       delete game.imagePath;
     } else {
-      game.imagePath = getImageAssetURL(ctx, game.imagePath, imageType);
+      game.imagePath = imgGetAssetURL(ctx, game.imagePath, imageType);
     }
 
     // If we were not asked to include the nameId, remove it from the object.
@@ -196,7 +196,7 @@ export async function dbGameList(ctx) {
   `).all();
 
   const result = getDBResult('dbGameList', 'find_games', gameList);
-  return mapImageAssets(ctx, result, 'imagePath', 'thumbnail');
+  return imgMapAssetListURLs(ctx, result, 'imagePath', 'thumbnail');
 }
 
 
@@ -216,7 +216,7 @@ export async function dbGameOwnedList(ctx, householdId) {
   `).bind(householdId).all();
 
   const result = getDBResult('dbGameOwnedList', 'find_games', gameList);
-  return mapImageAssets(ctx, result, 'imagePath', 'thumbnail');
+  return imgMapAssetListURLs(ctx, result, 'imagePath', 'thumbnail');
 }
 
 
@@ -236,7 +236,7 @@ export async function dbGameWishlist(ctx, householdId) {
   `).bind(householdId).all();
 
   const result = getDBResult('dbGameWishlist', 'find_games', gameList);
-  return mapImageAssets(ctx, result, 'imagePath', 'thumbnail');
+  return imgMapAssetListURLs(ctx, result, 'imagePath', 'thumbnail');
 }
 
 
@@ -347,7 +347,7 @@ export async function dbGameDetails(ctx, idOrSlug, householdId) {
   }
 
   // Set up the game data and map the game image URL.
-  gameData.imagePath = getImageAssetURL(ctx, gameData.imagePath, 'boxart');
+  gameData.imagePath = imgGetAssetURL(ctx, gameData.imagePath, 'boxart');
 
   // Gather the list of all of the names that this game is known by; much like
   // when we do the insert, the primary name is brought to the top of the list.
