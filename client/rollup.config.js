@@ -5,17 +5,21 @@ import resolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import commonjs from '@rollup/plugin-commonjs';
 import copyStatic from '@axel669/rollup-copy-static';
+import html from '@axel669/rollup-html-input';
 import $path from '@axel669/rollup-dollar-path';
+
+import asuid from "@axel669/asuid/node";
 
 export default [
   {
-    input: 'src/index.js',
+    input: 'src/index.html',
     output: {
-      file: `public/app.js`,
+      file: `public/app-${asuid()}.js`,
       format: 'iife',
       name: 'app',
     },
     plugins: [
+      html(),
       svelte({
         emitCss: false
       }),

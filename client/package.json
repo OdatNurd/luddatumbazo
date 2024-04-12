@@ -8,8 +8,10 @@
     "build": "rollup -c"
   },
   "devDependencies": {
+    "@axel669/asuid": "^0.2.1",
     "@axel669/rollup-copy-static": "^0.1.2",
     "@axel669/rollup-dollar-path": "^0.1.0",
+    "@axel669/rollup-html-input": "^0.1.2",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-replace": "^5.0.5",
