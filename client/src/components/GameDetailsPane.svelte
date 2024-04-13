@@ -1,14 +1,17 @@
 <script>
-  import { LoadZone, Paper, Titlebar, Link, Text,  Flex, Grid, Button, Icon } from "@axel669/zephyr";
+  import { Modal, EntryButton, LoadZone, Paper, Titlebar, Link, Text,  Flex, Grid, Button, Icon } from "@axel669/zephyr";
+
   import { push } from 'svelte-spa-router';
 
   import { user } from '$stores/user';
+
+  import RecordAddDialog from '$components/dialogs/RecordAddDialog.svelte';
 
   import BackButton from '$components/BackButton.svelte';
   import BGGLink from '$components/BGGLink.svelte';
   import GameImage from '$components/GameImage.svelte';
 
-  import { api } from '$api';
+  import { api, apiRemoveGameFromCollection, apiRemoveGameFromWishlist } from '$api';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -74,40 +77,72 @@
     return null;
   }
 
-  // Carry out a collection action; simple helper that bundles the appropriate
-  // request to the given URI and returns what it does.
-  const action = async (doInsert, URI, game, name, publisher) => {
-    const func = (doInsert === true) ? api.put : api.delete;
-    return await func(URI, { game, name, publisher });
-  }
+  // Remove a game from the owned collection for this household.
+  const removeFromCollection = async (game, name, publisher) => {
+    // Delete the record from the DB
+    await apiRemoveGameFromCollection($user, game, name, publisher);
 
-  // Insert or remove a game from the owned collection for this household.
-  const collection = async (doInsert, game, name, publisher) => {
-    const result = await action(doInsert, `/household/collection/${$user?.household.slug}`, game, name, publisher);
-
-    if (doInsert === true) {
-      gameData.owned = result;
-      delete gameData.wishlist;
-    } else {
-      delete gameData.owned;
-    }
-
-    // Trigger a refesh.
+    // Remove any ownership record we have for this game and trigger a refresh.
+    delete gameData.owned;
     gameData = gameData;
   }
 
-  // Insert or remove a game from the wishlist for this household.
-  const wishlist = async (doInsert, game, name) => {
-    const result = await action(doInsert, `/household/wishlist/${$user?.household.slug}`, game, name);
+  // Remove a game from the wishlist for this household.
+  const removeFromWishlist = async (game, name) => {
+    // Delete the record from the DB
+    await apiRemoveGameFromWishlist($user, game, name);
 
-    if (doInsert === true) {
-      gameData.wishlist = result;
-    } else {
-      delete gameData.wishlist;
-    }
-
-    // Trigger a refesh.
+    // Remove any wishlist record we have for this game and trigger a refresh.
+    delete gameData.wishlist;
     gameData = gameData;
+  }
+
+  // Invoked when the dialog used to add a game to a collection or wishlist is
+  // closed; the details on the event will be either null if the operation was
+  // cancelled, or the new ownership record.
+  const addDialogResult = event => {
+    // Pull the dialog result out of the close event
+    const { result, dataType } = event.detail;
+
+    // If we got a result, then update the game record with the new data.
+    if (result !== null) {
+
+      if (dataType == 'collection') {
+        // Add the new ownership record and remove any existing wishlist record.
+        gameData.owned = result;
+        delete gameData.wishlist;
+      } else {
+        // Add the new wishlist record.
+        gameData.wishlist = result;
+      }
+
+      // Trigger refresh.
+      gameData = gameData;
+    }
+  }
+
+
+  // Invoked to specify the dialog properties when adding to the collection
+  const collectionProps = () => {
+    return {
+      dataType: 'collection',
+      title: 'Add to Collection',
+      description: 'Select owned game properties',
+      game: gameData.slug,
+      names: gameData.names.map(e => ({label: e.name, value: e.name })),
+      publishers: gameData.publisher.map(e => ({label: e.name, value: e.slug })),
+    }
+  }
+
+  // Invoked to specify the dialog properties when adding to the wishlist.
+  const wishlistProps = () => {
+    return {
+      dataType: 'wishlist',
+      title: 'Add to Wishlist',
+      description: 'Select desired game name',
+      game: gameData.slug,
+      names: gameData.names.map(e => ({label: e.name, value: e.name })),
+    }
   }
 </script>
 
@@ -116,6 +151,8 @@
   <BackButton />
   <h3>Game Details</h3>
 </Flex>
+
+<Modal component={RecordAddDialog} />
 
 <LoadZone source={loadData()}>
   <Paper>
@@ -203,26 +240,27 @@
       {#if $user.household !== undefined}
         <Flex direction="row" gap="32px" fl.wr="wrap">
           {#if gameData.owned !== undefined}
-            <Button fill color="@primary" on:click={collection(false, gameData.slug, gameData.primaryName, gameData.publisher[0].slug)}>
+            <Button fill color="@primary" on:click={removeFromCollection(gameData.slug, gameData.primaryName, gameData.publisher[0].slug)}>
               <Icon name="star-off"></Icon>
               Remove from Collection
             </Button>
           {:else}
-            <Button fill color="@primary" on:click={collection(true, gameData.slug, gameData.primaryName, gameData.publisher[0].slug)}>
+
+            <EntryButton fill color="@primary" this={Modal} component={RecordAddDialog} props={collectionProps} on:entry={addDialogResult}>
               <Icon name="star-filled"></Icon>
               Add to Collection
-            </Button>
+            </EntryButton>
 
             {#if gameData.wishlist !== undefined}
-              <Button fill color="@primary" on:click={wishlist(false, gameData.slug, gameData.primaryName)}>
+              <Button fill color="@primary" on:click={removeFromWishlist(gameData.slug, gameData.primaryName)}>
                 <Icon name="heart-off"></Icon>
                 Remove from Wishlist
               </Button>
             {:else}
-              <Button fill color="@primary" on:click={wishlist(true, gameData.slug, gameData.primaryName)}>
+              <EntryButton fill color="@primary" this={Modal} component={RecordAddDialog} props={wishlistProps} on:entry={addDialogResult}>
                 <Icon name="heart-filled"></Icon>
                 Add to Wishlist
-              </Button>
+              </EntryButton>
             {/if}
           {/if}
         </Flex>
