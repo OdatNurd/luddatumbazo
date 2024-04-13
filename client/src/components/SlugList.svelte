@@ -5,7 +5,7 @@
   import BGGLink from '$components/BGGLink.svelte';
   import GameImage from '$components/GameImage.svelte';
 
-  import { api } from '$lib/fetch.js';
+  import { api } from '$api';
 
   // ---------------------------------------------------------------------------
   // Properties

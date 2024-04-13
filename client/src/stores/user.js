@@ -2,7 +2,7 @@
 
 
 import { writable } from 'svelte/store';
-import { api } from '$lib/fetch';
+import { api } from '$api';
 
 
 /******************************************************************************/

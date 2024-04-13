@@ -6,7 +6,7 @@
   import GameImage from '$components/GameImage.svelte';
   import SlugList from '$components/SlugList.svelte';
 
-  import { api } from '$lib/fetch.js';
+  import { api } from '$api';
   import { DateTime, Interval } from 'luxon';
 
 

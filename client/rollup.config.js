@@ -29,7 +29,8 @@ export default [
             $pages: "src/pages",
             $components: "src/components",
             $stores: "src/stores",
-            $lib: "src/lib"
+            $lib: "src/lib",
+            $api: "src/api/index.js"
           },
           extensions: [".js", ".mjs", ".svelte", ".jsx"]
       }),
