@@ -20,10 +20,13 @@
   // placeholder is replaced by the slug in the row.
   export let baseLink = '#/:slug';
 
-  // The underlying API query to use to populate the list. This should fetch a
-  // data item that has a "results" key that is a list of objects with the
-  // keys: ['id', 'bggId', 'slug', 'name']
-  export let query = '/game/list';
+  // We can be used to gather session data in a variety of different ways. The
+  // component accepts an async callback that is responsible for gathering the
+  // data.
+  //
+  // The result of the callback should be a promise that resolves to an array of
+  // short session objects.
+  export let loader = async () => [];
 
   // After making the query, this function is invoked on the dataset that is
   // returned in order to filter the data set into the list of items that should
@@ -39,8 +42,8 @@
   // ---------------------------------------------------------------------------
 
   // Fetch the list of data that we need from the back end API, and return
-  // the result back.
-  const loadData = async () => filter(await api.get(query));
+  // the result back after filtering it.
+  const loadData = async () => filter (await loader());
 </script>
 
 

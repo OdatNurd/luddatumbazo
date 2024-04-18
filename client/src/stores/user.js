@@ -21,7 +21,7 @@ function createUserStore() {
     // that to set the value of the current user.
     async function init() {
         // Fetch information on the current user and then set it into the store.
-        const userInfo = await api.get('/user/current');
+        const userInfo = await api.user.current();
         set(userInfo);
     }
 

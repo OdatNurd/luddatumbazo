@@ -4,7 +4,6 @@
   import BackButton from '$components/BackButton.svelte';
   import BGGLink from '$components/BGGLink.svelte';
   import GameImage from '$components/GameImage.svelte';
-  import SlugList from '$components/SlugList.svelte';
 
   import { api } from '$api';
   import { DateTime, Interval } from 'luxon';
@@ -47,7 +46,7 @@
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
   const loadData = async () => {
-    const result = await api.get(`/session/${params.id}`);
+    const result = await api.session.details(params.id);
 
     name = result.name;
     slug = result.slug;

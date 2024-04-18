@@ -11,7 +11,7 @@
   import BGGLink from '$components/BGGLink.svelte';
   import GameImage from '$components/GameImage.svelte';
 
-  import { api, apiRemoveGameFromCollection, apiRemoveGameFromWishlist } from '$api';
+  import { api } from '$api';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -47,9 +47,7 @@
   // Fetch the game details; if the current user has a primary household, then
   // this should also fetch ownership information based on that.
   const loadData = async () => {
-    gameData = await api.get(`/game/${slug}`, {
-      household: $user?.household.slug
-    });
+    gameData = await api.game.details($user, slug);
 
     console.log(gameData);
   }
@@ -78,9 +76,9 @@
   }
 
   // Remove a game from the owned collection for this household.
-  const removeFromCollection = async (game, name, publisher) => {
+  const removeFromCollection = async (game) => {
     // Delete the record from the DB
-    await apiRemoveGameFromCollection($user, game, name, publisher);
+    await api.household.collection.remove($user, game);
 
     // Remove any ownership record we have for this game and trigger a refresh.
     delete gameData.owned;
@@ -88,9 +86,9 @@
   }
 
   // Remove a game from the wishlist for this household.
-  const removeFromWishlist = async (game, name) => {
+  const removeFromWishlist = async (game) => {
     // Delete the record from the DB
-    await apiRemoveGameFromWishlist($user, game, name);
+    await api.household.wishlist.remove($user, game);
 
     // Remove any wishlist record we have for this game and trigger a refresh.
     delete gameData.wishlist;
@@ -240,7 +238,7 @@
       {#if $user.household !== undefined}
         <Flex direction="row" gap="32px" fl.wr="wrap">
           {#if gameData.owned !== undefined}
-            <Button fill color="@primary" on:click={removeFromCollection(gameData.slug, gameData.primaryName, gameData.publisher[0].slug)}>
+            <Button fill color="@primary" on:click={removeFromCollection(gameData.slug)}>
               <Icon name="star-off"></Icon>
               Remove from Collection
             </Button>
@@ -252,7 +250,7 @@
             </EntryButton>
 
             {#if gameData.wishlist !== undefined}
-              <Button fill color="@primary" on:click={removeFromWishlist(gameData.slug, gameData.primaryName)}>
+              <Button fill color="@primary" on:click={removeFromWishlist(gameData.slug)}>
                 <Icon name="heart-off"></Icon>
                 Remove from Wishlist
               </Button>

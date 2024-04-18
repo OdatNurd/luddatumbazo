@@ -10,10 +10,13 @@
   // Properties
   // ---------------------------------------------------------------------------
 
-  // The underlying API query to use to populate the list. This should fetch a
-  // data item that has a "results" key that is a list of objects with the
-  // keys: ['id', 'bggId', 'slug', 'name']
-  export let query = '/session/list';
+  // We can be used to gather session data in a variety of different ways. The
+  // component accepts an async callback that is responsible for gathering the
+  // data.
+  //
+  // The result of the callback should be a promise that resolves to an array of
+  // short session objects.
+  export let loader = async () => [];
 
   // ---------------------------------------------------------------------------
 
@@ -40,10 +43,6 @@
 
   // ---------------------------------------------------------------------------
 
-  // Fetch the list of data that we need from the back end API, and return
-  // the result back.
-  const loadData = async () => await api.get(query);
-
   // This is a duplicate of the natural sort order from sorts.natural() but
   // based on how we may want to have incoming dates be actual dates and not
   // strings, I'm going to leave this here so that when the time comes I can
@@ -55,7 +54,7 @@
 </script>
 
 
-<LoadZone source={loadData()} let:result>
+<LoadZone source={loader()} let:result>
   <DataTable data={result} pageSize={20} color="@primary">
     <svelte:fragment slot="header">
       <TH w="64px" sort={sorts.natural("id")}>ID</TH>

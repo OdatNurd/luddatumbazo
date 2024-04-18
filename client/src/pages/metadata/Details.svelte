@@ -1,4 +1,6 @@
 <script>
+  import { api } from '$api';
+
   import { Flex, Button, Icon } from "@axel669/zephyr";
 
   import BackButton from '$components/BackButton.svelte';
@@ -25,6 +27,10 @@
   // anything there to start with.
   let name = params.slug;
 
+  // Our loader queries the details for all games that are associated with the
+  // provided metadata.
+  const loader = async () => api.metadata.details(metaType, name, true);
+
   // The result of the query gives us the game details in a sub key instead of
   // at the top level, and the field that represents the game is named
   // differently to make it more obvious what it is. So we need to filter the
@@ -48,9 +54,7 @@
   <h3>{metaType}: {name}</h3>
 </Flex>
 
-<SlugList bggType='boardgame' baseLink='#/game/:slug'
-          query='/game/meta/{metaType}/{params.slug}?games'
-          filter={gameFilter} />
+<SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} filter={gameFilter} />
 
 <style>
   h3 {

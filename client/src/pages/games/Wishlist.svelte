@@ -1,8 +1,11 @@
 <script>
+  import { api } from '$api';
+  import { user } from '$stores/user';
+
   import SlugList from '$components/SlugList.svelte';
 
-  import { user } from '$stores/user';
+  const loader = async () => api.household.wishlist.list($user);
 </script>
 
 <h3>Games Wishlist for {$user?.household.name ?? 'Unknown'}</h3>
-<SlugList bggType='boardgame' baseLink='#/game/:slug' query='/household/wishlist/{$user?.household.slug}' />
+<SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} />

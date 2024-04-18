@@ -127,7 +127,7 @@ async function api_call(method, endpoint, body, options) {
  * mechanism that provides the appropriate method arguments, to make the call
  * point more expressive. */
 const methods = ['get', 'put', 'post', 'delete', 'patch'];
-export const api = Object.fromEntries(methods.map(method => [
+export const raw = Object.fromEntries(methods.map(method => [
   method, (...args) => api_call(method, ...args)
 ]));
 

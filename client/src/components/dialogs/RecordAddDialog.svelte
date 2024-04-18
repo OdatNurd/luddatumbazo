@@ -4,7 +4,7 @@
   import { user } from '$stores/user';
 
   import { onMount } from 'svelte';
-  import { apiAddGameToCollection, apiAddGameToWishlist } from '$api';
+  import { api } from '$api';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -50,8 +50,8 @@
 
     // Determine what action we need to carry out.
     const action = (dataType === 'collection')
-      ? apiAddGameToCollection
-      : apiAddGameToWishlist
+      ? api.household.collection.add
+      : api.household.wishlist.add
 
     // Perform the actual insertion and gather the result back.
     const result = await action($user, game, name, publisher);
