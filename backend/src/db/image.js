@@ -10,6 +10,58 @@ import { imgConstructAssetPath, imageVariantMap } from '#lib/image';
 /******************************************************************************/
 
 
+/* Obtain the URI that is used to access the Cloudflare Images API; this is the
+ * same URI for everything, but requires some runtime introspection because it
+ * contains an account ID which is configured at runtime. */
+const imagesURI = ctx => `https://api.cloudflare.com/client/v4/accounts/${ctx.env.CF_ACCOUNT_ID}/images/v1`;
+
+
+/******************************************************************************/
+
+
+/* Given an image record that would be passed to cfImagesURLUpload() in order
+ * to upload an image, check with CloudFlare to see if such an image already
+ * exists in the image list or not.
+ *
+ * If it does, an object that represents the upstream information on the image
+ * will be returned back. This includes the original filename and URL, the list
+ * of variants, as well as the metadata associated with the image.
+ *
+ * If there is no such image, null is returned back. */
+export async function cfImagesLookup(ctx, image) {
+  // Determine what the internal name for the image provided would be, if we
+  // were to upload it.
+  const uploadPath = imgConstructAssetPath(image.bggURL, 'game', `game${image.gameId}`);
+
+  // TO fetch details about the image, we need to create an authorized GET
+  // request with our images token.
+  const options = {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${ctx.env.CF_IMAGES_TOKEN}`
+    }
+  };
+
+  // Request that Cloudflare tell us information about the image; this will only
+  // reject if there is a network issue, which will be caught by the caller.
+  const res = await fetch(`${imagesURI(ctx)}/${uploadPath}`, options);
+  const result = await res.json();
+
+  // If the request failed, gather all of the error messages and use them to
+  // raise an error to the caller.
+  if (res.ok === false) {
+    const errors = result.errors.map(el => el.message).join(', ');
+    throw new BGGLookupError(`unable to find details on existing image: ${errors}`, res.status);
+  }
+
+  // Return the appropriate data back.
+  return result.result;
+}
+
+
+/******************************************************************************/
+
+
 /* Given an image record of the form:
  *   {
  *     "id": 1,
@@ -38,9 +90,17 @@ import { imgConstructAssetPath, imageVariantMap } from '#lib/image';
  *   }
  *
  * The custom id is used as a part of the image URL to serve the image. */
-export async function cfImagesURLUpload(ctx, image) {
-  // The URI to upload a file must contain our Cloudflare Account ID.
-  const uploadURI = `https://api.cloudflare.com/client/v4/accounts/${ctx.env.CF_ACCOUNT_ID}/images/v1`;
+export async function cfImagesURLUpload(ctx, image, checkForExisting) {
+  // Before we attempt to upload the image, if we were requested to do so, then
+  // attempt to check to see if the image already exists prior to uploading it.
+  if (checkForExisting === true) {
+    try {
+      return await cfImagesLookup(ctx, image);
+    }
+    catch (error) {
+      console.log(`existing image for ${image.gameId} was not found; uploading`);
+    }
+  }
 
   // Using the original BGG URL, create the full path to the file that we will
   // serve the image from under our own domain.
@@ -75,7 +135,7 @@ export async function cfImagesURLUpload(ctx, image) {
 
   // Request that Cloudflare ingest the image; this will only reject if there is
   // a network issue, which will be caught by the caller.
-  const res = await fetch(uploadURI, options);
+  const res = await fetch(imagesURI(ctx), options);
   const result = await res.json();
 
   // If the request failed, gather all of the error messages and use them to
@@ -103,7 +163,7 @@ export async function cfImagesURLUpload(ctx, image) {
 export async function cfImagesGetVariants(ctx) {
   // The URI uses to talk to the CloudFlare Images API; it requires our Account
   // ID.
-  const variantURI = `https://api.cloudflare.com/client/v4/accounts/${ctx.env.CF_ACCOUNT_ID}/images/v1/variants`;
+  const variantURI = `${imagesURI(ctx)}/variants`;
 
   // To obtain the list of image variants we need to create an authorized GET
   // request.
@@ -123,7 +183,7 @@ export async function cfImagesGetVariants(ctx) {
   // raise an error to the caller.
   if (res.ok === false) {
     const errors = lookup.errors.map(el => el.message).join(', ');
-    throw new BGGLookupError(`unable to upload image: ${errors}`, res.status);
+    throw new BGGLookupError(`unable to fetch image variants: ${errors}`, res.status);
   }
 
   // The request suceeded, so pull out of the lookup, the variants. This is an
