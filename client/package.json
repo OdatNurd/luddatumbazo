@@ -15,14 +15,14 @@
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-replace": "^5.0.5",
-    "rollup": "^4.8.0",
-    "rollup-plugin-svelte": "^7.1.6"
+    "rollup": "^4.17.2",
+    "rollup-plugin-svelte": "^7.2.0"
   },
   "dependencies": {
     "@axel669/zephyr": "^0.3.6",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.4.5",
     "luxon": "^3.4.4",
-    "svelte": "^4.2.8",
-    "svelte-spa-router": "^4.0.0"
+    "svelte": "^4.2.15",
+    "svelte-spa-router": "^4.0.1"
   }
 }
