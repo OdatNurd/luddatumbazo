@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "watch": "rollup -c -w",
-    "build": "rollup -c"
+    "getCommit": "node getCurrentCommit.js",
+    "watch": "npm run getCommit && rollup -c -w",
+    "build": "npm run getCommit && rollup -c"
   },
   "devDependencies": {
     "@axel669/asuid": "^0.2.1",

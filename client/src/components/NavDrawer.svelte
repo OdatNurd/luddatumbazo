@@ -1,7 +1,8 @@
 <script>
-  import { Drawer, Titlebar, Text, Link } from "@axel669/zephyr"
+  import { Drawer, Titlebar, Flex, Text, Link } from "@axel669/zephyr"
 
   import DrawerLinks from '$components/DrawerLinks.svelte';
+  import GitCommitLink from '$components/GitCommitLink.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -34,6 +35,8 @@
     { label: "Sessions", value: "#/sessions" },
   ];
 
+  // Gather the commit that it used for the UI release
+  export const uiCommit = process.env.UI_RELEASE_COMMIT;
 </script>
 
 <Drawer>
@@ -44,4 +47,13 @@
   </Titlebar>
 
   <DrawerLinks {close} {links} />
+
+  <Titlebar slot="footer">
+    <Text slot="title" title>
+      <Flex direction="row">
+        <Text subtitle> UI: </Text>
+        <Text subtitle> <GitCommitLink commit={uiCommit} /> </Text>
+      </Flex>
+    </Text>
+  </Titlebar>
 </Drawer>

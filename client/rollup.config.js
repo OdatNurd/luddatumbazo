@@ -15,13 +15,15 @@ import asuid from "@axel669/asuid/node";
 import copyStatic from '@axel669/rollup-copy-static';
 import html from '@axel669/rollup-html-input';
 
+import { releaseHash } from './commitReference.js';
+
 
 /******************************************************************************/
 
 
 /* Determine if this build is production or not; by default we assume that all
  * builds are not production unless they are explictly set that way. */
-const production = (process.env.NODE_ENV === 'production');
+const production = (process.env.BUILD_TYPE === 'production');
 console.log(`build mode: ${production ? 'production' : 'development'}`);
 
 
@@ -96,6 +98,8 @@ const buildList = [
       {
         'preventAssignment': true,
         'process.env.GAME_API_ROOT_URI': JSON.stringify(process.env.GAME_API_ROOT_URI),
+        'process.env.GITHUB_ROOT_URI': JSON.stringify(process.env.GITHUB_ROOT_URI),
+        'process.env.UI_RELEASE_COMMIT': JSON.stringify(releaseHash),
       }),
 
       // Ensure that modules resolve and that the bundler knows that the output

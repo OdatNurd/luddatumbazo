@@ -1,0 +1,1 @@
+../tools/getCurrentCommit.js
