@@ -192,7 +192,7 @@ export async function dbExpansionUpdate(ctx, gameId, bggId, expansionList) {
       // Add the insert to the batch.
       result.inserted += 1;
       batch.push(
-        insertStmt.bind(baseGame.gameId, baseGame.bggId,
+        insertStmt.bind(baseGame.gameId ?? null, baseGame.bggId,
                         expansionGame.gameId ?? null, expansionGame.bggId,
                         entry.name));
     } else {
