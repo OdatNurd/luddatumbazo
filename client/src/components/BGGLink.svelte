@@ -23,7 +23,7 @@
 
 {#if bggId !== 0}
   <Link href='https://boardgamegeek.com/{bggType}/{bggId}/' target="_blank">
-    <slot>BGG</slot><Icon name="external-link"></Icon>
+    <slot>BGG</slot><Icon p.l="4px" name="box-arrow-up-right"></Icon>
   </Link>
 {:else}
   <slot name="nolink">--</slot>

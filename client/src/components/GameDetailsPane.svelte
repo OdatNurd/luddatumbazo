@@ -1,5 +1,5 @@
 <script>
-  import { Modal, EntryButton, LoadZone, Paper, Titlebar, Link, Text,  Flex, Grid, Button, Icon } from "@axel669/zephyr";
+  import { Modal, EntryButton, LoadZone, Paper, Titlebar, Link, Text, Flex, Grid, Button, Icon } from "@axel669/zephyr";
 
   import { push } from 'svelte-spa-router';
 
@@ -158,12 +158,12 @@
       <Flex p="0px" gap="0px" slot="title">
         <Text title>
           {#if gameData.owned !== undefined}
-            <Icon name="star-filled">{gameData.owned.name} ({gameData.publishedIn})</Icon>
+            <Icon name="star-fill">{gameData.owned.name} ({gameData.publishedIn})</Icon>
           {:else}
             {#if gameData.wishlist !== undefined}
-              <Icon name="heart-filled">{gameData.wishlist.name} ({gameData.publishedIn}) [Added by: {gameData.wishlist.wishlister.name}]</Icon>
+              <Icon name="heart-fill">{gameData.wishlist.name} ({gameData.publishedIn}) [Added by: {gameData.wishlist.wishlister.name}]</Icon>
             {:else}
-              <Icon name="star-off">{gameData.primaryName} ({gameData.publishedIn})</Icon>
+              <Icon name="star">{gameData.primaryName} ({gameData.publishedIn})</Icon>
             {/if}
           {/if}
         </Text>
@@ -209,14 +209,14 @@
 
           {#if gameData.officialURL !== ''}
             <Link href={gameData.officialURL} target="_blank">
-              View Official Site <Icon name="external-link"></Icon>
+              View Official Site <Icon p.l="4px" name="box-arrow-up-right"></Icon>
             </Link>
           {:else}
             <span>No Official Site Available</span>
           {/if}
           {#if gameData.teachingURL !== ''}
             <Link href={gameData.teachingURL} target="_blank">
-              Learn to Play <Icon name="external-link"></Icon>
+              Learn to Play <Icon p.l="4px" name="box-arrow-up-right"></Icon>
             </Link>
           {:else}
             <span>No Learning Video available</span>
@@ -239,24 +239,24 @@
         <Flex direction="row" gap="32px" fl.wr="wrap">
           {#if gameData.owned !== undefined}
             <Button fill color="@primary" on:click={removeFromCollection(gameData.slug)}>
-              <Icon name="star-off"></Icon>
+              <Icon p.r="4px" name="star"></Icon>
               Remove from Collection
             </Button>
           {:else}
 
             <EntryButton fill color="@primary" this={Modal} component={RecordAddDialog} props={collectionProps} on:entry={addDialogResult}>
-              <Icon name="star-filled"></Icon>
+              <Icon p.r="4px" name="star-fill"></Icon>
               Add to Collection
             </EntryButton>
 
             {#if gameData.wishlist !== undefined}
               <Button fill color="@primary" on:click={removeFromWishlist(gameData.slug)}>
-                <Icon name="heart-off"></Icon>
+                <Icon p.r="4px" name="heart"></Icon>
                 Remove from Wishlist
               </Button>
             {:else}
               <EntryButton fill color="@primary" this={Modal} component={RecordAddDialog} props={wishlistProps} on:entry={addDialogResult}>
-                <Icon name="heart-filled"></Icon>
+                <Icon p.r="4px" name="heart-fill"></Icon>
                 Add to Wishlist
               </EntryButton>
             {/if}
@@ -266,12 +266,12 @@
 
       <Flex direction="row" gap="32px" fl.wr="wrap">
         <Button fill color="@secondary" disabled on:click={() => push('/')}>
-          <Icon name="plus"></Icon>
+          <Icon p.r="4px" name="plus"></Icon>
           Log a Session
         </Button>
 
         <Button fill color="@secondary" disabled={!gameData.hasSessions} on:click={sessionList}>
-          <Icon name="report-analytics"></Icon>
+          <Icon p.r="4px" name="clipboard-data"></Icon>
           {#if gameData.hasSessions}
             View Session Reports
           {:else}

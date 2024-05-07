@@ -35,10 +35,10 @@
   // The different types of games.
   const gameTypeIcons = {
     "cardboard": "box",
-    "boardgamearena": "world-www",
-    "steam": "brand-steam",
-    "gog": "device-desktop",
-    "android": "brand-andriod"
+    "boardgamearena": "globe",
+    "steam": "steam",
+    "gog": "pc-display-horizontal",
+    "android": "andriod2"
   }
 
   // ---------------------------------------------------------------------------
@@ -67,11 +67,11 @@
     <svelte:fragment slot="row" let:row>
       <td>{row.id}</td>
       <td>
-        <Icon c="@primary" name={gameTypeIcons[row.playType] ?? 'question-mark'}></Icon>
+        <Icon c="@primary" name={gameTypeIcons[row.playType] ?? 'question'}></Icon>
       </td>
       <td>
         {#if row.isLearning}
-          <Icon c="@secondary" name="school"></Icon>
+          <Icon c="@secondary" name="mortarboard-fill"></Icon>
         {/if}
       </td>
       <td>
@@ -83,7 +83,7 @@
       </td>
       <td>
         <Link href="{game(row.slug)}">
-          <Icon name="link"></Icon>
+          <Icon name="link-45deg"></Icon>
         </Link>
       </td>
     </svelte:fragment>

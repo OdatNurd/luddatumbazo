@@ -1,7 +1,7 @@
 <script>
   import { api } from '$api';
 
-  import { Flex, Button, Icon } from "@axel669/zephyr";
+  import { Flex } from "@axel669/zephyr";
 
   import BackButton from '$components/BackButton.svelte';
   import SlugList from '$components/SlugList.svelte';

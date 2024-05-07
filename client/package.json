@@ -22,7 +22,7 @@
     "rollup-plugin-svelte": "^7.2.0"
   },
   "dependencies": {
-    "@axel669/zephyr": "^0.3.6",
+    "@axel669/zephyr": "^0.3.8",
     "dotenv": "^16.4.5",
     "luxon": "^3.4.4",
     "svelte": "^4.2.15",

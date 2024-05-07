@@ -1,5 +1,5 @@
 <script>
-  import { Drawer, Titlebar, Flex, Text, Link } from "@axel669/zephyr"
+  import { Drawer, Titlebar, Flex, Text } from "@axel669/zephyr"
 
   import DrawerLinks from '$components/DrawerLinks.svelte';
   import GitCommitLink from '$components/GitCommitLink.svelte';

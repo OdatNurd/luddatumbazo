@@ -1,5 +1,5 @@
 <script>
-  import { Drawer, Titlebar, Text, Link } from "@axel669/zephyr"
+  import { Drawer, Titlebar, Text } from "@axel669/zephyr"
 
   import { user } from '$stores/user';
 

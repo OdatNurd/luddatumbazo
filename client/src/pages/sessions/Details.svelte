@@ -1,5 +1,5 @@
 <script>
-  import { LoadZone, Table, Flex, Grid, Button, Icon, Text, Chip } from "@axel669/zephyr";
+  import { LoadZone, Table, Flex, Grid, Icon, Text, Chip } from "@axel669/zephyr";
 
   import BackButton from '$components/BackButton.svelte';
   import BGGLink from '$components/BGGLink.svelte';
@@ -104,7 +104,7 @@
 
       @
       {result.sessionBegin.toLocaleString(DateTime.TIME_SIMPLE)}
-      <Icon name="arrow-right"></Icon>
+      <Icon name="caret-right-fill"></Icon>
       {result.sessionEnd.toLocaleString(DateTime.TIME_SIMPLE)}
 
       ({result.sessionDuration.toHuman({'unitDisplay': 'short'})})
@@ -123,12 +123,12 @@
       <td>{row.userId}</td>
       <td>
         {#if row.isStartingPlayer}
-          <Icon name="flag-2-filled" c="@primary"></Icon>
+          <Icon name="flag-fill" c="@primary"></Icon>
         {/if}
       </td>
       <td>
         {#if row.isWinner}
-          <Icon name="trophy-filled" c="@secondary"></Icon>
+          <Icon name="trophy-fill" c="@secondary"></Icon>
         {/if}
       </td>
       <td>

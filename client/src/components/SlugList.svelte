@@ -1,5 +1,5 @@
 <script>
-  import { Link, Icon, LoadZone, DataTable, TH, sorts, filters } from "@axel669/zephyr";
+  import { LoadZone, DataTable, TH, sorts, filters } from "@axel669/zephyr";
 
 
   import BGGLink from '$components/BGGLink.svelte';

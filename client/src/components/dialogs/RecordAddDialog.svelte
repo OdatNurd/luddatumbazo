@@ -1,5 +1,5 @@
 <script>
-  import { Button, Dialog, Titlebar, Flex, Text, Icon, Grid, Select, handler$ } from "@axel669/zephyr";
+  import { Button, Dialog, Titlebar, Text, Icon, Select, handler$ } from "@axel669/zephyr";
 
   import { user } from '$stores/user';
 
@@ -67,7 +67,7 @@
     <Text slot="title" title> {title} </Text>
 
     <Button m="2px" w="44px" color="@primary" slot="action" on:click={abort(null)}>
-      <Icon name="square-x"></Icon>
+      <Icon name="x-square"></Icon>
     </Button>
   </Titlebar>
 

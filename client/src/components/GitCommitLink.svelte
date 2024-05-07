@@ -25,7 +25,7 @@
 {#if commit === null }
   {linkText}
 {:else}
-  <Link href="{rootURI}/commit/{commit}">
+  <Link href="{rootURI}/commit/{commit}" target="_blank">
     {linkText}
   </Link>
 {/if}
