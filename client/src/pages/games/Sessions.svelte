@@ -1,6 +1,4 @@
 <script>
-  import { Flex } from '@axel669/zephyr';
-
   import { api } from '$api';
 
   import SessionList from '$components/SessionList.svelte';
@@ -21,9 +19,8 @@
   const loader = async () => api.session.list(true, params.slug)
 </script>
 
-<Flex direction="row">
-  <BackButton />
+<BackButton>
   <h3>Session Reports FOR A GAME</h3>
-</Flex>
+</BackButton>
 
 <SessionList {loader} />

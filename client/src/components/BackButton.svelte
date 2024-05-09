@@ -1,5 +1,5 @@
 <script>
-  import { Button, Icon } from "@axel669/zephyr";
+  import { Flex, Button, Icon } from "@axel669/zephyr";
 
   import { pop } from 'svelte-spa-router';
 
@@ -9,7 +9,10 @@
 
 </script>
 
+<Flex direction="row">
+  <Button fill color="@secondary" on:click={() => pop()}>
+    <Icon name="arrow-left"></Icon>
+  </Button>
+  <slot />
+</Flex>
 
-<Button fill color="@secondary" on:click={() => pop()}>
-  <Icon name="arrow-left"></Icon>
-</Button>

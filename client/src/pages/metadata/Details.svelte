@@ -1,8 +1,6 @@
 <script>
   import { api } from '$api';
 
-  import { Flex } from "@axel669/zephyr";
-
   import BackButton from '$components/BackButton.svelte';
   import SlugList from '$components/SlugList.svelte';
 
@@ -49,12 +47,13 @@
 
 </script>
 
-<Flex direction="row">
-  <BackButton />
+
+<BackButton>
   <h3>{metaType}: {name}</h3>
-</Flex>
+</BackButton>
 
 <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} filter={gameFilter} />
+
 
 <style>
   h3 {

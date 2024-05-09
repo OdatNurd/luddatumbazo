@@ -74,14 +74,14 @@
 </script>
 
 <Flex direction="column">
-  <Flex direction="row">
-    <BackButton />
+  <BackButton>
     {#if slug !== 'unknown'}
       <h3><a href="{slugLink(slug)}">{name}</a></h3>
     {:else}
       <h3>No session data loaded</h3>
     {/if}
-  </Flex>
+  </BackButton>
+
   {#if slug !== 'unknown'}
     <h3>{title}</h3>
   {/if}

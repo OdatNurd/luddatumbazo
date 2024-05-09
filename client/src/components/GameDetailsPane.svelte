@@ -143,10 +143,9 @@
 </script>
 
 
-<Flex direction="row">
-  <BackButton />
+<BackButton>
   <h3>Game Details</h3>
-</Flex>
+</BackButton>
 
 <Modal component={RecordAddDialog} />
 
