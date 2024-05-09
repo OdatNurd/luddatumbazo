@@ -9,6 +9,8 @@ import { image } from '#requests/image/index';
 import { session } from '#requests/session/index';
 import { game } from '#requests/game/index';
 
+import { server_info } from '#requests/server_info/index';
+
 import { authorization } from '#lib/middleware';
 
 
@@ -40,6 +42,15 @@ app.use('/api/*', (ctx, next) => {
 /* Ensure that all requests get authenticated based on the user in the token
  * that is given to us by Cloudflare Access. */
 app.use('/api/*', authorization);
+
+/*******************************************************************************
+ * Server API
+ *******************************************************************************
+ * The items in this section are related to getting information about the back
+ * end server component that is running the application.
+ ******************************************************************************/
+
+app.route(`${APIV1}/server_info`, server_info);
 
 
 /*******************************************************************************
