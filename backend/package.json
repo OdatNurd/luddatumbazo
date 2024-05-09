@@ -14,7 +14,8 @@
     "#db/*": "./src/db/*.js",
     "#requests/*": "./src/requests/*.js",
     "#schema/*": "./src/schema/*.js",
-    "#lib/*": "./src/lib/*.js"
+    "#lib/*": "./src/lib/*.js",
+    "#commit": "./commitReference.js"
   },
   "dependencies": {
     "@axel669/sanic-xml": "^0.1.2",

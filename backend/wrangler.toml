@@ -198,3 +198,15 @@ CF_VARIANT_SMALLBOXART = 'entry'
 [dev]
 ip = "localhost"
 port = 8000
+
+
+################################################################################
+# P R E B U I L D
+################################################################################
+
+[build]
+
+# When starting the dev mode server OR when doing a deployment, first execute
+# this script, which will generate a file that contains the current commit hash
+# for use in the worker code.
+command = "node ../tools/getCurrentCommit.js"
