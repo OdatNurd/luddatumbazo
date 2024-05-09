@@ -1,7 +1,7 @@
 <script>
   import { api } from '$api';
 
-  import SlugList from '$components/SlugList.svelte';
+  import SlugList from '$components/lists/SlugList.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties

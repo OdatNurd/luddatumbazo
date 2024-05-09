@@ -2,7 +2,7 @@
   import { api } from '$api';
   import { user } from '$stores/user';
 
-  import SlugList from '$components/SlugList.svelte';
+  import SlugList from '$components/lists/SlugList.svelte';
 
   const loader = async () => api.household.wishlist.list($user);
 </script>

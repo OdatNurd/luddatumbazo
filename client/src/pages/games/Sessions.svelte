@@ -1,7 +1,7 @@
 <script>
   import { api } from '$api';
 
-  import SessionList from '$components/SessionList.svelte';
+  import SessionList from '$components/lists/SessionList.svelte';
   import BackButton from '$components/BackButton.svelte';
 
 
