@@ -8,8 +8,8 @@
   import Router from 'svelte-spa-router';
   import { wrap } from 'svelte-spa-router/wrap'
 
-  import NavDrawer from '$components/NavDrawer.svelte';
-  import ProfileDrawer from '$components/ProfileDrawer.svelte';
+  import NavDrawer from '$components/drawers/NavDrawer.svelte';
+  import ProfileDrawer from '$components/drawers/ProfileDrawer.svelte';
 
   import Home from '$pages/Home.svelte';
   import GameList from '$pages/games/List.svelte';

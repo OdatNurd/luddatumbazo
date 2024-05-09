@@ -3,7 +3,7 @@
 
   import { server } from '$stores/server';
 
-  import DrawerLinks from '$components/DrawerLinks.svelte';
+  import DrawerLinks from '$components/drawers/DrawerLinks.svelte';
   import GitCommitLink from '$components/links/GitCommitLink.svelte';
 
   // ---------------------------------------------------------------------------

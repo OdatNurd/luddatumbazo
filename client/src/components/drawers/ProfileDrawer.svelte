@@ -3,7 +3,7 @@
 
   import { user } from '$stores/user';
 
-  import DrawerLinks from '$components/DrawerLinks.svelte';
+  import DrawerLinks from '$components/drawers/DrawerLinks.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
