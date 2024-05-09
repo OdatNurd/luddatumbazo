@@ -1,6 +1,8 @@
 <script>
   import { Drawer, Titlebar, Flex, Text } from "@axel669/zephyr"
 
+  import { server } from '$stores/server';
+
   import DrawerLinks from '$components/DrawerLinks.svelte';
   import GitCommitLink from '$components/GitCommitLink.svelte';
 
@@ -54,6 +56,12 @@
         <Text subtitle> UI: </Text>
         <Text subtitle> <GitCommitLink commit={uiCommit} /> </Text>
       </Flex>
+      {#if $server.commit !== undefined }
+        <Flex direction="row">
+          <Text subtitle> API: </Text>
+          <Text subtitle> <GitCommitLink commit={$server.commit} /> </Text>
+        </Flex>
+      {/if}
     </Text>
   </Titlebar>
 </Drawer>

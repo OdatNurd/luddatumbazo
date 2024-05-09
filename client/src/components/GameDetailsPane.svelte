@@ -48,8 +48,6 @@
   // this should also fetch ownership information based on that.
   const loadData = async () => {
     gameData = await api.game.details($user, slug);
-
-    console.log(gameData);
   }
 
   // Return the color to use for a metadata link based on whether or not the

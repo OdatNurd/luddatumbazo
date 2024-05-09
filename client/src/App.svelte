@@ -3,6 +3,7 @@
   import { LoadZone, Screen, Modal, Paper, Grid, Flex, Titlebar, Text, Link, EntryButton, Icon } from "@axel669/zephyr";
 
   import { user } from '$stores/user';
+  import { server } from '$stores/server';
 
   import Router from 'svelte-spa-router';
   import { wrap } from 'svelte-spa-router/wrap'
@@ -75,7 +76,7 @@
     <Modal component={NavDrawer} />
     <Modal component={ProfileDrawer} />
 
-    <LoadZone source={user.init()}>
+    <LoadZone source={Promise.all([user.init(), server.init()])}>
       <Router {routes} />
       <svelte:fragment slot="error" let:error>
         {error}
