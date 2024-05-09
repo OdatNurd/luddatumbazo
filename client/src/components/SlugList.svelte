@@ -2,7 +2,7 @@
   import { LoadZone, DataTable, TH, sorts, filters } from "@axel669/zephyr";
 
 
-  import BGGLink from '$components/BGGLink.svelte';
+  import BGGLink from '$components/links/BGGLink.svelte';
   import GameImage from '$components/GameImage.svelte';
 
   import { api } from '$api';

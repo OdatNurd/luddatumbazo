@@ -2,7 +2,7 @@
   import { LoadZone, Table, Flex, Grid, Icon, Text, Chip } from "@axel669/zephyr";
 
   import BackButton from '$components/BackButton.svelte';
-  import BGGLink from '$components/BGGLink.svelte';
+  import BGGLink from '$components/links/BGGLink.svelte';
   import GameImage from '$components/GameImage.svelte';
 
   import { api } from '$api';

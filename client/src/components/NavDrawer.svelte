@@ -4,7 +4,7 @@
   import { server } from '$stores/server';
 
   import DrawerLinks from '$components/DrawerLinks.svelte';
-  import GitCommitLink from '$components/GitCommitLink.svelte';
+  import GitCommitLink from '$components/links/GitCommitLink.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
