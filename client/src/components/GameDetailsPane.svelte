@@ -1,5 +1,5 @@
 <script>
-  import { Modal, EntryButton, LoadZone, Paper, Titlebar, Link, Text, Flex, Grid, Button, Icon } from "@axel669/zephyr";
+  import { Modal, EntryButton, LoadZone, Paper, Titlebar, Link, Text, Tabs, Flex, Grid, Button, Icon } from "@axel669/zephyr";
 
   import { push } from 'svelte-spa-router';
 
@@ -36,6 +36,16 @@
     { "key": "mechanic",  "title": "Mechanics:" },
     { "key": "publisher", "title": "Publishers:" },
   ];
+
+  // The core data that is available on the game; the list of images that are
+  // available, the list of attached files, and the descriptive text for the
+  // game.
+  const coreOptions = [
+      { label: "Images",      value: "images"      },
+      { label: "Files",       value: "files"       },
+      { label: "Description", value: "description" },
+  ];
+  let coreValue = coreOptions[0].value;
 
 
   // ---------------------------------------------------------------------------
@@ -143,6 +153,9 @@
 </script>
 
 
+<!-- *********************************************************************** -->
+
+
 <BackButton>
   <h3>Game Details</h3>
 </BackButton>
@@ -189,8 +202,6 @@
       </Flex>
     </Titlebar>
     <Flex gap="16px" fl.wr="wrap">
-      <GameImage imagePath={gameData.imagePath} name={gameData.primaryName} />
-
       <Text subtitle>
         {#if gameData.names.length > 1}
           <Flex direction="row" gap="8px">
@@ -220,6 +231,19 @@
           {/if}
         </Flex>
       </Text>
+
+      <Tabs bind:value={coreValue} options={coreOptions} color="@primary" solid />
+      <tab-content>
+        {#if coreValue === "images"}
+          <Flex fl.wr="wrap">
+            <GameImage imagePath={gameData.imagePath} name={gameData.primaryName} />
+          </Flex>
+        {:else if coreValue === "description"}
+          {@html gameData.description}
+        {:else}
+          No files available yet.
+        {/if}
+      </tab-content>
 
       <Grid cols="max-content auto" gap="8px">
         {#each metaKeys as metadata (metadata.key) }
@@ -277,11 +301,6 @@
         </Button>
       </Flex>
 
-
-      <Text p="8px" b.t="1.5px solid gray" b.b="1.5px solid gray">
-        {@html gameData.description}
-      </Text>
-
       {#if gameData.expansionGames.length > 0}
         <Grid cols="max-content auto" gap="8px">
           <Flex>Expansions:</Flex>
@@ -321,8 +340,16 @@
 </LoadZone>
 
 
+<!-- *********************************************************************** -->
+
+
 <style>
   h3 {
     text-transform: capitalize;
+  }
+
+  tab-content {
+    padding-bottom: 16px;
+    border-bottom: 1.5px solid gray;
   }
 </style>
