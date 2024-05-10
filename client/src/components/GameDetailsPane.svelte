@@ -1,17 +1,20 @@
 <script>
-  import { Modal, EntryButton, LoadZone, Paper, Titlebar, Link, Text, Tabs, Flex, Grid, Button, Icon } from "@axel669/zephyr";
+  import { Button, EntryButton, Flex, Grid, Icon, Link, LoadZone, Modal, Paper, Tabs, Text, Titlebar } from "@axel669/zephyr";
 
   import { push } from 'svelte-spa-router';
 
+  import { api } from '$api';
   import { user } from '$stores/user';
 
   import RecordAddDialog from '$components/dialogs/RecordAddDialog.svelte';
 
-  import BackButton from '$components/BackButton.svelte';
   import BGGLink from '$components/links/BGGLink.svelte';
+  import BackButton from '$components/BackButton.svelte';
+  import ExpansionList from '$components/lists/ExpansionList.svelte';
+  import MetaDataList from '$components/MetaDataList.svelte';
+
   import GameImage from '$components/GameImage.svelte';
 
-  import { api } from '$api';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -27,16 +30,6 @@
   // game.
   const sessionList = () => push(`/game/${slug}/sessions`);
 
-  // The list of keys that represent metadata in the returned game object, what
-  // titles they should have, and what order to display them in.
-  const metaKeys = [
-    { "key": "designer",  "title": "Designers:" },
-    { "key": "artist",    "title": "Artists:" },
-    { "key": "category",  "title": "Categories:" },
-    { "key": "mechanic",  "title": "Mechanics:" },
-    { "key": "publisher", "title": "Publishers:" },
-  ];
-
   // The core data that is available on the game; the list of images that are
   // available, the list of attached files, and the descriptive text for the
   // game.
@@ -47,6 +40,31 @@
   ];
   let coreValue = coreOptions[0].value;
 
+  // The underlying data options; information on the production of the game, the
+  // various gameplay categories and mechanics, the expansions that are
+  // available and the session reports for the game (if any).
+  const dataOptions = [
+      { label: "Production", value: 'production' },
+      { label: "Gameplay",   value: 'gameplay'   },
+      { label: "Expansions", value: 'expansions' },
+      { label: "Sessions",   value: 'sessions'   },
+  ];
+  let dataValue = dataOptions[0].value;
+
+  // The meta keys that are related to the production tab.
+  const productionMetaKeys = [
+    { "key": "designer",  "title": "Designers:" },
+    { "key": "artist",    "title": "Artists:" },
+    { "key": "publisher", "title": "Publishers:" },
+  ];
+
+  // The meta keys that are related to the gameplay tab.
+  // The list of keys that represent metadata in the returned game object, what
+  // titles they should have, and what order to display them in.
+  const gameplayMetaKeys = [
+    { "key": "category",  "title": "Categories:" },
+    { "key": "mechanic",  "title": "Mechanics:" },
+  ];
 
   // ---------------------------------------------------------------------------
 
@@ -58,29 +76,6 @@
   // this should also fetch ownership information based on that.
   const loadData = async () => {
     gameData = await api.game.details($user, slug);
-  }
-
-  // Return the color to use for a metadata link based on whether or not the
-  // current user owns it; gameData is the data for the game, metaDataType is
-  // the type of metadata being displayed, and rowData is the actual metadata
-  // item.
-  const metaColor = (gameData, metaDataType, rowData) => {
-    // If the game is owned, and the metadata type being displayed is the one
-    // from the ownership record, and the ID is the ID of the item that's owned,
-    // color the text.
-    if (gameData.owned !== undefined) {
-      const { id, metaType } = gameData.owned.publisher;
-
-      // Mild hack; the publisherId is here because this is expected to only
-      // ever color a publisher since that is the only thing in the ownership
-      // record.
-      if (metaDataType === metaType && rowData.id === id) {
-        return "@primary";
-      }
-    }
-
-    // Fallback; use normal text color.
-    return null;
   }
 
   // Remove a game from the owned collection for this household.
@@ -210,25 +205,27 @@
           </Flex>
         {/if}
         <Flex direction="row" gap="32px" fl.wr="wrap">
-          <BGGLink bggId={gameData.bggId}>
-            View on BoardGameGeek
-            <span slot="nolink">No BGG Link available</span>
-          </BGGLink>
+          {#if gameData.teachingURL !== ''}
+            <Link href={gameData.teachingURL} target="_blank">
+              Learn to Play <Icon p.l="4px" name="box-arrow-up-right"></Icon>
+            </Link>
+          {:else}
+            <Icon name="pencil-fill">No Learning Video available</Icon>
+          {/if}
 
           {#if gameData.officialURL !== ''}
             <Link href={gameData.officialURL} target="_blank">
               View Official Site <Icon p.l="4px" name="box-arrow-up-right"></Icon>
             </Link>
           {:else}
-            <span>No Official Site Available</span>
+            <Icon name="pencil-fill">No Official Site Available</Icon>
           {/if}
-          {#if gameData.teachingURL !== ''}
-            <Link href={gameData.teachingURL} target="_blank">
-              Learn to Play <Icon p.l="4px" name="box-arrow-up-right"></Icon>
-            </Link>
-          {:else}
-            <span>No Learning Video available</span>
-          {/if}
+
+          <BGGLink bggId={gameData.bggId}>
+            View on BoardGameGeek
+            <span slot="nolink">No BGG Link available</span>
+          </BGGLink>
+
         </Flex>
       </Text>
 
@@ -245,19 +242,40 @@
         {/if}
       </tab-content>
 
-      <Grid cols="max-content auto" gap="8px">
-        {#each metaKeys as metadata (metadata.key) }
-          <Flex>{metadata.title}</Flex>
-          <Flex direction="row" gap="4px" fl.wr="wrap">
-            {#each gameData[metadata.key] as row (row.id)}
-              <Link href="#/{metadata.key}/{row.slug}" color={metaColor(gameData, metadata.key, row)}>{row.name}</Link>
-            {/each}
-          </Flex>
-        {/each}
-      </Grid>
+      <Tabs bind:value={dataValue} options={dataOptions} color="@secondary" solid />
+      <tab-content>
+        {#if dataValue === "production"}
+          <MetaDataList {gameData} keyList={productionMetaKeys} />
+
+        {:else if dataValue === "gameplay"}
+          <MetaDataList {gameData} keyList={gameplayMetaKeys} />
+
+        {:else if dataValue === "expansions"}
+          <ExpansionList data={gameData.baseGames} title="Expansion For:" />
+          <ExpansionList data={gameData.expansionGames} title="Expansions:" />
+
+        {:else}
+          <Grid gr.cols="repeat(auto-fit, minmax(0, 1fr))" gap="8px">
+            <Button fill color="@secondary" disabled on:click={() => push('/')}>
+              <Icon p.r="4px" name="plus"></Icon>
+              Log a Session
+            </Button>
+
+            <Button fill color="@secondary" disabled={!gameData.hasSessions} on:click={sessionList}>
+              <Icon p.r="4px" name="clipboard-data"></Icon>
+              {#if gameData.hasSessions}
+                View Session Reports
+              {:else}
+                No logged sessions
+              {/if}
+            </Button>
+          </Grid>
+        {/if}
+      </tab-content>
+
 
       {#if $user.household !== undefined}
-        <Flex direction="row" gap="32px" fl.wr="wrap">
+        <Grid gr.cols="1fr 1fr" gap="8px">
           {#if gameData.owned !== undefined}
             <Button fill color="@primary" on:click={removeFromCollection(gameData.slug)}>
               <Icon p.r="4px" name="star"></Icon>
@@ -271,65 +289,20 @@
             </EntryButton>
 
             {#if gameData.wishlist !== undefined}
-              <Button fill color="@primary" on:click={removeFromWishlist(gameData.slug)}>
+              <Button fill color="@secondary" on:click={removeFromWishlist(gameData.slug)}>
                 <Icon p.r="4px" name="heart"></Icon>
                 Remove from Wishlist
               </Button>
             {:else}
-              <EntryButton fill color="@primary" this={Modal} component={RecordAddDialog} props={wishlistProps} on:entry={addDialogResult}>
+              <EntryButton fill color="@secondary" this={Modal} component={RecordAddDialog} props={wishlistProps} on:entry={addDialogResult}>
                 <Icon p.r="4px" name="heart-fill"></Icon>
                 Add to Wishlist
               </EntryButton>
             {/if}
           {/if}
-        </Flex>
-      {/if}
-
-      <Flex direction="row" gap="32px" fl.wr="wrap">
-        <Button fill color="@secondary" disabled on:click={() => push('/')}>
-          <Icon p.r="4px" name="plus"></Icon>
-          Log a Session
-        </Button>
-
-        <Button fill color="@secondary" disabled={!gameData.hasSessions} on:click={sessionList}>
-          <Icon p.r="4px" name="clipboard-data"></Icon>
-          {#if gameData.hasSessions}
-            View Session Reports
-          {:else}
-            No logged sessions
-          {/if}
-        </Button>
-      </Flex>
-
-      {#if gameData.expansionGames.length > 0}
-        <Grid cols="max-content auto" gap="8px">
-          <Flex>Expansions:</Flex>
-          <Flex direction="row" gap="4px" fl.wr="wrap">
-            {#each gameData.expansionGames as row (row.id)}
-              {#if row.id !== null}
-                <Link href="#/game/{row.slug}">{row.name}</Link>
-              {:else}
-                <BGGLink bggId={row.bggId}>{row.name}</BGGLink>
-              {/if}
-            {/each}
-          </Flex>
         </Grid>
       {/if}
 
-      {#if gameData.baseGames.length > 0}
-        <Grid cols="max-content auto" gap="8px">
-          <Flex>Expands:</Flex>
-          <Flex direction="row" gap="4px" fl.wr="wrap">
-            {#each gameData.baseGames as row (row.id)}
-              {#if row.id !== null}
-                <Link href="#/game/{row.slug}">{row.name}</Link>
-              {:else}
-                <BGGLink bggId={row.bggId}>{row.name}</BGGLink>
-              {/if}
-            {/each}
-          </Flex>
-        </Grid>
-      {/if}
 
     </Flex>
   </Paper>
