@@ -31,8 +31,10 @@
 <!-- *********************************************************************** -->
 
 
-{#if data.length !== 0}
-  <Text title>{title ?? 'Unknown'}</Text>
+<Text title>{title ?? 'Unknown'}</Text>
+{#if data.length === 0}
+  <Text subtitle>No entries</Text>
+{:else}
   <DataTable {data} pageSize={Math.min(data.length, pageSize)} color="@secondary">
     <svelte:fragment slot="header">
       <TH w="64px" sort={sorts.natural("id")}>ID</TH>

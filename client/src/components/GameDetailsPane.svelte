@@ -251,8 +251,8 @@
           <MetaDataList {gameData} keyList={gameplayMetaKeys} />
 
         {:else if dataValue === "expansions"}
-          <ExpansionList data={gameData.baseGames} title="Expansion For:" />
           <ExpansionList data={gameData.expansionGames} title="Expansions:" />
+          <ExpansionList data={gameData.baseGames} title="Expansion For:" />
 
         {:else}
           <Grid gr.cols="repeat(auto-fit, minmax(0, 1fr))" gap="8px">
