@@ -172,17 +172,36 @@ CREATE TABLE GameLoans (
 --------------------------------------------------------------------------------
 
 
-DROP TABLE IF EXISTS Wishlist;
-CREATE TABLE Wishlist (
+DROP TABLE IF EXISTS WishList;
+CREATE TABLE WishList (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
     householdId INTEGER NOT NULL REFERENCES Household(id),
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL,
+
+    isRoot INTEGER DEFAULT(false)
+);
+CREATE UNIQUE INDEX idx_wishlist ON WishList(householdId, slug);
+CREATE UNIQUE INDEX idx_wishlist_roots ON WishList(householdId, isRoot) WHERE isRoot = 1;
+
+
+--------------------------------------------------------------------------------
+
+
+DROP TABLE IF EXISTS WishlistContents;
+CREATE TABLE WishlistContents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    householdId INTEGER NOT NULL REFERENCES Household(id),
+    wishlistId INTEGER NOT NULL REFERENCES Wishlist(id),
+
     gameId INTEGER NOT NULL REFERENCES Game(id),
     gameName INTEGER NOT NULL REFERENCES GameName(id),
 
     addedByUserId INTEGER NOT NULL REFERENCES User(id)
 );
-CREATE INDEX idx_game_wishlist ON Wishlist(householdId, gameId, gameName);
+CREATE INDEX idx_wishlist_content ON WishlistContents(householdId, gameId, gameName);
 
 
 --------------------------------------------------------------------------------

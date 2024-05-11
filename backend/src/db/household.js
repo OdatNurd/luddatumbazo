@@ -115,9 +115,9 @@ export async function dbHouseholdRemoveOwned(ctx, householdId, gameId) {
  * assumed this has been pre-validated. */
 export async function dbHouseholdInsertWishlisted(ctx, householdId, gameId, nameId) {
   const result = await ctx.env.DB.prepare(`
-    INSERT INTO Wishlist
-      (householdId, gameId, gameName, addedByUserId)
-    VALUES (?1, ?2, ?3, ?4);
+    INSERT INTO WishlistContents
+      (wishlistId, householdId, gameId, gameName, addedByUserId)
+    VALUES (1, ?1, ?2, ?3, ?4);
     `).bind(householdId, gameId, nameId, ctx.get('userId')).all();
 
   getDBResult('dbHouseholdInsertWishlisted', 'insert', result);
@@ -136,7 +136,7 @@ export async function dbHouseholdInsertWishlisted(ctx, householdId, gameId, name
  * purges the entry if it happens to exist. */
 export async function dbHouseholdRemoveWishlisted(ctx, householdId, gameId) {
   const result = await ctx.env.DB.prepare(`
-    DELETE FROM Wishlist
+    DELETE FROM WishlistContents
      WHERE householdId = ?1 AND gameId = ?2
     `).bind(householdId, gameId).all();
 

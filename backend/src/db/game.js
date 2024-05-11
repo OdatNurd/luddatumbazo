@@ -230,7 +230,7 @@ export async function dbGameWishlist(ctx, householdId) {
   // Try to find all games wished for by this household.
   const gameList = await ctx.env.DB.prepare(`
     SELECT A.id, A.bggId, A.slug, B.name, A.imagePath
-      FROM Game as A, GameName as B, Wishlist as C
+      FROM Game as A, GameName as B, WishlistContents as C
      WHERE A.id = B.gameId AND A.id = C.gameId AND
            B.id = C.gameName AND C.householdId = ?1
   `).bind(householdId).all();
@@ -303,7 +303,7 @@ export async function dbGameHouseholdSpecifics(ctx, fetchOwnership, gameId, hous
       sql: `
         SELECT B.id, B.name, B.isPrimary,
                C.id as sub_id, C.displayName as sub_name
-          FROM Wishlist as A,
+          FROM WishlistContents as A,
                GameName as B,
                User as C
          WHERE A.gameId = ?1
