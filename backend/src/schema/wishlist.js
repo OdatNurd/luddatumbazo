@@ -28,3 +28,26 @@ export const WishlistRemoveGameSchema = z.object({
 
 
 /******************************************************************************/
+
+
+/* Operations to create a wishlist require a textual name and a textual slug in
+ * the body of the request.
+/* Operations to remove a game from a wishlist require a specification on the
+ * game to be removed. */
+export const WishlistCreateSchema = z.object({
+    name: z.string(),
+    slug: z.string(),
+});
+
+
+/******************************************************************************/
+
+
+/* Operations to remove a wishlist from a household require a specification on
+ * the wishlist to be removed. */
+export const WishlistDeleteSchema = z.object({
+  wishlist: z.string().or(z.number()).transform(numberOrString),
+});
+
+
+/******************************************************************************/

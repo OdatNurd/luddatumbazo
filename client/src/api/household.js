@@ -17,9 +17,24 @@ import { raw } from './fetch.js';
  * In all cases, the game and publisher can be either the numeric ID of the item
  * or the distinct textual slug. The name can be either the full textual name
  * of an entry for that game, or the name entry's distinguishing ID value. */
-async function rawAction(doInsert, URI, game, name, publisher) {
+async function rawGameDataAction(doInsert, URI, game, name, publisher) {
   const func = (doInsert === true) ? raw.put : raw.delete;
   return func(URI, { game, name, publisher });
+}
+
+
+/******************************************************************************/
+
+
+/* This internal helper carries out actions related to the mainenance of the
+ * list of wish lists itself (the rawGameDataAction helper is used to manipulate
+ * the contents of lists currently).
+ *
+ * Creating a new wishlist requires a name and a slug, while deleting requires
+ * either the ID value or the slug, in a field called wishlist. */
+async function rawWishlistAction(doInsert, URI, name, slug, wishlist) {
+  const func = (doInsert === true) ? raw.put : raw.delete;
+  return func(URI, { name, slug, wishlist });
 }
 
 
@@ -33,7 +48,7 @@ async function rawAction(doInsert, URI, game, name, publisher) {
  * Adding a game to the collection also implicitly removes that game from the
  * wishlist, if it is present there. */
 async function addToCollection (user, game, name, publisher) {
-  return rawAction(true, `/household/collection/${user?.household.slug}/add`, game, name, publisher);
+  return rawGameDataAction(true, `/household/collection/${user?.household.slug}/add`, game, name, publisher);
 }
 
 
@@ -44,7 +59,7 @@ async function addToCollection (user, game, name, publisher) {
  * include a record that says that the game with the given name and publisher
  * identifiers is a part of the household's wishlist. */
 async function addToWishlist(user, game, name) {
-  return rawAction(true, `/household/wishlist/${user?.household.slug}/add`, game, name);
+  return rawGameDataAction(true, `/household/wishlist/${user?.household.slug}/add`, game, name);
 }
 
 
@@ -55,7 +70,7 @@ async function addToWishlist(user, game, name) {
  * remove the record that says that the game with the given name and publisher
  * identifiers is a part of the household's collection. */
 async function removeFromCollection (user, game) {
-  return rawAction(false, `/household/collection/${user?.household.slug}/remove`, game,);
+  return rawGameDataAction(false, `/household/collection/${user?.household.slug}/remove`, game,);
 }
 
 
@@ -66,7 +81,7 @@ async function removeFromCollection (user, game) {
  * remove the record that says that the game with the given name and publisher
  * identifiers is a part of the household's wishlist. */
 async function removeFromWishlist(user, game) {
-  return rawAction(false, `/household/wishlist/${user?.household.slug}/remove`, game);
+  return rawGameDataAction(false, `/household/wishlist/${user?.household.slug}/remove`, game);
 }
 
 
@@ -95,6 +110,43 @@ async function getWishlistContents(user) {
   return raw.get(`/household/wishlist/${user?.household.slug}/contents`);
 }
 
+
+/******************************************************************************/
+
+
+/* Fetch details on the complete list of wishlists that are owned by the
+ * primary household; this will always be at least one because every household
+ * has a root wishlist.
+ *
+ * The returned list is a set of list details, which includes name, slug and
+ * ID values. */
+async function getListOfWishlists(user) {
+  return raw.get(`/household/wishlist/${user?.household.slug}/list`);
+}
+
+
+/******************************************************************************/
+
+
+/* Gather the household from the user record provided, and invoke the API to
+ * remove the record that says that the game with the given name and publisher
+ * identifiers is a part of the household's collection. */
+async function createNewWishlist (user, name, slug) {
+  return rawWishlistAction(true, `/household/wishlist/${user?.household.slug}/create`, name, slug,);
+}
+
+
+/******************************************************************************/
+
+
+/* Gather the household from the user record provided, and invoke the API to
+ * remove the record that says that the game with the given name and publisher
+ * identifiers is a part of the household's wishlist. */
+async function deleteExistingWishlist(user, slugOrId) {
+  return rawWishlistAction(false, `/household/wishlist/${user?.household.slug}/delete`, null, null, slugOrId);
+}
+
+
 /******************************************************************************/
 
 
@@ -108,6 +160,11 @@ export const household = {
   },
 
   wishlist: {
+    lists: {
+      list: getListOfWishlists,
+      add: createNewWishlist,
+      remove: deleteExistingWishlist,
+    },
     contents: {
       get: getWishlistContents,
       add: addToWishlist,
