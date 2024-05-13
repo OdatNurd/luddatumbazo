@@ -44,7 +44,7 @@ async function addToCollction (user, game, name, publisher) {
  * include a record that says that the game with the given name and publisher
  * identifiers is a part of the household's wishlist. */
 async function addToWishlist(user, game, name) {
-  return rawAction(true, `/household/wishlist/${user?.household.slug}`, game, name);
+  return rawAction(true, `/household/wishlist/${user?.household.slug}/add`, game, name);
 }
 
 
@@ -66,7 +66,7 @@ async function removeFromCollection (user, game) {
  * remove the record that says that the game with the given name and publisher
  * identifiers is a part of the household's wishlist. */
 async function removeFromWishlist(user, game) {
-  return rawAction(false, `/household/wishlist/${user?.household.slug}`, game);
+  return rawAction(false, `/household/wishlist/${user?.household.slug}/remove`, game);
 }
 
 
@@ -91,8 +91,8 @@ async function getCollection(user) {
  *
  * The returned list is a list of short game records that are wishlisted by that
  * household. */
-async function getWishlist(user) {
-  return raw.get(`/household/wishlist/${user?.household.slug}`);
+async function getWishlistContents(user) {
+  return raw.get(`/household/wishlist/${user?.household.slug}/contents`);
 }
 
 /******************************************************************************/
@@ -108,9 +108,11 @@ export const household = {
   },
 
   wishlist: {
-    list: getWishlist,
-    add: addToWishlist,
-    remove: removeFromWishlist,
+    contents: {
+      get: getWishlistContents,
+      add: addToWishlist,
+      remove: removeFromWishlist,
+    }
   }
 }
 

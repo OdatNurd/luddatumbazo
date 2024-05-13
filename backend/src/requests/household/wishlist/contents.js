@@ -13,7 +13,7 @@ import { dbGameWishlist } from '#db/game';
 /* Given an identifier or slug for a household, validate that the household
  * exists, and then return back a (potentially empty) list of games that is
  * wish for by that household. */
-export async function reqHouseholdWishlist(ctx) {
+export async function reqHouseholdWishlistContents(ctx) {
   const { idOrSlug } = ctx.req.valid('param');
 
   // Try to find the household in question

@@ -91,7 +91,7 @@
   // Remove a game from the wishlist for this household.
   const removeFromWishlist = async (game) => {
     // Delete the record from the DB
-    await api.household.wishlist.remove($user, game);
+    await api.household.wishlist.contents.remove($user, game);
 
     // Remove any wishlist record we have for this game and trigger a refresh.
     delete gameData.wishlist;

@@ -4,7 +4,7 @@
 
   import SlugList from '$components/lists/SlugList.svelte';
 
-  const loader = async () => api.household.wishlist.list($user);
+  const loader = async () => api.household.wishlist.contents.get($user);
 </script>
 
 <h3>Games Wishlist for {$user?.household.name ?? 'Unknown'}</h3>

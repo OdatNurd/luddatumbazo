@@ -51,7 +51,7 @@
     // Determine what action we need to carry out.
     const action = (dataType === 'collection')
       ? api.household.collection.add
-      : api.household.wishlist.add
+      : api.household.wishlist.contents.add
 
     // Perform the actual insertion and gather the result back.
     const result = await action($user, game, name, publisher);
