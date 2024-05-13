@@ -1,12 +1,15 @@
 <script>
   import { LoadZone, Table, Flex, Grid, Icon, Text, Chip } from "@axel669/zephyr";
 
+  import { api } from '$api';
+  import { server } from '$stores/server';
+
+  import { DateTime, Interval } from 'luxon';
+
   import BackButton from '$components/BackButton.svelte';
   import BGGLink from '$components/links/BGGLink.svelte';
   import GameImage from '$components/GameImage.svelte';
 
-  import { api } from '$api';
-  import { DateTime, Interval } from 'luxon';
 
 
   // ---------------------------------------------------------------------------
@@ -20,16 +23,6 @@
 
   // ---------------------------------------------------------------------------
 
-  export let gameLink = '#/game/:slug';
-
-  // The different types of games.
-  const gameTypeMap = {
-    "cardboard": "Physical Game",
-    "boardgamearena": "BoardGameArena",
-    "steam": "Computer (Steam)",
-    "gog": "Computer (GOG)",
-    "android": "Mobile"
-  }
 
   // Default to an empty game and a session title that is the id paramter;
   // these will be laoded when the session loads.
@@ -41,7 +34,7 @@
 
   // Using the props that we were given, generate out the kinds of links that
   // the table needs to generate internal links to the data that it contains.
-  const slugLink = slug => gameLink.replaceAll(':slug', slug);
+  const slugLink = slug => '#/game/:slug'.replaceAll(':slug', slug);
 
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
@@ -98,7 +91,7 @@
     {#if result.isLearning}
       <Chip color="@accent" fill>Learning Game!</Chip>
     {/if}
-    <Chip color="@accent" fill>{gameTypeMap[result.playType] ?? 'Unknown'}</Chip>
+    <Chip color="@accent" fill>{server.gameTypeName(result.playType)}</Chip>
     <Chip color="@secondary" fill>
       Played {result.sessionBegin.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)}
 

@@ -7,6 +7,16 @@ import { raw } from './fetch.js';
 /******************************************************************************/
 
 
+/* Gather the list of known and approved game types; when recording a session,
+ * these are used to control what type of game is being recorded in the session,
+ * and the data is also used in session report detail pages. */
+async function gameTypeList() {
+  return raw.get('/session/gametypes');
+}
+
+
+/******************************************************************************/
+
 /* Gather a list of session reports, either for all games or only for those
  * games specificaly provided. The list can optionally also be reversed on
  * output, putting the most recent sessions at the top instead of on the
@@ -16,7 +26,7 @@ import { raw } from './fetch.js';
  * game slugs, game identifiers, or both.
  *
  * THe result is a list of short session objects. */
-async function sessionList (reverse, games) {
+async function sessionList(reverse, games) {
   const options = { };
 
   // If requested, include the option to reverse the list.
@@ -54,6 +64,7 @@ async function sessionDetails (sessionId) {
 /* Export a composed object that collects the related API's together into a
  * single object based on the operations. */
 export const session = {
+  gameTypes: gameTypeList,
   list: sessionList,
   details: sessionDetails,
 }

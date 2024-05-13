@@ -2,9 +2,12 @@
   import { Link, Icon, LoadZone, DataTable, TH, sorts, filters } from "@axel669/zephyr";
   import { DateTime } from 'luxon';
 
+  import { server } from '$stores/server';
+
   import GameImage from '$components/GameImage.svelte';
 
   import { api } from '$api';
+
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -32,14 +35,6 @@
   const session = id => baseLink.replaceAll(':id', id);
   const game = slug => gameLink.replaceAll(':slug', slug);
 
-  // The different types of games.
-  const gameTypeIcons = {
-    "cardboard": "box",
-    "boardgamearena": "globe",
-    "steam": "steam",
-    "gog": "pc-display-horizontal",
-    "android": "andriod2"
-  }
 
   // ---------------------------------------------------------------------------
 
@@ -67,7 +62,7 @@
     <svelte:fragment slot="row" let:row>
       <td>{row.id}</td>
       <td>
-        <Icon c="@primary" name={gameTypeIcons[row.playType] ?? 'question'}></Icon>
+        <Icon c="@primary" name={server.gameTypeIcon(row.playType)}></Icon>
       </td>
       <td>
         {#if row.isLearning}

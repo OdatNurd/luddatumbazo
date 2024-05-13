@@ -56,10 +56,10 @@
         <Text subtitle> UI: </Text>
         <Text subtitle> <GitCommitLink commit={uiCommit} /> </Text>
       </Flex>
-      {#if $server.commit !== undefined }
+      {#if $server.version.commit !== undefined }
         <Flex direction="row">
           <Text subtitle> API: </Text>
-          <Text subtitle> <GitCommitLink commit={$server.commit} /> </Text>
+          <Text subtitle> <GitCommitLink commit={$server.version.commit} /> </Text>
         </Flex>
       {/if}
     </Text>
