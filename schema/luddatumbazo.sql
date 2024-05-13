@@ -272,6 +272,28 @@ CREATE INDEX idx_session_guests on SessionReportPlayer(sessionId, guestId) WHERE
 --------------------------------------------------------------------------------
 
 
+DROP TABLE IF EXISTS SessionGameType;
+CREATE TABLE SessionGameType (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    slug TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    icon TEXT NOT NULL
+);
+
+
+INSERT INTO SessionGameType VALUES(NULL, "cardboard",         "Physical Game",      "box-seam");
+INSERT INTO SessionGameType VALUES(NULL, "boardgamearena",    "BoardGameArena",     "globe");
+INSERT INTO SessionGameType VALUES(NULL, "steam",             "Computer (Steam)",   "steam");
+INSERT INTO SessionGameType VALUES(NULL, "gog",               "Computer (GOG)",     "pc-display-horizontal");
+INSERT INTO SessionGameType VALUES(NULL, "android",           "Mobile",             "andriod2");
+INSERT INTO SessionGameType VALUES(NULL, "tabletopsimulator", "Tabletop Simulator", "headset-vr");
+INSERT INTO SessionGameType VALUES(NULL, "drgncards",         "DrgnCards",          "person-vcard");
+
+
+--------------------------------------------------------------------------------
+
+
 DROP TABLE IF EXISTS SessionReport;
 CREATE TABLE SessionReport (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

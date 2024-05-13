@@ -367,6 +367,24 @@ function prepareSessionUpdate(sessionData, updateData) {
 /******************************************************************************/
 
 
+/* Gather the static list of known game types that can be used to represent a
+ * game in a session report.
+ *
+ * The result is a list of records providing the name, slug and id of all of the
+ * known game types, along with the name of the bootstrap icon used to represent
+ * them in lists. */
+export async function dbSessionGameTypes(ctx) {
+  const result = await ctx.env.DB.prepare(`
+    select * FROM SessionGameType
+  `).all();
+
+  return getDBResult('dbSessionGameTypes', 'get_gametypes', result);
+}
+
+
+/******************************************************************************/
+
+
 /* This takes as input an object in a shape similar to:
  *   {
  *     "gameId": 52,

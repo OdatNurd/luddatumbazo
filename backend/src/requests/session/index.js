@@ -8,6 +8,7 @@ import { wrappedRequest as _, validate } from '#requests/common';
 import { SessionIDSchema, NewSessionReportSchema, UpdateSessionReportSchema,
          SessionListParamSchema } from '#schema/session';
 
+import { reqSessionGameTypes } from '#requests/session/gametype';
 import { reqSessionAdd } from '#requests/session/insert';
 import { reqSessionUpdate } from '#requests/session/update';
 import { reqSessionList } from '#requests/session/list';
@@ -21,6 +22,8 @@ import { reqSessionDetails } from '#requests/session/details';
  * map all routes in. */
 export const session = new Hono();
 
+
+session.get('/gametypes', ctx => _(ctx, reqSessionGameTypes));
 
 session.put('/add',
             validate('json', NewSessionReportSchema),
