@@ -32,8 +32,8 @@ async function rawAction(doInsert, URI, game, name, publisher) {
  *
  * Adding a game to the collection also implicitly removes that game from the
  * wishlist, if it is present there. */
-async function addToCollction (user, game, name, publisher) {
-  return rawAction(true, `/household/collection/${user?.household.slug}`, game, name, publisher);
+async function addToCollection (user, game, name, publisher) {
+  return rawAction(true, `/household/collection/${user?.household.slug}/add`, game, name, publisher);
 }
 
 
@@ -55,7 +55,7 @@ async function addToWishlist(user, game, name) {
  * remove the record that says that the game with the given name and publisher
  * identifiers is a part of the household's collection. */
 async function removeFromCollection (user, game) {
-  return rawAction(false, `/household/collection/${user?.household.slug}`, game,);
+  return rawAction(false, `/household/collection/${user?.household.slug}/remove`, game,);
 }
 
 
@@ -78,8 +78,8 @@ async function removeFromWishlist(user, game) {
  *
  * The returned list is a list of short game records that are owned by that
  * household. */
-async function getCollection(user) {
-  return raw.get(`/household/collection/${user?.household.slug}`);
+async function getCollectionContents(user) {
+  return raw.get(`/household/collection/${user?.household.slug}/contents`);
 }
 
 
@@ -102,8 +102,8 @@ async function getWishlistContents(user) {
  * single object based on the operations. */
 export const household = {
   collection: {
-    list: getCollection,
-    add: addToCollction,
+    contents: getCollectionContents,
+    add: addToCollection,
     remove: removeFromCollection,
   },
 

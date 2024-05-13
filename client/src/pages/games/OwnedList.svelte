@@ -4,7 +4,7 @@
 
   import SlugList from '$components/lists/SlugList.svelte';
 
-  const loader = async () => api.household.collection.list($user);
+  const loader = async () => api.household.collection.contents($user);
 </script>
 
 <h3>Games owned by {$user?.household.name ?? 'Unknown'}</h3>

@@ -13,7 +13,7 @@ import { dbGameOwnedList } from '#db/game';
 /* Given an identifier or slug for a household, validate that the household
  * exists, and then return back a (potentially empty) list of games that is
  * owned by that household. */
-export async function reqHouseholdCollection(ctx) {
+export async function reqHouseholdCollectionContents(ctx) {
   const { idOrSlug } = ctx.req.valid('param');
 
   // Try to find the household in question
