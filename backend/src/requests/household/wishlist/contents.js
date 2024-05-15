@@ -3,7 +3,7 @@
 
 import { success, fail } from '#requests/common';
 
-import { dbHouseholdDetails } from '#db/household';
+import { dbHouseholdDetails, dbWishlistDetails } from '#db/household';
 import { dbGameWishlist } from '#db/game';
 
 
@@ -14,17 +14,24 @@ import { dbGameWishlist } from '#db/game';
  * exists, and then return back a (potentially empty) list of games that is
  * wish for by that household. */
 export async function reqHouseholdWishlistContents(ctx) {
-  const { idOrSlug } = ctx.req.valid('param');
+  const { householdIdOrSlug, wishlistIdOrSlug } = ctx.req.valid('param');
 
   // Try to find the household in question
-  const household = await dbHouseholdDetails(ctx, idOrSlug);
+  const household = await dbHouseholdDetails(ctx, householdIdOrSlug);
   if (household === null) {
-    return fail(ctx, `unable to locate household with id ${idOrSlug}`, 404);
+    return fail(ctx, `unable to locate household with id ${householdIdOrSlug}`, 404);
   }
 
-  // Get the games associated with this household, if any.
-  const result = await dbGameWishlist(ctx, household.id);
-  return success(ctx, `found ${result.length} games wished for by household ${idOrSlug}`, result);
+  // Try to find a wishlist using this id for this household; if it exists, we
+  // should complain right away.
+  let wishlist = await dbWishlistDetails(ctx, household.id, wishlistIdOrSlug);
+  if (wishlist === null) {
+    return fail(ctx, `unable to local wishlist with id ${wishlistIdOrSlug} in household ${householdIdOrSlug}`, 404);
+  }
+
+  // Get the games associated with this household and wishlist, if any.
+  const result = await dbGameWishlist(ctx, household.id, wishlist.id);
+  return success(ctx, `found ${result.length} games for ${wishlistIdOrSlug} in household ${householdIdOrSlug}`, result);
 }
 
 

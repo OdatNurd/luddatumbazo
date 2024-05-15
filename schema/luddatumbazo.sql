@@ -201,7 +201,7 @@ CREATE TABLE WishlistContents (
 
     addedByUserId INTEGER NOT NULL REFERENCES User(id)
 );
-CREATE INDEX idx_wishlist_content ON WishlistContents(householdId, gameId, gameName);
+CREATE INDEX idx_wishlist_content ON WishlistContents(householdId, gameId, gameName, wishlistId);
 
 
 --------------------------------------------------------------------------------

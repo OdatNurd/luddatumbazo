@@ -106,8 +106,8 @@ async function getCollectionContents(user) {
  *
  * The returned list is a list of short game records that are wishlisted by that
  * household. */
-async function getWishlistContents(user) {
-  return raw.get(`/household/wishlist/${user?.household.slug}/contents`);
+async function getWishlistContents(user, wishlist) {
+  return raw.get(`/household/wishlist/${user?.household.slug}/contents/${wishlist}`);
 }
 
 

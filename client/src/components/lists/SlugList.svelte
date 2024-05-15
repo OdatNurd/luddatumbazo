@@ -20,6 +20,9 @@
   // placeholder is replaced by the slug in the row.
   export let baseLink = '#/:slug';
 
+  // A key that is provided to the provided loader, to control what it does.
+  export let loaderKey = undefined;
+
   // We can be used to gather session data in a variety of different ways. The
   // component accepts an async callback that is responsible for gathering the
   // data.
@@ -43,11 +46,11 @@
 
   // Fetch the list of data that we need from the back end API, and return
   // the result back after filtering it.
-  const loadData = async () => filter (await loader());
+  const loadData = async param => filter (await loader(param));
 </script>
 
 
-<LoadZone source={loadData()} let:result>
+<LoadZone source={loadData(loaderKey)} let:result>
   <DataTable data={result} pageSize={20} color="@primary">
     <svelte:fragment slot="header">
       <TH w="64px" sort={sorts.natural("id")}>ID</TH>

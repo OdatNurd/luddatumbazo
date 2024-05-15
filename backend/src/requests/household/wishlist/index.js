@@ -6,7 +6,7 @@ import { Hono } from 'hono'
 import { wrappedRequest as _, validate } from '#requests/common';
 
 import { HouseholdLookupIDSchema } from '#schema/household';
-import { WishlistCreateSchema, WishlistDeleteSchema, WishlistAddGameSchema, WishlistRemoveGameSchema } from '#schema/wishlist';
+import { WishlistContentsIDSchema, WishlistCreateSchema, WishlistDeleteSchema, WishlistAddGameSchema, WishlistRemoveGameSchema } from '#schema/wishlist';
 
 import { reqHouseholdWishlistCreate } from '#requests/household/wishlist/create';
 import { reqHouseholdWishlistDelete } from '#requests/household/wishlist/delete';
@@ -54,8 +54,8 @@ wishlist.delete('/:idOrSlug/remove',
          validate('json', WishlistRemoveGameSchema),
          ctx => _(ctx, reqHouseholdWishlistRemove));
 
-wishlist.get('/:idOrSlug/contents',
-         validate('param', HouseholdLookupIDSchema),
+wishlist.get('/:householdIdOrSlug/contents/:wishlistIdOrSlug',
+         validate('param', WishlistContentsIDSchema),
          ctx => _(ctx, reqHouseholdWishlistContents));
 
 

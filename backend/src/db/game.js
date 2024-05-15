@@ -224,16 +224,18 @@ export async function dbGameOwnedList(ctx, householdId) {
 
 
 /* This works as per dbGameList(), except that it requires a householdId and
- * will return only games wished for by that household. In addition, the names
- * that fall out will be the version of the name that is "wished for". */
-export async function dbGameWishlist(ctx, householdId) {
+ * wishlistId and will return only games wished for by that household which are
+ * contained within the wishlist with the given ID. In addition, the names that
+ * fall out will be the version of the name that is "wished for". */
+export async function dbGameWishlist(ctx, householdId, wishlistId) {
   // Try to find all games wished for by this household.
   const gameList = await ctx.env.DB.prepare(`
     SELECT A.id, A.bggId, A.slug, B.name, A.imagePath
       FROM Game as A, GameName as B, WishlistContents as C
-     WHERE A.id = B.gameId AND A.id = C.gameId AND
-           B.id = C.gameName AND C.householdId = ?1
-  `).bind(householdId).all();
+     WHERE A.id = B.gameId AND
+           A.id = C.gameId AND C.wishlistId = ?1  AND
+           B.id = C.gameName AND C.householdId = ?2
+  `).bind(wishlistId, householdId).all();
 
   const result = getDBResult('dbGameWishlist', 'find_games', gameList);
   return imgMapAssetListURLs(ctx, result, 'imagePath', 'thumbnail');
