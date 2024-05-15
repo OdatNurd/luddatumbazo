@@ -139,7 +139,7 @@ export async function dbWishlistList(ctx, householdId) {
   `).all();
 
   const wishlists = getDBResult('dbWishlistList', 'list_wishlists', wishlistLookup);
-  return mapIntFieldsToBool(wishlists);
+  return wishlists.map(entry => mapIntFieldsToBool(entry))
 }
 
 
