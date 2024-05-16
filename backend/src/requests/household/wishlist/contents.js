@@ -26,7 +26,7 @@ export async function reqHouseholdWishlistContents(ctx) {
   // should complain right away.
   let wishlist = await dbWishlistDetails(ctx, household.id, wishlistIdOrSlug);
   if (wishlist === null) {
-    return fail(ctx, `unable to local wishlist with id ${wishlistIdOrSlug} in household ${householdIdOrSlug}`, 404);
+    return fail(ctx, `unable to locate wishlist with id ${wishlistIdOrSlug} in household ${householdIdOrSlug}`, 404);
   }
 
   // Get the games associated with this household and wishlist, if any.

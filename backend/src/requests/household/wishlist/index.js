@@ -44,8 +44,8 @@ wishlist.get('/:idOrSlug/list',
 
 /* Manipulating the contents of a wishlist */
 
-wishlist.put('/:idOrSlug/add',
-         validate('param', HouseholdLookupIDSchema),
+wishlist.put('/:householdIdOrSlug/add/:wishlistIdOrSlug',
+         validate('param', WishlistContentsIDSchema),
          validate('json', WishlistAddGameSchema),
          ctx => _(ctx, reqHouseholdWishlistAdd));
 

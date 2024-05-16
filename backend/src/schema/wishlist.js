@@ -9,8 +9,8 @@ import { numberOrString } from '#schema/common';
 /******************************************************************************/
 
 
-/* When looking up the list of wishlists, we require a household and a wishlist
- * to look up. */
+/* When looking up the list of wishlists or adding entries to them, we require
+ * a household and a wishlist to look up. */
 export const WishlistContentsIDSchema = z.object({
   householdIdOrSlug: z.string().transform(numberOrString),
   wishlistIdOrSlug: z.string().transform(numberOrString),

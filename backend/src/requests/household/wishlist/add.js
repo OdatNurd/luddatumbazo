@@ -4,7 +4,7 @@
 import { success, fail } from '#requests/common';
 
 
-import { dbHouseholdDetails, dbHouseholdInsertWishlisted } from '#db/household';
+import { dbHouseholdDetails, dbWishlistDetails, dbHouseholdInsertWishlisted } from '#db/household';
 import { dbGameDetails, dbGameNames } from '#db/game';
 
 
@@ -15,13 +15,20 @@ import { dbGameDetails, dbGameNames } from '#db/game';
  * a specific household. This requires that we also be told which of the many
  * possible names it should take. */
 export async function reqHouseholdWishlistAdd(ctx) {
-  const { idOrSlug } = ctx.req.valid('param');
+  const { householdIdOrSlug, wishlistIdOrSlug } = ctx.req.valid('param');
   const { game, name, publisher } = ctx.req.valid('json');
 
   // Try to find the household we want to add the game to.
-  const householdInfo = await dbHouseholdDetails(ctx, idOrSlug);
+  const householdInfo = await dbHouseholdDetails(ctx, householdIdOrSlug);
   if (householdInfo === null) {
-    return fail(ctx, `unable to locate household with id ${idOrSlug}`, 404);
+    return fail(ctx, `unable to locate household with id ${householdIdOrSlug}`, 404);
+  }
+
+  // Check to see if this wishlist exists for this household or not; if not,
+  // then we need to bail.
+  const wishlistInfo = await dbWishlistDetails(ctx, householdInfo.id, wishlistIdOrSlug);
+  if (wishlistInfo === null) {
+    return fail(ctx, `unable to locate wishlist with id ${wishlistIdOrSlug} in household ${householdIdOrSlug}`, 404);
   }
 
   // Look up and validate the game that was specified in the request.
@@ -45,7 +52,7 @@ export async function reqHouseholdWishlistAdd(ctx) {
     return fail(ctx, `game ${gameInfo.slug} does not have a name with ID ${name}`, 404);
   }
 
-  const result = await dbHouseholdInsertWishlisted(ctx, householdInfo.id, gameInfo.id, nameRecord.id);
+  const result = await dbHouseholdInsertWishlisted(ctx, householdInfo.id, wishlistInfo.id, gameInfo.id, nameRecord.id);
   return success(ctx, `added ${gameInfo.slug} to the wishlist for ${householdInfo.slug}`, result);
 }
 

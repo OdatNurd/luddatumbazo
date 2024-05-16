@@ -237,12 +237,12 @@ export async function dbWishlistDelete(ctx, householdId, wishlistId) {
  *
  * This does not validate that the game has a name with the ID provided; it is
  * assumed this has been pre-validated. */
-export async function dbHouseholdInsertWishlisted(ctx, householdId, gameId, nameId) {
+export async function dbHouseholdInsertWishlisted(ctx, householdId, wishlistId, gameId, nameId) {
   const result = await ctx.env.DB.prepare(`
     INSERT INTO WishlistContents
       (wishlistId, householdId, gameId, gameName, addedByUserId)
-    VALUES (1, ?1, ?2, ?3, ?4);
-    `).bind(householdId, gameId, nameId, ctx.get('userId')).all();
+    VALUES (?1, ?2, ?3, ?4, ?5);
+  `).bind(wishlistId, householdId, gameId, nameId, ctx.get('userId')).all();
 
   getDBResult('dbHouseholdInsertWishlisted', 'insert', result);
 
