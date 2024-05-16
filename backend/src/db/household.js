@@ -27,6 +27,33 @@ export async function dbHouseholdUsers(ctx, householdId) {
 /******************************************************************************/
 
 
+/* Create a new household in the database, and all of the other required data
+ * elements in other tables (such as a root wishlist) using the arguments that
+ * were provided.
+ *
+ * On success the new household record is returned. This can throw if the name
+ * or slug already exists in the table. */
+export async function dbHouseholdCreate(ctx, name, slug) {
+  const results = await ctx.env.DB.batch(
+    [
+      ctx.env.DB.prepare(`
+        INSERT INTO Household (name, slug) VALUES (?1, ?2);
+      `).bind(name, slug),
+
+      ctx.env.DB.prepare(`
+        INSERT INTO Wishlist (householdId, name, slug, isRoot)
+        VALUES (last_insert_rowid(), ?1, 'root', true)
+      `).bind(`${name} Wishlist`)
+    ]
+  );
+
+  return { id: results[0].meta.last_row_id, name, slug };
+}
+
+
+/******************************************************************************/
+
+
 /* Return details on the household with the provided identifier or textual
  * slug; if such a household is not found, null is returned. Otherwise, the
  * result is information on that particular household. */

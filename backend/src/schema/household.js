@@ -6,6 +6,18 @@ import { z } from 'zod';
 import { numberOrString } from '#schema/common';
 
 
+
+/******************************************************************************/
+
+
+/* Operations to create a household require a textual name and a textual slug in
+ * the body of the request. */
+export const HouseholdCreateSchema = z.object({
+    name: z.string(),
+    slug: z.string(),
+});
+
+
 /******************************************************************************/
 
 

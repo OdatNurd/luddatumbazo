@@ -11,9 +11,7 @@ import { dbHouseholdDetails, dbWishlistDetails, dbWishlistCreate } from '#db/hou
 
 
 /* Attempt to create a new wishlist for a given hosuehold, using the name and
- * the slug provided for the record.
-/* Given a name and optional slug for a new wishlist in a given household,
- * create the new wishlist and return it's data. */
+ * the slug provided for the record. */
 export async function reqHouseholdWishlistCreate(ctx) {
   const { idOrSlug } = ctx.req.valid('param');
   const { name, slug } = ctx.req.valid('json');
