@@ -6,7 +6,18 @@
 
   import SlugList from '$components/lists/SlugList.svelte';
 
-  let loaderKey = 'root';
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
+  // Receive paramters from the URL route that landed us on this page; this
+  // will contain the slug that we need in order to display the details pane.
+  // The paramters come from the named arguments in the route itself.
+  export let params = {};
+
+  // ---------------------------------------------------------------------------
+
+  let loaderKey = params.wishlist ?? 'root';
   const loader = async wishlistSlug => api.household.wishlist.contents.get($user, wishlistSlug);
 
   const loadWishlistNames = async () => {

@@ -9,6 +9,7 @@
   import RecordAddDialog from '$components/dialogs/RecordAddDialog.svelte';
 
   import BGGLink from '$components/links/BGGLink.svelte';
+  import WishlistLink from '$components/links/WishlistLink.svelte';
   import BackButton from '$components/BackButton.svelte';
   import ExpansionList from '$components/lists/ExpansionList.svelte';
   import MetaDataList from '$components/MetaDataList.svelte';
@@ -200,7 +201,8 @@
       <Text subtitle>
         {#if gameData.wishlist !== undefined}
           <Flex direction="row" gap="8px">
-            Added to Wishlist <strong>{gameData.wishlist.wishlist.name}</strong> by <strong>{gameData.wishlist.wishlister.name}</strong>
+            Added to Wishlist <WishlistLink wishlist={gameData.wishlist.wishlist} />
+            by <strong>{gameData.wishlist.wishlister.name}</strong>
           </Flex>
         {/if}
         {#if gameData.names.length > 1}

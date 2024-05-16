@@ -35,7 +35,7 @@
     '/game/:slug/sessions': GameSessionList,
 
     '/games/owned': OwnedGameList,
-    '/games/wishlisted': WishlistedGameList,
+    '/games/wishlisted/:wishlist?': WishlistedGameList,
 
     '/sessions': SessionList,
     '/session/:id': SessionDetails,
