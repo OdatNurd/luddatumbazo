@@ -163,10 +163,10 @@
       <Flex p="0px" gap="0px" slot="title">
         <Text title>
           {#if gameData.owned !== undefined}
-            <Icon name="star-fill">{gameData.owned.name} ({gameData.publishedIn})</Icon>
+            <Icon name="star-fill">{gameData.owned.name.name} ({gameData.publishedIn})</Icon>
           {:else}
             {#if gameData.wishlist !== undefined}
-              <Icon name="heart-fill">{gameData.wishlist.name} ({gameData.publishedIn}) [Added by: {gameData.wishlist.wishlister.name}]</Icon>
+              <Icon name="heart-fill">{gameData.wishlist.name.name} ({gameData.publishedIn})</Icon>
             {:else}
               <Icon name="star">{gameData.primaryName} ({gameData.publishedIn})</Icon>
             {/if}
@@ -198,6 +198,11 @@
     </Titlebar>
     <Flex gap="16px" fl.wr="wrap">
       <Text subtitle>
+        {#if gameData.wishlist !== undefined}
+          <Flex direction="row" gap="8px">
+            Added to Wishlist <strong>{gameData.wishlist.wishlist.name}</strong> by <strong>{gameData.wishlist.wishlister.name}</strong>
+          </Flex>
+        {/if}
         {#if gameData.names.length > 1}
           <Flex direction="row" gap="8px">
             <strong>Also Known As:</strong>

@@ -16,31 +16,49 @@ import { imgMapAssetListURLs, imgGetAssetURL  } from '#lib/image';
 
 
 /* Given an input object with any number of keys, find all of the keys which
- * start with "sub_" and move them into a sub-object with a key named subKey.
+ * start with the given prefix and move them into a sub-object with a key named
+ * subKey. As keys are moved, the prefix is removed from them.
  *
- * As keys are moved, the "sub_" prefix is removed from them. */
-function splitSubKeys(inputObject, subKey) {
+ * The returned object is scanned for boolean fields that need to be swapped to
+ * actual booleans and adjusted as needed. */
+function splitSubKeys(inputObject, prefix, subKey) {
+  prefix ??= 'sub_';
+
   // If the input object is undefined, then we don't want to do anything special
   // here.
   if (inputObject === undefined) {
     return;
   }
 
-  // Set up the object that will hold the sub keys.
-  const subObject = {}
-  subObject[subKey] = {}
+  // Set up a new return object into which we will accumulate our result; we
+  // also need to add in a new key for the provided subKey that is an empty
+  // object; all keys in the input object that have the given prefix will be
+  // moved into that subKey object.
+  const result = {}
+  result[subKey] = {}
 
-  // Ensure that all boolean fields represent properly/
+  // Adjust all of the top level boolean fields that are currently stored as
+  // int values.
   inputObject = mapIntFieldsToBool(inputObject);
-  return Object.entries(inputObject).reduce((acc, [key, value]) => {
-    if (key.startsWith("sub_")) {
-      acc[subKey][key.substr(4)] = value;
+
+  // Reduce the keys in the input object down into the result; any keys that
+  // have the given prefix have it stripped and they're placed into the subKey
+  // object; everything else remains as it is.
+  Object.entries(inputObject).reduce((acc, [key, value]) => {
+    if (key.startsWith(prefix)) {
+      acc[subKey][key.substr(prefix.length)] = value;
     } else {
       acc[key] = value;
     }
 
     return acc;
-  }, subObject);
+  }, result);
+
+  // Ensure that the keys we just added to the subKey (if any) that are booleans
+  // are fixed; they would have been skipped previously due to their prefix.
+  result[subKey] = mapIntFieldsToBool(result[subKey])
+
+  return result;
 }
 
 
@@ -285,10 +303,14 @@ export async function dbGameNames(ctx, idOrSlug) {
 export async function dbGameHouseholdSpecifics(ctx, fetchOwnership, gameId, householdId) {
   const coreLookupData = [
     {
-      subKey: 'publisher',
+      prefixes: {
+        'pub_': 'publisher',
+        'name_': 'name',
+      },
       sql: `
-        SELECT B.id, B.name, B.isPrimary, C.id as sub_id, C.bggId as sub_bggId,
-               C.slug as sub_slug, C.name as sub_name, C.metaType as sub_metaType
+        SELECT B.id as name_id, B.name as name_name, B.isPrimary as name_isPrimary,
+               C.id as pub_id, C.bggId as pub_bggId,
+               C.slug as pub_slug, C.name as pub_name, C.metaType as pub_metaType
           FROM GameOwners as A,
                GameName as B,
                GameMetadata as C
@@ -301,18 +323,26 @@ export async function dbGameHouseholdSpecifics(ctx, fetchOwnership, gameId, hous
       dataSpecifics: 'get_ownership'
     },
     {
-      subKey: 'wishlister',
+      prefixes: {
+        'user_': 'wishlister',
+        'wish_': 'wishlist',
+        'name_': 'name',
+      },
       sql: `
-        SELECT B.id, B.name, B.isPrimary,
-               C.id as sub_id, C.displayName as sub_name
+        SELECT B.id as name_id, B.name as name_name, B.isPrimary as name_isPrimary,
+               C.id as user_id, C.displayName as user_name,
+               D.id as wish_id, D.name as wish_name,
+               D.slug as wish_slug, D.isRoot as wish_isRoot
           FROM WishlistContents as A,
                GameName as B,
-               User as C
+               User as C,
+               Wishlist as D
          WHERE A.gameId = ?1
            AND A.householdId = ?2
            AND A.addedByUserId = C.id
            AND A.gameId = B.gameId
            AND A.gameName = B.id
+           AND A.wishlistId = D.id
       `,
       dataSpecifics: 'get_wishlist'
     }
@@ -323,7 +353,19 @@ export async function dbGameHouseholdSpecifics(ctx, fetchOwnership, gameId, hous
   const specificInfo = await ctx.env.DB.prepare(lookup.sql).bind(gameId, householdId).all();
   const result = getDBResult('dbGameHouseholdSpecifics', lookup.dataSpecifics, specificInfo);
 
-  return splitSubKeys(result[0], lookup.subKey) ?? null;
+  // Short circuit out if the result was no data
+  if (result.length === 0) {
+    return null;
+  }
+
+  // Scan over all of the potential prefixes and shift keys around into sub
+  // objects as configured above.
+  let data = result[0];
+  for (let [prefix, subKey] of Object.entries(lookup.prefixes)) {
+    data = splitSubKeys(data, prefix, subKey);
+  }
+
+  return data;
 }
 
 
