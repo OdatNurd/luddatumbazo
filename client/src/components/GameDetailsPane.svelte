@@ -73,9 +73,18 @@
   // The loaded game data for the page; populated on page load
   let gameData = undefined;
 
+  // The loaded list of known wishlists
+  let wishlists = undefined;
+
   // Fetch the game details; if the current user has a primary household, then
   // this should also fetch ownership information based on that.
   const loadData = async () => {
+    // HACK: This is loading the list of wishlists for every game details view;
+    //       it should instead be pulled from a store so that it only has to
+    //       load once.
+    const rawData = await api.household.wishlist.lists.list($user);
+    wishlists = rawData.map(e => ({ label: e.name, value: e.slug}));
+
     gameData = await api.game.details($user, slug);
   }
 
@@ -132,7 +141,8 @@
       description: 'Select owned game properties',
       game: gameData.slug,
       names: gameData.names.map(e => ({label: e.name, value: e.name })),
-      publishers: gameData.publisher.map(e => ({label: e.name, value: e.slug })),
+      optionLabel: 'Publisher',
+      options: gameData.publisher.map(e => ({label: e.name, value: e.slug })),
     }
   }
 
@@ -144,6 +154,8 @@
       description: 'Select desired game name',
       game: gameData.slug,
       names: gameData.names.map(e => ({label: e.name, value: e.name })),
+      optionLabel: 'Wishlist',
+      options: wishlists
     }
   }
 </script>

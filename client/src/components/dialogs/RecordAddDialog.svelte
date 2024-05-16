@@ -20,12 +20,13 @@
   export let game = '';
   export let dataType = 'collection';
   export let names = [];
-  export let publishers = [];
+  export let options = [];
+  export let optionLabel = 'Unknown';
 
   // ---------------------------------------------------------------------------
 
   let name;
-  let publisher;
+  let optionValue;
 
   // ---------------------------------------------------------------------------
 
@@ -35,8 +36,8 @@
       name = names[0].value;
     }
 
-    if (publishers.length > 0) {
-      publisher = publishers[0].value;
+    if (options.length > 0) {
+      optionValue = options[0].value;
     }
   });
 
@@ -44,7 +45,7 @@
   const abort = handler$(result => close({ result: null, dataType }));
 
   // Apply the data change, returning back the new record.
-  const apply = async(game, name, publisher) => {
+  const apply = async(game, name, optionValue) => {
     // TODO:
     // Disable the form buttons and controls
 
@@ -54,7 +55,7 @@
       : api.household.wishlist.contents.add
 
     // Perform the actual insertion and gather the result back.
-    const result = await action($user, game, name, publisher);
+    const result = await action($user, game, name, optionValue);
 
     // Send the loaded data back to the caller, along with it's type.
     close({ dataType, result });
@@ -72,10 +73,7 @@
   </Titlebar>
 
   <Select outline bind:value={name} color="@primary" options={names} label="Name" />
-  {#if dataType === 'collection'}
-    <Select outline bind:value={publisher} color="@primary" options={publishers} label="Publisher" />
-  {/if}
-
+  <Select outline bind:value={optionValue} color="@primary" {options} label={optionLabel} />
   <Titlebar slot="footer">
     <Button fill m="2px" w="44px" color="@danger" slot="menu" on:click={abort(null)}>
       <Icon name="x"></Icon>
@@ -83,7 +81,7 @@
 
     <Text slot="title" subtitle> {description} </Text>
 
-    <Button fill m="2px" w="44px" color="@secondary" slot="action" on:click={apply(game, name, publisher)}>
+    <Button fill m="2px" w="44px" color="@secondary" slot="action" on:click={apply(game, name, optionValue)}>
       <Icon name="check"></Icon>
     </Button>
   </Titlebar>

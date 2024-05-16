@@ -57,9 +57,9 @@ async function addToCollection (user, game, name, publisher) {
 
 /* Gather the household from the user record provided, and invoke the API to
  * include a record that says that the game with the given name and publisher
- * identifiers is a part of the household's wishlist. */
-async function addToWishlist(user, game, name) {
-  return rawGameDataAction(true, `/household/wishlist/${user?.household.slug}/add`, game, name);
+ * identifiers is a part of the household's wishlist with the given ID. */
+async function addToWishlist(user, game, name, wishlist) {
+  return rawGameDataAction(true, `/household/wishlist/${user?.household.slug}/add/${wishlist}`, game, name);
 }
 
 
