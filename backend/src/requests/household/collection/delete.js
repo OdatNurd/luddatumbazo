@@ -14,13 +14,13 @@ import { dbGameDetails } from '#db/game';
 /* Given information on a game, attempt to remove that game from the collection
  * of a specific household. */
 export async function reqHouseholdCollectionDelete(ctx) {
-  const { idOrSlug } = ctx.req.valid('param');
+  const { householdIdOrSlug } = ctx.req.valid('param');
   const { game } = ctx.req.valid('json');
 
   // Try to find the household we want to remove the game from.
-  const householdInfo = await dbHouseholdDetails(ctx, idOrSlug);
+  const householdInfo = await dbHouseholdDetails(ctx, householdIdOrSlug);
   if (householdInfo === null) {
-    return fail(ctx, `unable to locate household with id ${idOrSlug}`, 404);
+    return fail(ctx, `unable to locate household with id ${householdIdOrSlug}`, 404);
   }
 
   // Look up and validate the game that was specified in the request.

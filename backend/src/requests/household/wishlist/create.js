@@ -13,13 +13,13 @@ import { dbHouseholdDetails, dbWishlistDetails, dbWishlistCreate } from '#db/hou
 /* Attempt to create a new wishlist for a given hosuehold, using the name and
  * the slug provided for the record. */
 export async function reqHouseholdWishlistCreate(ctx) {
-  const { idOrSlug } = ctx.req.valid('param');
+  const { householdIdOrSlug } = ctx.req.valid('param');
   const { name, slug } = ctx.req.valid('json');
 
   // Try to find the household that we want to create a wishlist in.
-  const householdInfo = await dbHouseholdDetails(ctx, idOrSlug);
+  const householdInfo = await dbHouseholdDetails(ctx, householdIdOrSlug);
   if (householdInfo === null) {
-    return fail(ctx, `unable to locate household with id ${idOrSlug}`, 404);
+    return fail(ctx, `unable to locate household with id ${householdIdOrSlug}`, 404);
   }
 
   // Try to find a wishlist using this id for this household; if it exists, we

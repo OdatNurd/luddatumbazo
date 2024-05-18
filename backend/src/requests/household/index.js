@@ -28,7 +28,7 @@ household.put('/create',
 
 household.get('/list', ctx => _(ctx, reqHouseholdList));
 
-household.get('/details/:idOrSlug',
+household.get('/details/:householdIdOrSlug',
          validate('param', HouseholdLookupIDSchema),
          ctx => _(ctx, reqHouseholdDetails));
 

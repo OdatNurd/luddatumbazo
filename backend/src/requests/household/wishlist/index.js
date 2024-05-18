@@ -27,17 +27,17 @@ export const wishlist = new Hono();
 
 /* Manipulating the list of wishlists. */
 
-wishlist.put('/:idOrSlug/create',
+wishlist.put('/:householdIdOrSlug/create',
          validate('param', HouseholdLookupIDSchema),
          validate('json', WishlistCreateSchema),
          ctx => _(ctx, reqHouseholdWishlistCreate));
 
-wishlist.delete('/:idOrSlug/delete',
+wishlist.delete('/:householdIdOrSlug/delete',
          validate('param', HouseholdLookupIDSchema),
          validate('json', WishlistDeleteSchema),
          ctx => _(ctx, reqHouseholdWishlistDelete));
 
-wishlist.get('/:idOrSlug/list',
+wishlist.get('/:householdIdOrSlug/list',
          validate('param', HouseholdLookupIDSchema),
          ctx => _(ctx, reqHouseholdWishlistList));
 
@@ -49,7 +49,7 @@ wishlist.put('/:householdIdOrSlug/add/:wishlistIdOrSlug',
          validate('json', WishlistAddGameSchema),
          ctx => _(ctx, reqHouseholdWishlistAdd));
 
-wishlist.delete('/:idOrSlug/remove',
+wishlist.delete('/:householdIdOrSlug/remove',
          validate('param', HouseholdLookupIDSchema),
          validate('json', WishlistRemoveGameSchema),
          ctx => _(ctx, reqHouseholdWishlistRemove));

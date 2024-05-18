@@ -17,13 +17,13 @@ import { dbGameDetails, dbGameNames } from '#db/game';
  * game is to be added with, as well as which of the many possible names it
  * should take. */
 export async function reqHouseholdCollectionAdd(ctx) {
-  const { idOrSlug } = ctx.req.valid('param');
+  const { householdIdOrSlug } = ctx.req.valid('param');
   const { game, name, publisher } = ctx.req.valid('json');
 
   // Try to find the household we want to add the game to.
-  const householdInfo = await dbHouseholdDetails(ctx, idOrSlug);
+  const householdInfo = await dbHouseholdDetails(ctx, householdIdOrSlug);
   if (householdInfo === null) {
-    return fail(ctx, `unable to locate household with id ${idOrSlug}`, 404);
+    return fail(ctx, `unable to locate household with id ${householdIdOrSlug}`, 404);
   }
 
   // Look up and validate the game that was specified in the request.

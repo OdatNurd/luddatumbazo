@@ -21,16 +21,16 @@ import { reqHouseholdCollectionDelete } from '#requests/household/collection/del
 export const collection = new Hono();
 
 
-collection.get('/:idOrSlug/contents',
+collection.get('/:householdIdOrSlug/contents',
          validate('param', HouseholdLookupIDSchema),
          ctx => _(ctx, reqHouseholdCollectionContents));
 
-collection.put('/:idOrSlug/add',
+collection.put('/:householdIdOrSlug/add',
          validate('param', HouseholdLookupIDSchema),
          validate('json', CollectionAddGameSchema),
          ctx => _(ctx, reqHouseholdCollectionAdd));
 
-collection.delete('/:idOrSlug/remove',
+collection.delete('/:householdIdOrSlug/remove',
          validate('param', HouseholdLookupIDSchema),
          validate('json', CollectionRemoveGameSchema),
          ctx => _(ctx, reqHouseholdCollectionDelete));
