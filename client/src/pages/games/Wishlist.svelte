@@ -1,8 +1,9 @@
 <script>
-  import { LoadZone, Select } from "@axel669/zephyr";
+  import { Select } from "@axel669/zephyr";
 
   import { api } from '$api';
   import { user } from '$stores/user';
+  import { wishlists } from '$stores/wishlists';
 
   import SlugList from '$components/lists/SlugList.svelte';
 
@@ -29,10 +30,8 @@
 
 {#if $user.household}
   <h3>Games Wishlists for {$user.household?.name ?? 'Unknown'}</h3>
-  <LoadZone source={loadWishlistNames()} let:result>
-    <Select label="Wishlist" color="@primary" options={result} bind:value={loaderKey} />
-    <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} {loaderKey} />
-  </LoadZone>
+  <Select label="Wishlist" color="@primary" options={$wishlists} bind:value={loaderKey} />
+  <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} {loaderKey} />
 {:else}
   No wishlists; you do not belong to any households yet!
 {/if}

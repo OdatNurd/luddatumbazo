@@ -8,7 +8,7 @@ import { api } from '$api';
 /******************************************************************************/
 
 
-/* Create a custom readable userData store which contains information on the
+/* Create a custom readable server data store which contains information on the
  * server, such as its version information and the list of known game types for
  * session reports.
  *

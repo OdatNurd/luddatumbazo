@@ -4,6 +4,7 @@
 
   import { user } from '$stores/user';
   import { server } from '$stores/server';
+  import { wishlists } from '$stores/wishlists';
 
   import Router from 'svelte-spa-router';
   import { wrap } from 'svelte-spa-router/wrap'
@@ -52,6 +53,18 @@
     '/artist/:slug':    wrap({ component: MetaDetails, props: { metaType: 'artist'    } }),
     '/publisher/:slug': wrap({ component: MetaDetails, props: { metaType: 'publisher' } }),
   };
+
+  // Initiwlize all of the stores that start with data from a default query.
+  const init = async () => {
+    // Get information on the current user and the server
+    await Promise.all([user.init(), server.init()]);
+
+    // Using the loaded data for the user, if they have a household also load
+    // the list of wishlists.
+    if ($user.household) {
+      await wishlists.init($user.household);
+    }
+  }
 </script>
 
 <svelte:body use:wsx={{ "@theme": 'dark', "@app": true, "p": "8px" }} />
@@ -81,7 +94,7 @@
     <Modal component={NavDrawer} />
     <Modal component={ProfileDrawer} />
 
-    <LoadZone source={Promise.all([user.init(), server.init()])}>
+    <LoadZone source={init()}>
       <Router {routes} />
       <svelte:fragment slot="error" let:error>
         {error}
