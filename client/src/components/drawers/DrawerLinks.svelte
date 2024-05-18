@@ -1,6 +1,8 @@
 <script>
   import { Link } from "@axel669/zephyr"
 
+  import { user } from '$stores/user';
+
   // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
@@ -17,13 +19,16 @@
 
   // ---------------------------------------------------------------------------
 
+  // Check if a link should be disabled; disable any link that requires a
+  // household if there is not a household on the current user.
+  const disabled = link => link.requiresHousehold === true ? !($user.household) : false;
 </script>
 
 {#each links as link (link.value) }
   {#if link.label === '---'}
     <hr />
   {:else}
-    <Link href={link.value} button outline on:click={close}>{link.label}</Link>
+    <Link disabled={disabled(link)} href={link.value} button outline on:click={close}>{link.label}</Link>
   {/if}
 {/each}
 

@@ -18,18 +18,21 @@
   // ---------------------------------------------------------------------------
 
   let loaderKey = params.wishlist ?? 'root';
-  const loader = async wishlistSlug => api.household.wishlist.contents.get($user, wishlistSlug);
+  const loader = async wishlistSlug => api.household.wishlist.contents.get($user.household, wishlistSlug);
 
   const loadWishlistNames = async () => {
-    const rawData = await api.household.wishlist.lists.list($user);
+    const rawData = await api.household.wishlist.lists.list($user.household);
     return rawData.map(e => ({ label: e.name, value: e.slug}));
   }
 
 </script>
 
-
-<h3>Games Wishlists for {$user?.household.name ?? 'Unknown'}</h3>
-<LoadZone source={loadWishlistNames()} let:result>
-  <Select label="Wishlist" color="@primary" options={result} bind:value={loaderKey} />
-  <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} {loaderKey} />
-</LoadZone>
+{#if $user.household}
+  <h3>Games Wishlists for {$user.household?.name ?? 'Unknown'}</h3>
+  <LoadZone source={loadWishlistNames()} let:result>
+    <Select label="Wishlist" color="@primary" options={result} bind:value={loaderKey} />
+    <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} {loaderKey} />
+  </LoadZone>
+{:else}
+  No wishlists; you do not belong to any households yet!
+{/if}

@@ -61,7 +61,12 @@
     <Titlebar slot="header">
       <Flex p="0px" gap="0px" slot="title">
         <Text title> Luddatumbazo! </Text>
-        <Text subtitle>Current User: {$user.displayName ?? 'Unknown'}, Household: {$user?.household?.name ?? 'Unknown'}</Text>
+        <Text subtitle>
+          Current User: {$user.displayName ?? 'Unknown'}
+          {#if $user.household !== null}
+            , Household: {$user.household?.name ?? 'Unknown'}
+          {/if}
+        </Text>
       </Flex>
 
       <EntryButton this={Modal} component={NavDrawer} m="2px" w="44px" color="@primary" slot="menu" disabled={$user.name === undefined}>

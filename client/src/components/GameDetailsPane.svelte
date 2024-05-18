@@ -82,8 +82,11 @@
     // HACK: This is loading the list of wishlists for every game details view;
     //       it should instead be pulled from a store so that it only has to
     //       load once.
-    const rawData = await api.household.wishlist.lists.list($user);
-    wishlists = rawData.map(e => ({ label: e.name, value: e.slug}));
+
+    if ($user.household) {
+      const rawData = await api.household.wishlist.lists.list($user.household);
+      wishlists = rawData.map(e => ({ label: e.name, value: e.slug}));
+    }
 
     gameData = await api.game.details($user, slug);
   }
@@ -91,7 +94,7 @@
   // Remove a game from the owned collection for this household.
   const removeFromCollection = async (game) => {
     // Delete the record from the DB
-    await api.household.collection.remove($user, game);
+    await api.household.collection.remove($user.household, game);
 
     // Remove any ownership record we have for this game and trigger a refresh.
     delete gameData.owned;
@@ -101,7 +104,7 @@
   // Remove a game from the wishlist for this household.
   const removeFromWishlist = async (game) => {
     // Delete the record from the DB
-    await api.household.wishlist.contents.remove($user, game);
+    await api.household.wishlist.contents.remove($user.household, game);
 
     // Remove any wishlist record we have for this game and trigger a refresh.
     delete gameData.wishlist;
@@ -293,7 +296,7 @@
       </tab-content>
 
 
-      {#if $user.household !== undefined}
+      {#if $user.household}
         <Grid gr.cols="1fr 1fr" gap="8px">
           {#if gameData.owned !== undefined}
             <Button fill color="@primary" on:click={removeFromCollection(gameData.slug)}>

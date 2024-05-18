@@ -13,8 +13,10 @@ import { raw } from './fetch.js';
  * If a user is provided, then the primary household of that user is used to
  * determine any ownership and wishlist data for that particular game. */
 async function gameDetails (user, game) {
+  // Set household to undefined when the user is not specified, it does not have
+  // a household, or the household has no slug.
   return raw.get(`/game/${game}`, {
-      household: user?.household.slug
+      household: user?.household?.slug
     });
 }
 

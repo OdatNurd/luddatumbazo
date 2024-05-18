@@ -55,7 +55,7 @@
       : api.household.wishlist.contents.add
 
     // Perform the actual insertion and gather the result back.
-    const result = await action($user, game, name, optionValue);
+    const result = await action($user.household, game, name, optionValue);
 
     // Send the loaded data back to the caller, along with it's type.
     close({ dataType, result });

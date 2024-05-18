@@ -4,8 +4,12 @@
 
   import SlugList from '$components/lists/SlugList.svelte';
 
-  const loader = async () => api.household.collection.contents($user);
+  const loader = async () => api.household.collection.contents($user.household);
 </script>
 
-<h3>Games owned by {$user?.household.name ?? 'Unknown'}</h3>
-<SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} />
+{#if $user.household}
+  <h3>Games owned by {$user.household?.name ?? 'Unknown'}</h3>
+  <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} />
+{:else}
+  No collection; you do not belong to any households yet!
+{/if}
