@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { getDBResult } from '#db/common';
+import { getDBResult, mapIntFieldsToBool } from '#db/common';
 
 
 /******************************************************************************/
@@ -20,7 +20,8 @@ export async function dbUserHouseholds(ctx, userId) {
        AND B.userId = ?
   `).bind(userId).all();
 
-  return getDBResult('dbUserHouseholds', 'find_households', householdLookup);
+  const households = getDBResult('dbUserHouseholds', 'find_households', householdLookup);
+  return households.map(e => mapIntFieldsToBool(e));
 }
 
 
@@ -42,7 +43,7 @@ async function addHouseholds(ctx, userInfo) {
   const households = await dbUserHouseholds(ctx, userInfo.id);
 
   // Set in the primary (if any), and the overall list.
-  userInfo.household = households.find(h => h.isPrimary === 1) ?? null;
+  userInfo.household = households.find(h => h.isPrimary) ?? null;
   userInfo.households = households
 
   return userInfo;
