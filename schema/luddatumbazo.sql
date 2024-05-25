@@ -313,3 +313,23 @@ CREATE INDEX idx_session_game_names ON SessionReport(gameId, gameName);
 
 
 --------------------------------------------------------------------------------
+
+
+DROP TABLE IF EXISTS GameAssets;
+CREATE TABLE GameAssets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+  gameId INTEGER NOT NULL REFERENCES Game(id),
+
+  mimetype TEXT NOT null,
+  filename TEXT NOT null,
+
+  createdAt TIME NOT NULL,
+  updatedAt TIME DEFAULT(NULL),
+
+  bucketKey TEXT UNIQUE NOT NULL
+);
+CREATE INDEX idx_game_asset_bucketKey ON GameAssets(bucketKey);
+
+
+--------------------------------------------------------------------------------
