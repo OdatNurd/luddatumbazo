@@ -44,3 +44,34 @@ export async function dbGameAssetUpload(ctx, gameId, r2Key, filename, mimetype) 
 
   return getDBResult('dbGameAssetInsert', 'record_asset', result)[1];
 }
+
+
+/******************************************************************************/
+
+
+/* Return back a list of all of the assets associated with the game with the
+ * given internal ID, or if the gameId is undefined, all assets in the list.
+ *
+ * In either case, the result may be an empty list, but it will always be a
+ * list. */
+export async function dGameAssetList(ctx, gameId) {
+  let stmt, op;
+  if (gameId === undefined) {
+    op = 'find_all_assets';
+    stmt = ctx.env.DB.prepare(`
+      SELECT * FROM GameAssets
+    `);
+  } else {
+    op = 'find_game_assets';
+    stmt = ctx.env.DB.prepare(`
+      SELECT * FROM GameAssets
+      WHERE gameId = ?
+    `).bind(gameId);
+  }
+
+  const result = await stmt.all();
+  return getDBResult('dbGameAssetList', op, result);
+}
+
+
+/******************************************************************************/

@@ -9,6 +9,7 @@ import { GameLookupIDSchema } from "#schema/game";
 import { AssetUploadSchema } from '#schema/asset';
 
 import { reqGameAssetUpload } from '#requests/asset/upload';
+import { reqGameAssetList } from '#requests/asset/list';
 
 
 /******************************************************************************/
@@ -18,6 +19,13 @@ import { reqGameAssetUpload } from '#requests/asset/upload';
  * map all routes in. */
 export const asset = new Hono();
 
+
+asset.get('/list',
+        ctx => _(ctx, reqGameAssetList));
+
+asset.get('/game/:idOrSlug/list',
+        validate('param', GameLookupIDSchema),
+        ctx => _(ctx, reqGameAssetList));
 
 asset.post('/game/:idOrSlug/upload',
         validate('param', GameLookupIDSchema),

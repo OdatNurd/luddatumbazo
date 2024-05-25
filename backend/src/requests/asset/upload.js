@@ -22,7 +22,7 @@ export async function reqGameAssetUpload(ctx) {
   // we got is correct, since we need the slug to be valid.
   const gameInfo = await dbGameLookup(ctx, idOrSlug);
   if (gameInfo === null) {
-    return fail(ctx, `invalid request: no such game '${idOrSlug}'`);
+    return fail(ctx, `invalid request: no such game '${idOrSlug}'`, 404);
   }
 
   // The name of the file that's being uploaded can be overridden in the body
