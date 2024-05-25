@@ -8,6 +8,7 @@ import { guest } from '#requests/guest/index';
 import { image } from '#requests/image/index';
 import { session } from '#requests/session/index';
 import { game } from '#requests/game/index';
+import { asset } from '#requests/asset/index';
 
 import { server_info } from '#requests/server_info/index';
 
@@ -116,6 +117,16 @@ app.route(`${APIV1}/session`, session);
  ******************************************************************************/
 
 app.route(`${APIV1}/images`, image);
+
+
+/*******************************************************************************
+ * Asset Requests
+ *******************************************************************************
+ * Items in this section are related to putting data into R2 buckets and other
+ * related asset queries.
+ ******************************************************************************/
+
+app.route(`${APIV1}/asset`, asset);
 
 
 /******************************************************************************/
