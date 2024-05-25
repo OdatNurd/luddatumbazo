@@ -10,6 +10,8 @@ import { session } from '#requests/session/index';
 import { game } from '#requests/game/index';
 import { asset } from '#requests/asset/index';
 
+import { file } from '#requests/file/index';
+
 import { server_info } from '#requests/server_info/index';
 
 import { authorization } from '#lib/middleware';
@@ -127,6 +129,16 @@ app.route(`${APIV1}/images`, image);
  ******************************************************************************/
 
 app.route(`${APIV1}/asset`, asset);
+
+
+/*******************************************************************************
+ * Static Asset Routes
+ *******************************************************************************
+ * Items in this section have routes that mount on the root of the router and
+ * are used to serve static assets, such as files stored in R2.
+ ******************************************************************************/
+
+app.route('/', file);
 
 
 /******************************************************************************/

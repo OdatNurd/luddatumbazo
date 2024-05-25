@@ -8,7 +8,10 @@ compatibility_date = "2023-12-01"
 # Here the zone_id comes from the API section of the overview page of a site in
 # the CF Dashboard.
 workers_dev = false
-route = { pattern = "luddatumbazo.odatnurd.net/api/*", zone_id="228f86abc5bc8b04719dc4671eb09dc0" }
+routes = [
+    { pattern = "luddatumbazo.odatnurd.net/api/*", zone_id="228f86abc5bc8b04719dc4671eb09dc0" },
+    { pattern = "luddatumbazo.odatnurd.net/files/*", zone_id="228f86abc5bc8b04719dc4671eb09dc0" }
+]
 
 # For CF Images setup, set up an account and make a note of your account hash,
 # which is readily visible in the images dashboard. Then, set up a page rewrite
@@ -79,6 +82,15 @@ CF_ACCOUNT_ID = 'd8cc4339c920f6d32079a5b483603063'
 # sites are both at the same origin (e.g. production); for localhost, this needs
 # to be overridden in .dev.vars instead.
 GAME_UI_ORIGIN = '*'
+
+################################################################################
+# A S S E T S
+################################################################################
+
+# When serving static assets out of the configured R2 bucket, this sets what the
+# s-maxage value is set to in the returned Cache-Control header, which controls
+# how long the response is cached at the CDN edge
+ASSET_S_MAXAGE = '3600'
 
 
 ################################################################################
