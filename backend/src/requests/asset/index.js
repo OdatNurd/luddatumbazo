@@ -6,9 +6,10 @@ import { Hono } from 'hono'
 import { wrappedRequest as _, validate } from '#requests/common';
 
 import { GameLookupIDSchema } from "#schema/game";
-import { AssetUploadSchema } from '#schema/asset';
+import { AssetUploadSchema, AssetDeleteSchema } from '#schema/asset';
 
 import { reqGameAssetUpload } from '#requests/asset/upload';
+import { reqGameAssetDelete } from '#requests/asset/delete';
 import { reqGameAssetList } from '#requests/asset/list';
 
 
@@ -32,5 +33,8 @@ asset.post('/game/:idOrSlug/upload',
         validate('form', AssetUploadSchema),
         ctx => _(ctx, reqGameAssetUpload));
 
+asset.delete('/',
+        validate('json', AssetDeleteSchema),
+        ctx => _(ctx, reqGameAssetDelete));
 
 /******************************************************************************/

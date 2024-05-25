@@ -75,3 +75,22 @@ export async function dGameAssetList(ctx, gameId) {
 
 
 /******************************************************************************/
+
+
+/* Try to delete from the list of assets the item with the provided key; since
+ * the key is unique, no other information is required in order to find the
+ * record.
+ *
+ * The return value is the number of rows that were deleted, which is either 0
+ * or 1. */
+export async function dbAssetDelete(ctx, key) {
+  const result = await ctx.env.DB.prepare(`
+    DELETE FROM GameAssets
+    WHERE bucketKey = ?
+  `).bind(key).all();
+
+  return result.meta.changes;
+}
+
+
+/******************************************************************************/

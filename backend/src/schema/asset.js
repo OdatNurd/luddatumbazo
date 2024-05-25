@@ -19,3 +19,15 @@ export const AssetUploadSchema = z.object({
 
 
 /******************************************************************************/
+
+
+/* When deleting assets, the body should contain the key to delete; there is
+ * no specification for what the asset may be attached to (e.g. a game) since
+ * the key is unique already. */
+export const AssetDeleteSchema = z.object({
+  key: z.string()
+});
+
+
+
+/******************************************************************************/
