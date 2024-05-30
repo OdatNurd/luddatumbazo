@@ -14,6 +14,7 @@
   import BackButton from '$components/BackButton.svelte';
   import ExpansionList from '$components/lists/ExpansionList.svelte';
   import MetaDataList from '$components/MetaDataList.svelte';
+  import GameAssetList from '$components/lists/FileList.svelte';
 
   import GameImage from '$components/GameImage.svelte';
 
@@ -78,6 +79,13 @@
   // this should also fetch ownership information based on that.
   const loadData = async () => {
     gameData = await api.game.details($user, slug);
+  }
+
+  // Load the list of files that are associated with this game, if any.
+  // TODO: This is currently (and stupidly) fetching the list every time the
+  // tab is focused.
+  const loadFileData = async () => {
+    return await api.game.assets.list(slug);
   }
 
   // Remove a game from the owned collection for this household.
@@ -249,7 +257,7 @@
         {:else if coreValue === "description"}
           {@html gameData.description}
         {:else}
-          No files available yet.
+          <GameAssetList loader={loadFileData}/>
         {/if}
       </tab-content>
 
