@@ -17,7 +17,7 @@ import { getDBResult } from '#db/common';
  * occurs; the time is used as an update if the key was previously used.
  *
  * Details on the new or updated key are returned back. */
-export async function dbGameAssetUpload(ctx, gameId, r2Key, filename, mimetype) {
+export async function dbGameAssetUpload(ctx, gameId, r2Key, filename, mimetype, description) {
   // Calculate the current time, to be used as a timestamp for the creation or
   // update as appropriate.
   const timestamp = new Date().toISOString();
@@ -27,14 +27,15 @@ export async function dbGameAssetUpload(ctx, gameId, r2Key, filename, mimetype) 
     // Attempt to insert the new record; if the bucket key was already in use
     // then update the existing record with the new data instead.
     ctx.env.DB.prepare(`
-      INSERT INTO GameAssets (gameId, mimetype, filename, createdAt, bucketKey)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO GameAssets (gameId, mimetype, filename, description, createdAt, bucketKey)
+      VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT(bucketKey) DO UPDATE
         SET gameId = excluded.gameId,
             mimetype = excluded.mimetype,
             filename = excluded.filename,
+            description = excluded.description,
             updatedAt = excluded.createdAt;
-    `).bind(gameId, mimetype, filename, timestamp, r2Key),
+    `).bind(gameId, mimetype, filename, description, timestamp, r2Key),
 
     // Fetch the record that we just inserted or updated
     ctx.env.DB.prepare(`

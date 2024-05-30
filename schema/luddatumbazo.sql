@@ -321,8 +321,10 @@ CREATE TABLE GameAssets (
 
   gameId INTEGER NOT NULL REFERENCES Game(id),
 
-  mimetype TEXT NOT null,
-  filename TEXT NOT null,
+  mimetype TEXT NOT NULL,
+  filename TEXT NOT NULL,
+
+  description TEXT NOT NULL,
 
   createdAt TIME NOT NULL,
   updatedAt TIME DEFAULT(NULL),

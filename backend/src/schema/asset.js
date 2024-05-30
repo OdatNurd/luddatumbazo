@@ -14,6 +14,7 @@ export const AssetUploadSchema = z.object({
   // This field is expected to be a File, which only happens during a form
   // upload with a file input in it.
   file: z.instanceof(File),
+  description: z.string(),
   filename: z.string().optional()
 });
 

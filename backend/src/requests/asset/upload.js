@@ -16,7 +16,7 @@ import { dbGameAssetUpload } from "#db/asset";
  * with. */
 export async function reqGameAssetUpload(ctx) {
   const { idOrSlug } = ctx.req.valid('param');
-  const { file, filename } = ctx.req.valid('form');
+  const { file, filename, description } = ctx.req.valid('form');
 
   // In order to construct the final asset key we need to verify that the game
   // we got is correct, since we need the slug to be valid.
@@ -58,7 +58,7 @@ export async function reqGameAssetUpload(ctx) {
   }
 
   // Record the upload in the database and return back the record for the asset.
-  const asset = await dbGameAssetUpload(ctx, gameInfo.id, key, file.name, file.type);
+  const asset = await dbGameAssetUpload(ctx, gameInfo.id, key, file.name, file.type, description);
   return success(ctx, `uploaded asset ${uploadedFileName}`, asset);
 }
 
