@@ -1,12 +1,20 @@
 {
   "name": "luddatumbazo-ui",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "private": true,
+  "description": "The Luddatumbazo front end; a CloudFlare Pages Site",
   "type": "module",
+  "repository": "https://github.com/OdatNurd/luddatumbazo",
+  "author": {
+    "name": "OdatNurd",
+    "email": "odatnurd@gmail.com",
+    "url": "https://odatnurd.net"
+  },
   "scripts": {
-    "getCommit": "node getCurrentCommit.js",
+    "run": "wrangler pages dev",
     "watch": "npm run getCommit && rollup -c -w",
-    "build": "npm run getCommit && rollup -c"
+    "build": "npm run getCommit && rollup -c",
+    "getCommit": "node getCurrentCommit.js"
   },
   "devDependencies": {
     "@axel669/asuid": "^0.2.1",
@@ -19,7 +27,8 @@
     "@rollup/plugin-terser": "^0.4.4",
     "rollup": "^4.17.2",
     "rollup-plugin-delete": "^2.0.0",
-    "rollup-plugin-svelte": "^7.2.0"
+    "rollup-plugin-svelte": "^7.2.0",
+    "wrangler": "^3.57.2"
   },
   "dependencies": {
     "@axel669/zephyr": "^0.3.8",

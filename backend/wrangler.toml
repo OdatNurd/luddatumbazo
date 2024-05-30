@@ -36,6 +36,11 @@ routes = [
 # which case the request will require a key to be provided; the app currently
 # makes all images public however).
 
+
+################################################################################
+# B I N D I N G S
+################################################################################
+
 # Bind our database; the name and ID come from the D1 page and are visible when
 # you create DB or go back to look at one.
 [[d1_databases]]
@@ -49,11 +54,12 @@ database_id = "12c1daa5-0e78-4a83-ae4e-6785dd098005"
 binding = "BUCKET"
 bucket_name = "luddatumbazo-assets"
 
-[vars]
 
 ################################################################################
 # G E N E R A L
 ################################################################################
+
+[vars]
 
 # The Account ID of the CF account that is running the worker; this is visible
 # from the same place as the zone_id for the worker router; it's specific to an
@@ -82,6 +88,7 @@ CF_ACCOUNT_ID = 'd8cc4339c920f6d32079a5b483603063'
 # sites are both at the same origin (e.g. production); for localhost, this needs
 # to be overridden in .dev.vars instead.
 GAME_UI_ORIGIN = '*'
+
 
 ################################################################################
 # A S S E T S
@@ -206,7 +213,10 @@ CF_VARIANT_SMALLBOXART = 'entry'
 # CF_ACCESS_TOKEN = 'putsecrettokenhere'
 
 
-# Local dev server settings
+################################################################################
+# D E V   S E R V E R   S E T T I N G S
+################################################################################
+
 [dev]
 ip = "localhost"
 port = 8000

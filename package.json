@@ -1,19 +1,19 @@
 {
   "name": "luddatumbazo",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "private": true,
   "description": "A home grown tool for tracking board game ownership and plays",
-  "repository": "https://github.com/OdatNurd/devember-2023",
+  "type": "module",
+  "repository": "https://github.com/OdatNurd/luddatumbazo",
   "author": {
     "name": "OdatNurd",
     "email": "odatnurd@gmail.com",
     "url": "https://odatnurd.net"
   },
-  "private": true,
-  "type": "module",
   "scripts": {
-    "dev:seed-db": "cd backend && npm run dev:seed-db",
+    "local:seed-db": "cd backend && npm run local:seed-db",
+    "client:run": "cd client && npm run run",
     "client:watch": "cd client && npm run watch",
-    "client:run": "wrangler pages dev --compatibility-date=2023-12-01 --port=3000 client/public/",
     "client:build": "cd client && npm run build",
     "backend:run": "cd backend && wrangler dev",
     "backend:deploy": "cd backend && wrangler deploy",
@@ -22,7 +22,6 @@
   },
   "devDependencies": {
     "jose": "^5.2.0",
-    "toml": "^3.0.0",
-    "wrangler": "^3.55.0"
+    "toml": "^3.0.0"
   }
 }
