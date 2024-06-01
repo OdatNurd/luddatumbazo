@@ -15,6 +15,7 @@
   import ExpansionList from '$components/lists/ExpansionList.svelte';
   import MetaDataList from '$components/MetaDataList.svelte';
   import GameAssetList from '$components/lists/FileList.svelte';
+  import SessionList from '$components/lists/SessionList.svelte';
 
   import GameImage from '$components/GameImage.svelte';
 
@@ -82,6 +83,13 @@
   // tab is focused.
   const loadFileData = async () => {
     return await api.game.assets.list(slug);
+  }
+
+  // Load the list of files that are associated with this game, if any.
+  // TODO: This is currently (and stupidly) fetching the list every time the
+  // tab is focused.
+  const loadSessionData = async () => {
+    return await api.session.list(true, slug);
   }
 
   // Remove a game from the owned collection for this household.
@@ -276,6 +284,8 @@
               Log a Session
             </Button>
           </Grid>
+
+          <SessionList loader={loadSessionData} pageSize={5} color="@secondary" showGames={false} />
         {/if}
       </tab-content>
 
