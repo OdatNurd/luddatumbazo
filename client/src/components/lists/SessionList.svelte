@@ -21,6 +21,16 @@
   // short session objects.
   export let loader = async () => [];
 
+  // When this property is true, the table displays an extra column that has a
+  // link to the game that the session is for.
+  export let showGames = true;
+
+  // Set the number of rows that are visible in the data table per page
+  export let pageSize = 20;
+
+  // The color to use for the table
+  export let color = "@primary";
+
   // ---------------------------------------------------------------------------
 
   // The links in all of the table entries link to either sessions by ID or
@@ -50,14 +60,16 @@
 
 
 <LoadZone source={loader()} let:result>
-  <DataTable data={result} pageSize={20} color="@primary">
+  <DataTable data={result} pageSize={showGames ? pageSize : Math.min(result.length, pageSize)} {color}>
     <svelte:fragment slot="header">
       <TH w="64px" sort={sorts.natural("id")}>ID</TH>
       <TH w="32px"></TH>
       <TH w="32px"></TH>
       <TH filter={filters.text("title")} sort={sorts.natural("title")}>Name</TH>
       <TH sort={dateSort("sessionBegin")} w="64px">Date</TH>
-      <TH w="64px">Game</TH>
+      {#if showGames === true}
+        <TH w="64px">Game</TH>
+      {/if}
     </svelte:fragment>
     <svelte:fragment slot="row" let:row>
       <td>{row.id}</td>
@@ -76,11 +88,13 @@
       <td>
         {DateTime.fromISO(row.sessionBegin).toLocaleString(DateTime.DATETIME_SHORT)}
       </td>
-      <td>
-        <Link href="{game(row.slug)}">
-          <Icon name="link-45deg"></Icon>
-        </Link>
-      </td>
+      {#if showGames === true}
+        <td>
+          <Link href="{game(row.slug)}">
+            <Icon name="link-45deg"></Icon>
+          </Link>
+        </td>
+      {/if}
     </svelte:fragment>
   </DataTable>
 
