@@ -29,10 +29,6 @@
 
   // ---------------------------------------------------------------------------
 
-  // Cause the router to jump to the list of sessions for this particular
-  // game.
-  const sessionList = () => push(`/game/${slug}/sessions`);
-
   // The core data that is available on the game; the list of images that are
   // available, the list of attached files, and the descriptive text for the
   // game.
@@ -278,15 +274,6 @@
             <Button fill color="@secondary" disabled on:click={() => push('/')}>
               <Icon p.r="4px" name="plus"></Icon>
               Log a Session
-            </Button>
-
-            <Button fill color="@secondary" disabled={!gameData.hasSessions} on:click={sessionList}>
-              <Icon p.r="4px" name="clipboard-data"></Icon>
-              {#if gameData.hasSessions}
-                View Session Reports
-              {:else}
-                No logged sessions
-              {/if}
             </Button>
           </Grid>
         {/if}
