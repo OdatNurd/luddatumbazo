@@ -14,7 +14,7 @@
   import BackButton from '$components/BackButton.svelte';
   import ExpansionList from '$components/lists/ExpansionList.svelte';
   import MetaDataList from '$components/MetaDataList.svelte';
-  import GameAssetList from '$components/lists/FileList.svelte';
+  import FileList from '$components/lists/FileList.svelte';
   import SessionList from '$components/lists/SessionList.svelte';
 
   import GameImage from '$components/GameImage.svelte';
@@ -261,7 +261,7 @@
         {:else if coreValue === "description"}
           {@html gameData.description}
         {:else}
-          <GameAssetList loader={loadFileData}/>
+          <FileList loader={loadFileData} gameName={gameData.primaryName} gameSlug={gameData.slug} />
         {/if}
       </tab-content>
 
