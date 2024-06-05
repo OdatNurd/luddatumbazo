@@ -24,6 +24,11 @@
   // An object that represents the asset record for this particular file.
   export let file;
 
+  // The Modal system will invoke the function with this property  when a click
+  // is registered on the area outside of the dialog box. We take that
+  // opportunity to close the dialog.
+  export const cancel = () => close({ result: null });
+
 
   // ---------------------------------------------------------------------------
 
@@ -35,7 +40,7 @@
 
 </script>
 
-<Dialog >
+<Dialog w.min="fit-content">
   <Titlebar slot="header">
     <Text slot="title" title> File Details: {file.bucketKey.split('/').at(-1)} </Text>
 
