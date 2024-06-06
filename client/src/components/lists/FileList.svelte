@@ -31,7 +31,7 @@
 
   // The game that the files in the list are for;
   export let gameName = undefined;
-  export let gameSlug = undefined;
+
 
   // ---------------------------------------------------------------------------
 
@@ -61,7 +61,7 @@
         </Link>
       </td>
       <td>
-        <EntryButton this={Modal} component={FileInfoDialog} props={{ file: row, gameName, gameSlug }}>
+        <EntryButton this={Modal} component={FileInfoDialog} props={{ file: row, gameName }}>
           <Icon name="info-circle-fill"></Icon>
         </EntryButton>
       </td>

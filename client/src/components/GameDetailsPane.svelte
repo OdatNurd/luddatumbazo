@@ -262,7 +262,7 @@
         {:else if coreValue === "description"}
           {@html gameData.description}
         {:else}
-          <FileList loader={loadFileData} gameName={gameData.primaryName} gameSlug={gameData.slug} />
+          <FileList loader={loadFileData} gameName={gameData.primaryName} />
         {/if}
       </tab-content>
 

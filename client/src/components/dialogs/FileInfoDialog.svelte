@@ -17,10 +17,8 @@
   // that we can invoke in order to close the drawer.
   export let close;
 
-  // These properties tell us the name of the game that the file the dialog is
-  // for is using, and what it's slug is.
+  // The name of the game that the file the dialog is for.
   export let gameName;
-  export let gameSlug;
 
   // An object that represents the asset record for this particular file.
   export let file;
