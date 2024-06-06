@@ -1,5 +1,6 @@
 <script>
   import { Button, Grid, Dialog, Titlebar, Text, Icon, Select, handler$ } from "@axel669/zephyr";
+  import IconButton from '$components/IconButton';
 
   import { DateTime } from 'luxon';
 
@@ -66,10 +67,10 @@
 
     <Text p.t="8px" b.t="1.5px solid gray">{file.description}</Text>
 
-    <Button outline color="@secondary" on:click={navigator.clipboard.writeText(fileLink(file.bucketKey))}>
-      <Icon p.r="4px" name="copy"></Icon>
-      Copy File Link
-    </Button>
+    <IconButton outline color="@secondary"
+                caption="Copy File Link" clickedCaption="Link Copied!"
+                icon="copy" clickedIcon="check-circle"
+                on:click={() => navigator.clipboard.writeText(fileLink(file.bucketKey))} />
   </Grid>
 
 </Dialog>

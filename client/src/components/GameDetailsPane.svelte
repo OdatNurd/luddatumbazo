@@ -9,6 +9,7 @@
 
   import RecordAddDialog from '$components/dialogs/RecordAddDialog.svelte';
 
+  import IconButton from '$components/IconButton.svelte';
   import BGGLink from '$components/links/BGGLink.svelte';
   import WishlistLink from '$components/links/WishlistLink.svelte';
   import BackButton from '$components/BackButton.svelte';
@@ -279,10 +280,7 @@
 
         {:else}
           <Grid gr.cols="repeat(auto-fit, minmax(0, 1fr))" gap="8px">
-            <Button fill color="@secondary" disabled on:click={() => push('/')}>
-              <Icon p.r="4px" name="plus"></Icon>
-              Log a Session
-            </Button>
+            <IconButton disabled fill color="@secondary" icon="plus" caption="Log a Session" />
           </Grid>
 
           <SessionList loader={loadSessionData} pageSize={5} color="@secondary" showGames={false} />
@@ -293,10 +291,11 @@
       {#if $user.household}
         <Grid gr.cols="1fr 1fr" gap="8px">
           {#if gameData.owned !== undefined}
-            <Button fill color="@primary" on:click={removeFromCollection(gameData.slug)}>
-              <Icon p.r="4px" name="star"></Icon>
-              Remove from Collection
-            </Button>
+            <IconButton fill color="@primary"
+                        caption="Remove from Collection"
+                        icon="star"
+                        on:click={removeFromCollection(gameData.slug)} />
+
           {:else}
 
             <EntryButton fill color="@primary" this={Modal} component={RecordAddDialog} props={collectionProps} on:entry={addDialogResult}>
@@ -305,10 +304,11 @@
             </EntryButton>
 
             {#if gameData.wishlist !== undefined}
-              <Button fill color="@secondary" on:click={removeFromWishlist(gameData.slug)}>
-                <Icon p.r="4px" name="heart"></Icon>
-                Remove from Wishlist
-              </Button>
+              <IconButton fill color="@secondary"
+                          caption="Remove from Wishlist"
+                          icon="heart"
+                          on:click={removeFromWishlist(gameData.slug)} />
+
             {:else}
               <EntryButton fill color="@secondary" this={Modal} component={RecordAddDialog} props={wishlistProps} on:entry={addDialogResult}>
                 <Icon p.r="4px" name="heart-fill"></Icon>
