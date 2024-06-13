@@ -1,5 +1,5 @@
 <script>
-  import { Button, Grid, Dialog, Titlebar, Text, Icon, Select, handler$ } from "@axel669/zephyr";
+  import { Button, Grid, Dialog, Titlebar, Text, Icon, Select, Toast, handler$ } from "@axel669/zephyr";
   import IconButton from '$components/IconButton';
 
   import { DateTime } from 'luxon';
@@ -37,7 +37,23 @@
   // Generate a link to an asset file given its bucket key
   const fileLink = key => `${process.env.GAME_API_ROOT_URI}${key}`;
 
+  // The toaster element; this is used to fire toasts.
+  let toaster = null;
+
+  // Fire a toast to provide extra feedback that a link was copied, and then
+  // actually copy the link to the clipboard.
+  const copyLink = () => {
+    toaster.show(1000, {
+      message: 'Link Copied!',
+      color: '@secondary',
+      icon: 'copy'
+    });
+    navigator.clipboard.writeText(fileLink(file.bucketKey));
+  }
+
 </script>
+
+<Toast bind:this={toaster} position="tc" />
 
 <Dialog w.min="fit-content">
   <Titlebar slot="header">
@@ -68,7 +84,7 @@
     <IconButton outline color="@secondary"
                 caption="Copy File Link" clickedCaption="Link Copied!"
                 icon="copy" clickedIcon="check-circle"
-                on:click={() => navigator.clipboard.writeText(fileLink(file.bucketKey))} />
+                on:click={copyLink} />
   </Grid>
 
 </Dialog>

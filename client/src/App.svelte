@@ -65,7 +65,7 @@
   }
 </script>
 
-<svelte:body use:wsx={{ "@theme": 'dark', "@app": true, "p": "8px" }} />
+<svelte:body use:wsx={{ "@@theme": 'dark', "@@app": true, "p": "8px" }} />
 
 <Screen>
   <Paper>

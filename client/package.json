@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@axel669/asuid": "^0.2.1",
-    "@axel669/rollup-copy-static": "^0.1.2",
+    "@axel669/rollup-copy-static": "^0.2.0",
     "@axel669/rollup-dollar-path": "^0.1.0",
     "@axel669/rollup-html-input": "^0.1.2",
     "@rollup/plugin-commonjs": "^25.0.7",
@@ -31,7 +31,7 @@
     "wrangler": "^3.57.2"
   },
   "dependencies": {
-    "@axel669/zephyr": "^0.3.8",
+    "@axel669/zephyr": "^0.4.5",
     "dotenv": "^16.4.5",
     "luxon": "^3.4.4",
     "svelte": "^4.2.15",

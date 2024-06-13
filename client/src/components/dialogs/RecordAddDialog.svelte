@@ -1,5 +1,5 @@
 <script>
-  import { Button, Dialog, Titlebar, Text, Icon, Select, handler$ } from "@axel669/zephyr";
+  import { AsyncButton, Button, Dialog, Titlebar, Text, Icon, Select, handler$ } from "@axel669/zephyr";
 
   import { user } from '$stores/user';
 
@@ -72,8 +72,8 @@
     </Button>
   </Titlebar>
 
-  <Select outline bind:value={name} color="@primary" options={names} label="Name" />
-  <Select outline bind:value={optionValue} color="@primary" {options} label={optionLabel} />
+  <Select bind:value={name} color="@primary" options={names} label="Name" />
+  <Select bind:value={optionValue} color="@primary" {options} label={optionLabel} />
   <Titlebar slot="footer">
     <Button fill m="2px" w="44px" color="@danger" slot="menu" on:click={abort(null)}>
       <Icon name="x"></Icon>
@@ -81,8 +81,8 @@
 
     <Text slot="title" subtitle> {description} </Text>
 
-    <Button fill m="2px" w="44px" color="@secondary" slot="action" on:click={apply(game, name, optionValue)}>
+    <AsyncButton fill m="2px" w="44px" color="@secondary" slot="action" handler={async () => apply(game, name, optionValue)}>
       <Icon name="check"></Icon>
-    </Button>
+    </AsyncButton>
   </Titlebar>
 </Dialog>

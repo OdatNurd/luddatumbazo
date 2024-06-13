@@ -10,6 +10,7 @@
   import RecordAddDialog from '$components/dialogs/RecordAddDialog.svelte';
 
   import IconButton from '$components/IconButton.svelte';
+  import AsyncIconButton from '$components/AsyncIconButton.svelte';
   import BGGLink from '$components/links/BGGLink.svelte';
   import WishlistLink from '$components/links/WishlistLink.svelte';
   import BackButton from '$components/BackButton.svelte';
@@ -253,7 +254,7 @@
         </Flex>
       </Text>
 
-      <Tabs bind:value={coreValue} options={coreOptions} color="@primary" solid />
+      <Tabs bind:value={coreValue} options={coreOptions} color="@primary" fill />
       <tab-content>
         {#if coreValue === "images"}
           <Flex fl.wr="wrap">
@@ -266,7 +267,7 @@
         {/if}
       </tab-content>
 
-      <Tabs bind:value={dataValue} options={dataOptions} color="@secondary" solid />
+      <Tabs bind:value={dataValue} options={dataOptions} color="@secondary" fill />
       <tab-content>
         {#if dataValue === "production"}
           <MetaDataList {gameData} keyList={productionMetaKeys} />
@@ -291,10 +292,10 @@
       {#if $user.household}
         <Grid gr.cols="1fr 1fr" gap="8px">
           {#if gameData.owned !== undefined}
-            <IconButton fill color="@primary"
-                        caption="Remove from Collection"
-                        icon="star"
-                        on:click={removeFromCollection(gameData.slug)} />
+            <AsyncIconButton fill color="@primary"
+                             caption="Remove from Collection"
+                             icon="star"
+                             handler={async () => removeFromCollection(gameData.slug)} />
 
           {:else}
 
@@ -304,10 +305,10 @@
             </EntryButton>
 
             {#if gameData.wishlist !== undefined}
-              <IconButton fill color="@secondary"
-                          caption="Remove from Wishlist"
-                          icon="heart"
-                          on:click={removeFromWishlist(gameData.slug)} />
+              <AsyncIconButton fill color="@secondary"
+                               caption="Remove from Wishlist"
+                               icon="heart"
+                               handler={async () => removeFromWishlist(gameData.slug)} />
 
             {:else}
               <EntryButton fill color="@secondary" this={Modal} component={RecordAddDialog} props={wishlistProps} on:entry={addDialogResult}>

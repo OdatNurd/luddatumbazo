@@ -12,7 +12,7 @@ import terser from '@rollup/plugin-terser';
 
 import $path from '@axel669/rollup-dollar-path';
 import asuid from "@axel669/asuid/node";
-import copyStatic from '@axel669/rollup-copy-static';
+import copy from '@axel669/rollup-copy-static';
 import html from '@axel669/rollup-html-input';
 
 import { commitReference } from './commitReference.js';
@@ -56,7 +56,7 @@ const buildList = [
     plugins: [
       // Copy over the contents of the static folder; this happens only once
       // when running a "watch" build.
-      copyStatic("static"),
+      copy("static"),
 
       // Remove the bundled JS output to make the generated output during
       // development easier to grok.
