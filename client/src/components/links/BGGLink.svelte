@@ -1,8 +1,6 @@
 <script>
   import { Link, Icon } from "@axel669/zephyr";
 
-  import { pop } from 'svelte-spa-router';
-
 
   // ---------------------------------------------------------------------------
   // Properties

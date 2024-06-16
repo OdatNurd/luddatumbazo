@@ -1,8 +1,6 @@
 <script>
   import { Button, EntryButton, Flex, Grid, Icon, Link, LoadZone, Modal, Paper, Tabs, Text, Titlebar } from "@axel669/zephyr";
 
-  import { push } from 'svelte-spa-router';
-
   import { api } from '$api';
   import { user } from '$stores/user';
   import { wishlists } from '$stores/wishlists';

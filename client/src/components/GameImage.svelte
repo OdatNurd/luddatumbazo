@@ -1,5 +1,4 @@
 <script>
-  import { pop } from 'svelte-spa-router';
 
   // ---------------------------------------------------------------------------
   // Properties
