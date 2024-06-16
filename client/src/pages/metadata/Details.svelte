@@ -16,14 +16,14 @@
   // Receive paramters from the URL route that landed us on this page; this
   // will contain the slug that we need in order to display the details pane.
   // The paramters come from the named arguments in the route itself.
-  export let params = {};
+  export let routeInfo = {};
 
   // ---------------------------------------------------------------------------
 
   // Default the name on the page to the slug that was used to load it, until
   // the data is fully loaded. This could also be smarter and just not display
   // anything there to start with.
-  let name = params.slug;
+  let name = routeInfo.params.slug;
 
   // Our loader queries the details for all games that are associated with the
   // provided metadata.

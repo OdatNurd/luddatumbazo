@@ -14,11 +14,11 @@
   // Receive paramters from the URL route that landed us on this page; this
   // will contain the slug that we need in order to display the details pane.
   // The paramters come from the named arguments in the route itself.
-  export let params = {};
+  export let routeInfo = {};
 
   // ---------------------------------------------------------------------------
 
-  let loaderKey = params.wishlist ?? 'root';
+  let loaderKey = routeInfo.params.wishlist ?? 'root';
   const loader = async wishlistSlug => api.household.wishlist.contents.get($user.household, wishlistSlug);
 
   const loadWishlistNames = async () => {

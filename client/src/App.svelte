@@ -1,13 +1,10 @@
 <script>
   import { wsx } from "@axel669/zephyr";
-  import { LoadZone, Screen, Modal, Paper, Grid, Flex, Titlebar, Text, Link, EntryButton, Icon } from "@axel669/zephyr";
+  import { LoadZone, Route, Screen, Modal, Paper, Grid, Flex, Titlebar, Text, Link, EntryButton, Icon } from "@axel669/zephyr";
 
   import { user } from '$stores/user';
   import { server } from '$stores/server';
   import { wishlists } from '$stores/wishlists';
-
-  import Router from 'svelte-spa-router';
-  import { wrap } from 'svelte-spa-router/wrap'
 
   import NavDrawer from '$components/drawers/NavDrawer.svelte';
   import ProfileDrawer from '$components/drawers/ProfileDrawer.svelte';
@@ -25,34 +22,7 @@
   import MetaList from '$pages/metadata/List.svelte';
   import MetaDetails from '$pages/metadata/Details.svelte';
 
-  // The list of routes that control what pages in the application exist, and
-  // what page fragments should be rendered when that path is active.
-  const routes = {
-    '/': Home,
-
-    '/games': GameList,
-    '/game/:slug': GameDetails,
-
-    '/games/owned': OwnedGameList,
-    '/games/wishlisted/:wishlist?': WishlistedGameList,
-
-    '/sessions': SessionList,
-    '/session/:id': SessionDetails,
-
-    '/categories': wrap({ component: MetaList, props: { metaType: 'category'  } }),
-    '/mechanics':  wrap({ component: MetaList, props: { metaType: 'mechanic'  } }),
-    '/designers':  wrap({ component: MetaList, props: { metaType: 'designer'  } }),
-    '/artists':    wrap({ component: MetaList, props: { metaType: 'artist'    } }),
-    '/publishers': wrap({ component: MetaList, props: { metaType: 'publisher' } }),
-
-    '/category/:slug':  wrap({ component: MetaDetails, props: { metaType: 'category'  } }),
-    '/mechanic/:slug':  wrap({ component: MetaDetails, props: { metaType: 'mechanic'  } }),
-    '/designer/:slug':  wrap({ component: MetaDetails, props: { metaType: 'designer'  } }),
-    '/artist/:slug':    wrap({ component: MetaDetails, props: { metaType: 'artist'    } }),
-    '/publisher/:slug': wrap({ component: MetaDetails, props: { metaType: 'publisher' } }),
-  };
-
-  // Initiwlize all of the stores that start with data from a default query.
+  // Initialize all of the stores that start with data from a default query.
   const init = async () => {
     // Get information on the current user and the server
     await Promise.all([user.init(), server.init()]);
@@ -93,7 +63,30 @@
     <Modal component={ProfileDrawer} />
 
     <LoadZone source={init()}>
-      <Router {routes} />
+      <Route path="/" component={Home} exact={true} />
+
+      <Route path="games" component={GameList} exact={true} />
+      <Route path="game/:slug" component={GameDetails} />
+
+      <Route path="games/owned" component={OwnedGameList} />
+      <Route path="games/wishlisted" component={WishlistedGameList} exact={true} />
+      <Route path="games/wishlisted/:wishlist" component={WishlistedGameList} />
+
+      <Route path="sessions" component={SessionList} />
+      <Route path="session/:id" component={SessionDetails} />
+
+      <Route path="categories" component={MetaList} props={ { metaType: "category" } } />
+      <Route path="mechanics" component={MetaList} props={ { metaType: "mechanic" } } />
+      <Route path="designers" component={MetaList} props={ { metaType: "designer" } } />
+      <Route path="artists" component={MetaList} props={ { metaType: "artist" } } />
+      <Route path="publishers" component={MetaList} props={ { metaType: "publisher" } } />
+
+      <Route path="category/:slug" component={MetaDetails} props={ { metaType: "category" } } />
+      <Route path="mechanic/:slug" component={MetaDetails} props={ { metaType: "mechanic" } } />
+      <Route path="designer/:slug" component={MetaDetails} props={ { metaType: "designer" } } />
+      <Route path="artist/:slug" component={MetaDetails} props={ { metaType: "artist" } } />
+      <Route path="publisher/:slug" component={MetaDetails} props={ { metaType: "publisher" } } />
+
       <svelte:fragment slot="error" let:error>
         {error}
       </svelte:fragment>

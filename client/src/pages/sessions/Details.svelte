@@ -19,7 +19,7 @@
   // Receive paramters from the URL route that landed us on this page; this
   // will contain the slug that we need in order to display the details pane.
   // The paramters come from the named arguments in the route itself.
-  export let params = {};
+  export let routeInfo = {};
 
   // ---------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@
   // until the data is fully loaded.
   let name = 'Unknown';
   let slug = 'unknown';
-  let title = params.id;
+  let title = routeInfo.params.id;
 
   // Using the props that we were given, generate out the kinds of links that
   // the table needs to generate internal links to the data that it contains.
@@ -39,7 +39,7 @@
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
   const loadData = async () => {
-    const result = await api.session.details(params.id);
+    const result = await api.session.details(routeInfo.params.id);
 
     name = result.name;
     slug = result.slug;
