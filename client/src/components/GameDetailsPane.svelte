@@ -1,5 +1,5 @@
 <script>
-  import { Button, EntryButton, Flex, Grid, Icon, Link, LoadZone, Modal, Paper, Tabs, Text, Titlebar } from "@axel669/zephyr";
+  import { Button, EntryButton, Confirm, Flex, Grid, Icon, Link, LoadZone, Modal, Paper, Tabs, Text, Titlebar } from "@axel669/zephyr";
 
   import { api } from '$api';
   import { user } from '$stores/user';
@@ -68,6 +68,21 @@
 
   // ---------------------------------------------------------------------------
 
+  // The reference to the modal dialog box that we use to get the user to
+  // confirm that they want to remove items from their wishlist or collection.
+  let confirmModal = null;
+
+  // Parameters used to confirm the removal of a game from a collection.
+  const confirmCollectionRemoval = {
+      title: "Are you Sure?",
+      message: "Remove this game from your collection?"
+  };
+
+  // Parameters used to confirm the removal of a game from a wishlist.
+  const confirmWishlistRemoval = {
+      title: "Are you Sure?",
+      message: "Remove this game from your wishlist?"
+  };
 
   // The loaded game data for the page; populated on page load
   let gameData = undefined;
@@ -94,6 +109,11 @@
 
   // Remove a game from the owned collection for this household.
   const removeFromCollection = async (game) => {
+    // Confirm the removal with the user before we proceed.
+    if ((await confirmModal.show(confirmCollectionRemoval)) === false) {
+      return;
+    }
+
     // Delete the record from the DB
     await api.household.collection.remove($user.household, game);
 
@@ -104,6 +124,11 @@
 
   // Remove a game from the wishlist for this household.
   const removeFromWishlist = async (game) => {
+    // Confirm the removal with the user before we proceed.
+    if ((await confirmModal.show(confirmWishlistRemoval)) === false) {
+      return;
+    }
+
     // Delete the record from the DB
     await api.household.wishlist.contents.remove($user.household, game);
 
@@ -173,6 +198,7 @@
 </BackButton>
 
 <Modal component={RecordAddDialog} />
+<Modal component={Confirm} bind:this={confirmModal} />
 
 <LoadZone source={loadData()}>
   <Paper>
