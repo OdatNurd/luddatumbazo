@@ -3,7 +3,8 @@
 
 import { success, fail } from '#requests/common';
 
-import { dbHouseholdDetails, dbWishlistList } from '#db/household';
+import { dbHouseholdDetails } from '#db/household';
+import { dbWishlistList } from '#db/wishlist';
 
 
 /******************************************************************************/

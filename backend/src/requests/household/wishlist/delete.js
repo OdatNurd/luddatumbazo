@@ -4,7 +4,8 @@
 import { success, fail } from '#requests/common';
 
 
-import { dbHouseholdDetails, dbWishlistDetails, dbWishlistDelete } from '#db/household';
+import { dbHouseholdDetails } from '#db/household';
+import { dbWishlistDetails, dbWishlistDelete } from '#db/wishlist';
 import { dbGameDetails } from '#db/game';
 
 
