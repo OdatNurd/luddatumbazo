@@ -19,21 +19,18 @@ const imagesURI = ctx => `https://api.cloudflare.com/client/v4/accounts/${ctx.en
 /******************************************************************************/
 
 
-/* Given an image record that would be passed to cfImagesURLUpload() in order
- * to upload an image, check with CloudFlare to see if such an image already
- * exists in the image list or not.
+/* Given the Cloudflare Images name of an image (the name that you see in the
+ * dashboard in Images Overview, e.g 'luddatumbazo/game/game293.png'), look
+ * up the details for that image via the CF Images API and return the result
+ * back.
  *
- * If it does, an object that represents the upstream information on the image
- * will be returned back. This includes the original filename and URL, the list
- * of variants, as well as the metadata associated with the image.
+ * The return value is null if there is no such image, or the details of the
+ * image if it was found.
  *
- * If there is no such image, null is returned back. */
-export async function cfImagesLookup(ctx, image) {
-  // Determine what the internal name for the image provided would be, if we
-  // were to upload it.
-  const uploadPath = imgConstructAssetPath(image.bggURL, 'game', `game${image.gameId}`);
-
-  // TO fetch details about the image, we need to create an authorized GET
+ * This can raise an exception, but only on errors such as transport issues and
+ * the like; CF reports errors regarding missing images by returning null. */
+export async function cfRawImageLookup(ctx, imageName) {
+  // To fetch details about the image, we need to create an authorized GET
   // request with our images token.
   const options = {
     method: 'GET',
@@ -44,7 +41,7 @@ export async function cfImagesLookup(ctx, image) {
 
   // Request that Cloudflare tell us information about the image; this will only
   // reject if there is a network issue, which will be caught by the caller.
-  const res = await fetch(`${imagesURI(ctx)}/${uploadPath}`, options);
+  const res = await fetch(`${imagesURI(ctx)}/${imageName}`, options);
   const result = await res.json();
 
   // If the request failed, gather all of the error messages and use them to
@@ -62,11 +59,33 @@ export async function cfImagesLookup(ctx, image) {
 /******************************************************************************/
 
 
+/* Given an image record that would be passed to cfImagesURLUpload() in order
+ * to upload an image, check with CloudFlare to see if such an image already
+ * exists in the image list or not.
+ *
+ * If it does, an object that represents the upstream information on the image
+ * will be returned back. This includes the original filename and URL, the list
+ * of variants, as well as the metadata associated with the image.
+ *
+ * If there is no such image, null is returned back. */
+export async function cfImagesLookup(ctx, image) {
+  // Determine what the internal name for the image provided would be, if we
+  // were to upload it.
+  const uploadPath = imgConstructAssetPath(image.bggURL, 'game', image.slug);
+
+  // Defer to the raw helper to do the lookup.
+  return cfRawImageLookup(ctx, uploadPath);
+}
+
+
+/******************************************************************************/
+
+
 /* Given an image record of the form:
  *   {
- *     "id": 1,
  *     "gameId": 1,
  *     "bggId": 7865,
+ *     "slug": "10-days-in-africa",
  *     "bggURL": "https://cf.geekdo-images.com/B1Bji6N...../0x0/pic1229634.jpg"
  *   }
  *
@@ -104,7 +123,7 @@ export async function cfImagesURLUpload(ctx, image, checkForExisting) {
 
   // Using the original BGG URL, create the full path to the file that we will
   // serve the image from under our own domain.
-  const uploadPath = imgConstructAssetPath(image.bggURL, 'game', `game${image.gameId}`);
+  const uploadPath = imgConstructAssetPath(image.bggURL, 'game', image.slug);
 
   // Store in the image metadata information about where the image came from and
   // what it represents.

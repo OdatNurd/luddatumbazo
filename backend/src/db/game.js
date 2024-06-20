@@ -544,7 +544,12 @@ export async function dbGameInsert(ctx, gameData) {
       // and then attempt to upload it; we also tell it to check if it has
       // already uploaded the image before proceeding. If it has, the correct
       // data is directly returned back.
-      const imageMeta = { gameId: id, bggId: gameData.bggId, bggURL: gameData.image };
+      const imageMeta = {
+        gameId: id,
+        bggId: gameData.bggId,
+        bggURL: gameData.image,
+        slug: gameData.slug
+      };
       const data = await cfImagesURLUpload(ctx, imageMeta, true);
 
       // Update the game record we just inserted so that it knows about the new
