@@ -41,7 +41,7 @@ export async function reqGameAssetUpload(ctx) {
   // Put the file into the bucket; this stores the mime type in the stored HTTP
   // metadata fields in the R2 object, and also includes as custom metadata the
   // fact that this file is a game related asset and the game that it's for.
-  const result = await ctx.env.BUCKET.put(key, file, {
+  const result = await ctx.env.ASSETS.put(key, file, {
     'httpMetadata': { 'contentType': file.type },
     'customMetadata': {
       assetType: 'game',

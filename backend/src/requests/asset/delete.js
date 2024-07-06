@@ -24,9 +24,9 @@ export async function reqGameAssetDelete(ctx) {
 
   // Check to see if this object exists in the bucket or not; if it is, then
   // delete it from the bucket before proceeding.
-  const bucketCheck = await ctx.env.BUCKET.head(key);
+  const bucketCheck = await ctx.env.ASSETS.head(key);
   if (bucketCheck !== null) {
-    await ctx.env.BUCKET.delete(key);
+    await ctx.env.ASSETS.delete(key);
   }
 
   // If nothing was deleted from the database AND the key was not present in

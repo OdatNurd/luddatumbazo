@@ -29,11 +29,11 @@ export const success = (ctx, message, result, status) => {
  *
  * This generates a JSON return value with the given HTTP status, with an
  * error reason that is the reason specified. */
-export const fail = (ctx, message, status) => {
+export const fail = (ctx, message, status, result) => {
   status ??= 400;
 
   ctx.status(status);
-  return ctx.json({ success: false, message });
+  return ctx.json({ success: false, message, data: result });
 }
 
 

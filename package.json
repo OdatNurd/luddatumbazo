@@ -15,8 +15,8 @@
     "client:run": "cd client && npm run run",
     "client:watch": "cd client && npm run watch",
     "client:build": "cd client && npm run build",
-    "backend:run": "cd backend && wrangler dev",
-    "backend:deploy": "cd backend && wrangler deploy",
+    "backend:run": "cd backend && npm run run",
+    "backend:deploy": "cd backend && npm run deploy",
     "db:dump": "node ./tools/dumpLocalDB.js",
     "jwt:create": "node ./tools/makeJwt.js"
   },

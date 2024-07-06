@@ -41,18 +41,18 @@ routes = [
 # B I N D I N G S
 ################################################################################
 
+# Bind our data buckets; the name is specified by you when you create the bucket
+# initially.
+r2_buckets = [
+    { binding = "ASSETS", bucket_name = "luddatumbazo-assets" }
+]
+
 # Bind our database; the name and ID come from the D1 page and are visible when
 # you create DB or go back to look at one.
 [[d1_databases]]
 binding = "DB"
-database_name = "luddatumbazo-db"
-database_id = "12c1daa5-0e78-4a83-ae4e-6785dd098005"
-
-# Bind our data bucket; the name is specified by you when you create the bucket
-# initially.
-[[r2_buckets]]
-binding = "BUCKET"
-bucket_name = "luddatumbazo-assets"
+database_name = "luddatumbazo"
+database_id = "8b684b74-2299-4276-a0b2-f6f6d3a65526"
 
 
 ################################################################################

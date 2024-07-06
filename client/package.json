@@ -11,7 +11,7 @@
     "url": "https://odatnurd.net"
   },
   "scripts": {
-    "run": "wrangler pages dev",
+    "run": "wrangler pages dev --persist-to ~/.config/.wrangler/state/",
     "watch": "npm run getCommit && rollup -c -w",
     "build": "npm run getCommit && rollup -c",
     "getCommit": "node getCurrentCommit.js"

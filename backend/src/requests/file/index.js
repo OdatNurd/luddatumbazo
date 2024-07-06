@@ -30,7 +30,7 @@ async function reqGameAssetDownload(ctx) {
 
   // Grab the object from the bucket; we can 404 if it's not found.
   // Fetch the object from the bucket.
-  const r2Object = await ctx.env.BUCKET.get(ctx.req.path);
+  const r2Object = await ctx.env.ASSETS.get(ctx.req.path);
   if (r2Object === null) {
     return ctx.notFound();
   }

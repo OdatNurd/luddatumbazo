@@ -194,7 +194,7 @@ CREATE TABLE WishlistContents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
     householdId INTEGER NOT NULL REFERENCES Household(id),
-    wishlistId INTEGER NOT NULL REFERENCES Wishlist(id),
+    wishlistId INTEGER NOT NULL REFERENCES WishList(id),
 
     gameId INTEGER NOT NULL REFERENCES Game(id),
     gameName INTEGER NOT NULL REFERENCES GameName(id),

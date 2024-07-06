@@ -60,7 +60,7 @@ const displayDBResultLog = (where, action, result, isBatch) => {
   // Since Cloudflare are dicks, the result set doesn't match the docs when you
   // do local dev, so we need to patch that in so that stuff doesn't blow up in
   // our faces.
-  const duration = `[${m.duration}ms]`;
+  const duration = `[${m.duration ?? '?'}ms]`;
   const status = `${result.success ? 'success' : 'failure'}`;
   const stats = `last_row_id=${m.last_row_id}, reads=${m.rows_read ?? '?'}, writes=${m.rows_written ?? '?'}`
 
