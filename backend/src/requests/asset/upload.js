@@ -33,7 +33,7 @@ export async function reqGameAssetUpload(ctx) {
   // The R2 key to store the file consists of a path that indicates that this is
   // a file associated with a game with a particular slug, followed by the
   // name of the file that's being uploaded.
-  const key = `/files/game/${gameInfo.slug}/${uploadedFileName}`;
+  const key = `files/game/${gameInfo.slug}/${uploadedFileName}`;
 
   console.log(`incoming file is ${file.name} of type ${file.type}`);
   console.log(`storing '${uploadedFileName}' to '${key}'`);

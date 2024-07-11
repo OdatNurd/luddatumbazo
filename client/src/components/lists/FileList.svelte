@@ -40,7 +40,7 @@
   const loadData = async param => filter (await loader(param));
 
   // Generate a link to an asset file given its bucket key
-  const fileLink = key => `${process.env.GAME_API_ROOT_URI}${key}`;
+  const fileLink = key => `${process.env.GAME_API_ROOT_URI}/${key}`;
 
 </script>
 
