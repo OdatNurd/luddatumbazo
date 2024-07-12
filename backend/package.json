@@ -16,7 +16,7 @@
     "deploy": "wrangler deploy"
   },
   "devDependencies": {
-    "wrangler": "^3.57.2"
+    "wrangler": "^3.63.1"
   },
   "imports": {
     "#db/*": "./src/db/*.js",

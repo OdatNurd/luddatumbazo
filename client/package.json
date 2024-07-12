@@ -28,7 +28,7 @@
     "rollup": "^4.17.2",
     "rollup-plugin-delete": "^2.0.0",
     "rollup-plugin-svelte": "^7.2.0",
-    "wrangler": "^3.57.2"
+    "wrangler": "^3.63.1"
   },
   "dependencies": {
     "@axel669/zephyr": "^0.4.5",
