@@ -1,3 +1,6 @@
+--------------------------------------------------------------------------------
+
+
 DROP TABLE IF EXISTS GameExpansion;
 CREATE TABLE GameExpansion (
     id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,

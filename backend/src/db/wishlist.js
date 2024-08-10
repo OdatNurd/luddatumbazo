@@ -56,7 +56,7 @@ export async function dbWishlistList(ctx, householdId) {
  * Details on the new wishlist will be returned back. */
 export async function dbWishlistCreate(ctx, householdId, name, slug) {
   const result = await ctx.env.DB.prepare(`
-    INSERT INTO WIshlist
+    INSERT INTO Wishlist
       (householdId, name, slug)
     VALUES (?1, ?2, ?3);
   `).bind(householdId, name, slug).all();
