@@ -50,11 +50,11 @@
         </Text>
       </Flex>
 
-      <EntryButton this={Modal} component={NavDrawer} m="2px" w="44px" color="@primary" slot="menu" disabled={$user.name === undefined}>
+      <EntryButton this={Modal} ground component={NavDrawer} m="2px" w="44px" color="@primary" slot="menu" disabled={$user.name === undefined}>
         <Icon name="dice-3-fill"></Icon>
       </EntryButton>
 
-      <EntryButton this={Modal} component={ProfileDrawer} m="2px" w="44px" color="@primary" slot="action">
+      <EntryButton this={Modal} ground component={ProfileDrawer} m="2px" w="44px" color="@primary" slot="action">
         <Icon name="person-fill"></Icon>
       </EntryButton>
     </Titlebar>
