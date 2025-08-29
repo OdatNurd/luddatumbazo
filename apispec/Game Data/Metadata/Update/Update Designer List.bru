@@ -1,0 +1,24 @@
+meta {
+  name: Update Designer List
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{luddatumbazo}}/api/v1/game/meta/designer/update
+  body: json
+  auth: none
+}
+
+body:json {
+  [
+  		{
+  			"name": "Poopy McGee",
+        "slug": "tits"
+  		}
+  	]
+}
+
+settings {
+  encodeUrl: true
+}

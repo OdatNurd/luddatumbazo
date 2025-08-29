@@ -1,0 +1,21 @@
+meta {
+  name: Delete Wishlist
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{luddatumbazo}}/api/v1/household/wishlist/the-martins/delete
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "wishlist": "poops"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

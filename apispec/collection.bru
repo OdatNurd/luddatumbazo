@@ -1,0 +1,11 @@
+headers {
+  CF-Access-Client-Id: {{clientId}}
+  CF-Access-Client-Secret: {{clientSecret}}
+}
+
+script:pre-request {
+  const jwt = bru.getEnvVar('jwt');
+  if (jwt !== undefined) {
+    req.setHeader('Cookie', `CF_Authorization=${jwt}; Expires=Wed, 27 Jan 2099 21:53:00 GMT; Path=/; Secure; HttpOnly; SameSite=none; Domain=localhost`);
+  }
+}

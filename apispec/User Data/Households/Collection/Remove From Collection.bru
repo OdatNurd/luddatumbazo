@@ -1,0 +1,21 @@
+meta {
+  name: Remove From Collection
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{luddatumbazo}}/api/v1/household/collection/the-martins/remove
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "game": "tiny-towns"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

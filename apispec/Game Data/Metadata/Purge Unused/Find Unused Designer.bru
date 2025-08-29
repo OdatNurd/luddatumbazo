@@ -1,0 +1,15 @@
+meta {
+  name: Find Unused Designer
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{luddatumbazo}}/api/v1/game/meta/designer/purge
+  body: none
+  auth: none
+}
+
+settings {
+  encodeUrl: true
+}

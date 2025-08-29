@@ -1,0 +1,22 @@
+meta {
+  name: Add to Wishlist
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{luddatumbazo}}/api/v1/household/wishlist/the-martins/add/best-with-group
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "game": "tiny-towns",
+    "name": "Tiny Towns"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

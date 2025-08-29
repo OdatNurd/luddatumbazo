@@ -1,0 +1,20 @@
+meta {
+  name: Add BGG Game List
+  type: http
+  seq: 10
+}
+
+put {
+  url: {{luddatumbazo}}/api/v1/game/data/details/bgg/add/list
+  body: json
+  auth: none
+}
+
+body:json {
+  [331787, 334888, 201921]
+
+}
+
+settings {
+  encodeUrl: true
+}

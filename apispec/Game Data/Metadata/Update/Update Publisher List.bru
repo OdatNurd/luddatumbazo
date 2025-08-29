@@ -1,0 +1,23 @@
+meta {
+  name: Update Publisher List
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{luddatumbazo}}/api/v1/game/meta/publisher/update
+  body: json
+  auth: none
+}
+
+body:json {
+  [
+  			{
+  				"name": "Cowley Coating Corp."
+  			}
+  		]
+}
+
+settings {
+  encodeUrl: true
+}

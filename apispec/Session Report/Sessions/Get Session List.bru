@@ -1,0 +1,15 @@
+meta {
+  name: Get Session List
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{luddatumbazo}}/api/v1/session/list?games=azul,castles-of-burgundy&reverse=false
+  body: none
+  auth: none
+}
+
+settings {
+  encodeUrl: true
+}

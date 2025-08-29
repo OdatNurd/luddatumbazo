@@ -1,0 +1,47 @@
+meta {
+  name: Add Session
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{luddatumbazo}}/api/v1/session/add
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "sessionBegin": "2024-07-07T21:26:35.000Z",
+      "sessionEnd": "2024-07-07T22:30:39.000Z",
+      "players": {
+        "users": [
+          {
+            "userId": 1,
+            "isStartingPlayer": true,
+            "score": 119,
+            "isWinner": true
+          }
+        ],
+        "guests": [
+          {
+            "firstName": "Marisue",
+            "lastName": "Martin",
+            "isStartingPlayer": false,
+            "score": 91,
+            "isWinner": false
+          }
+        ]
+      },
+      "playType": "boardgamearena",
+      "isLearning": false,
+      "content": "",
+      "reportingUser": 1,
+      "expansions": [],
+      "gameId": 13
+    }
+}
+
+settings {
+  encodeUrl: true
+}

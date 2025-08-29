@@ -1,0 +1,15 @@
+meta {
+  name: Get Server Version
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{luddatumbazo}}/api/v1/server_info/version
+  body: none
+  auth: none
+}
+
+settings {
+  encodeUrl: true
+}

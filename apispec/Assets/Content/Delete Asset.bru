@@ -1,0 +1,21 @@
+meta {
+  name: Delete Asset
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{luddatumbazo}}/api/v1/asset
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "key": "/files/game/ark-nova/assets.sql"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

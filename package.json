@@ -21,7 +21,7 @@
     "jwt:create": "node ./tools/makeJwt.js"
   },
   "devDependencies": {
-    "jose": "^5.2.0",
+    "jose": "^6.1.0",
     "toml": "^3.0.0"
   }
 }

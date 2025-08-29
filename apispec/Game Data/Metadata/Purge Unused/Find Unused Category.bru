@@ -1,0 +1,15 @@
+meta {
+  name: Find Unused Category
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{luddatumbazo}}/api/v1/game/meta/category/purge
+  body: none
+  auth: none
+}
+
+settings {
+  encodeUrl: true
+}

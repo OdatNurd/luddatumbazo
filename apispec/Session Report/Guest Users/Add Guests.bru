@@ -1,0 +1,35 @@
+meta {
+  name: Add Guests
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{luddatumbazo}}/api/v1/guest/add
+  body: json
+  auth: none
+}
+
+body:json {
+  [
+  	{
+  		"firstName": "Donna",
+  		"lastName": "Martin",
+      "displayName": "Donna M."
+  	},
+    {
+  		"firstName": "Heather",
+  		"lastName": "Topham",
+      "displayName": "Heather T."
+    },
+    {
+  		"firstName": "Wayne",
+  		"lastName": "Topham",
+      "displayName": "Wayne T."
+    }
+  ]
+}
+
+settings {
+  encodeUrl: true
+}

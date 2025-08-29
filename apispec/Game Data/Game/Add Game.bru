@@ -1,0 +1,101 @@
+meta {
+  name: Add Game
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{luddatumbazo}}/api/v1/game/data/details/add
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "bggId": 0,
+      "name": [
+        "20 Strong: Solar Sentinels"
+      ],
+      "slug": "20-strong-solar-sentinels",
+      "primaryName": "20 Strong",
+      "expansions": [
+        {
+          "isExpansion": false,
+          "name": "20 Strong",
+          "bggId": 373167
+        }
+      ],
+      "description": "Solar Sentinels is the original deck for 20 Strong that is packed in with the base game set.",
+      "thumbnail": "https://cf.geekdo-images.com/RkCu6WACRaPeZYAtWkdoJw__imagepage/img/YI8YKkvq2MA3N05OGha7ZUaT2aI=/fit-in/900x600/filters:no_upscale():strip_icc()/pic7858264.png",
+      "image": "https://cf.geekdo-images.com/RkCu6WACRaPeZYAtWkdoJw__imagepage/img/YI8YKkvq2MA3N05OGha7ZUaT2aI=/fit-in/900x600/filters:no_upscale():strip_icc()/pic7858264.png",
+      "officialUrl": "",
+      "teachingUrl": "",
+      "published": 2023,
+      "minPlayers": 1,
+      "maxPlayers": 1,
+      "minPlayerAge": 14,
+      "playTime": 40,
+      "minPlayTime": 30,
+      "maxPlayTime": 40,
+      "complexity": 2.4,
+      "category": [
+        {
+          "name": "Card Game",
+          "bggId": 1002,
+          "slug": "card-game"
+        },
+        {
+          "name": "Dice",
+          "bggId": 1017,
+          "slug": "dice"
+        }
+      ],
+      "mechanic": [
+        {
+          "name": "Dice Rolling",
+          "bggId": 2072,
+          "slug": "dice-rolling"
+        },
+        {
+          "name": "Move Through Deck",
+          "bggId": 2962,
+          "slug": "move-through-deck"
+        },
+        {
+          "name": "Solo / Solitaire Game",
+          "bggId": 2819,
+          "slug": "solo-solitaire-game"
+        }
+      ],
+      "designer": [
+        {
+          "name": "Josh J. Carlson",
+          "bggId": 60315,
+          "slug": "josh-j-carlson"
+        }
+      ],
+      "artist": [
+        {
+          "name": "Chris Beck",
+          "bggId": 59189,
+          "slug": "chris-beck"
+        }
+      ],
+      "publisher": [
+        {
+          "name": "Chip Theory Games",
+          "bggId": 22593,
+          "slug": "chip-theory-games"
+        },
+        {
+          "name": "Frosted Games",
+          "bggId": 29895,
+          "slug": "frosted-games"
+        }
+      ]
+    }
+}
+
+settings {
+  encodeUrl: true
+}

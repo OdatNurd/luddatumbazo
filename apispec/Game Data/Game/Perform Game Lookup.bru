@@ -1,0 +1,21 @@
+meta {
+  name: Perform Game Lookup
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{luddatumbazo}}/api/v1/game/lookup?imageType=smallboxart
+  body: json
+  auth: none
+}
+
+body:json {
+  [
+    "azul", "tiny-towns"
+  ]
+}
+
+settings {
+  encodeUrl: true
+}

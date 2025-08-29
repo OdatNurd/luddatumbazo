@@ -1,0 +1,15 @@
+meta {
+  name: Get Current User
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{luddatumbazo}}/api/v1/user/current
+  body: none
+  auth: none
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,22 @@
+meta {
+  name: Create Wishlist
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{luddatumbazo}}/api/v1/household/wishlist/the-martins/create
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Winnipeg Comicon 2024",
+    "slug": "comicon-2024"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

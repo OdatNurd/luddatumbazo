@@ -1,0 +1,40 @@
+meta {
+  name: Update Mechanic List
+  type: http
+  seq: 10
+}
+
+put {
+  url: {{luddatumbazo}}/api/v1/game/meta/mechanic/update
+  body: json
+  auth: none
+}
+
+body:json {
+  [
+  		{
+  			"bggId": 2923,
+  			"name": "Auction: Once Around"
+  		},
+  		{
+  			"bggId": 2012,
+  			"name": "Auction/Bidding"
+  		},
+  		{
+  			"bggId": 2040,
+  			"name": "Hand Management"
+  		},
+  		{
+  			"bggId": 2661,
+  			"name": "Push Your Luck"
+  		},
+  		{
+  			"bggId": 2849,
+  			"name": "Tech Trees / Tech Tracks"
+  		}
+  	]
+}
+
+settings {
+  encodeUrl: true
+}

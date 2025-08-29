@@ -1,0 +1,21 @@
+meta {
+  name: Update Session
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{luddatumbazo}}/api/v1/session/update/2
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+  	"title": "Bonsai (Terence, Marisue)"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,26 @@
+meta {
+  name: Upload Asset
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{luddatumbazo}}/api/v1/asset/game/al-cabohne/upload
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Content-Type: multipart/form-data
+}
+
+body:multipart-form {
+  file:
+  description: Game Rules
+  ~filename: odatnurd.png
+  ~description: Player Aid
+}
+
+settings {
+  encodeUrl: true
+}

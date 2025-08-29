@@ -1,0 +1,64 @@
+meta {
+  name: Update Expansions
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{luddatumbazo}}/api/v1/game/data/expansions/update
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+  	"gameId": 115,
+  	"bggId": 3076,
+  		"expansions": [
+  			{
+  				"isExpansion": true,
+  				"name": "Deutscher Spielepreis Classic Goodie Box",
+  				"bggId": 286086
+  			},
+  			{
+  				"isExpansion": true,
+  				"name": "Haiti (fan expansion for Puerto Rico)",
+  				"bggId": 69178
+  			},
+  			{
+  				"isExpansion": true,
+  				"name": "Puerto Rico: Buccaneer",
+  				"bggId": 292912
+  			},
+  			{
+  				"isExpansion": true,
+  				"name": "Puerto Rico: Expansion I – New Buildings",
+  				"bggId": 12382
+  			},
+  			{
+  				"isExpansion": true,
+  				"name": "Puerto Rico: Expansion II – The Nobles",
+  				"bggId": 159761
+  			},
+  			{
+  				"isExpansion": true,
+  				"name": "Puerto Rico: Expansions 1&amp;2 – The New Buildings &amp; The Nobles",
+  				"bggId": 270125
+  			},
+  			{
+  				"isExpansion": true,
+  				"name": "Puerto Rico: Festival en Puerto Rico",
+  				"bggId": 291423
+  			},
+  			{
+  				"isExpansion": true,
+  				"name": "Treasure Chest",
+  				"bggId": 40688
+  			}
+  		]
+  }
+}
+
+settings {
+  encodeUrl: true
+}

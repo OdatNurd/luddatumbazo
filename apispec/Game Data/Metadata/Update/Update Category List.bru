@@ -1,0 +1,24 @@
+meta {
+  name: Update Category List
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{luddatumbazo}}/api/v1/game/meta/category/update
+  body: json
+  auth: none
+}
+
+body:json {
+  [
+  	{
+  		"bggId": 1070,
+  		"name": "Renaissance"
+  	}
+  ]
+}
+
+settings {
+  encodeUrl: true
+}

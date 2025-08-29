@@ -1,0 +1,22 @@
+meta {
+  name: Create Household
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{luddatumbazo}}/api/v1/household/create
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "The Poopingtons",
+    "slug": "the-poopingtons"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

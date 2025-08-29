@@ -1,0 +1,23 @@
+meta {
+  name: Add to Collection
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{luddatumbazo}}/api/v1/household/collection/the-martins/add
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "game": "tiny-towns",
+    "name": "Tiny Towns",
+    "publisher": "pegasus-spiele"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

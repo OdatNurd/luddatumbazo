@@ -1,0 +1,15 @@
+meta {
+  name: Find Unused Publisher
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{luddatumbazo}}/api/v1/game/meta/publisher/purge
+  body: none
+  auth: none
+}
+
+settings {
+  encodeUrl: true
+}

@@ -23,6 +23,7 @@ routes = [
 #     - Expression: (http.request.uri.path matches "^/images/.*$")
 #  4. Choose 'Then > Rewrite To > Dynamic' and edit the expression
 #     - concat( "/cdn-cgi/imagedelivery/Dx4jrYPNAcY0IcNpYD9HJA", substring(http.request.uri.path, 7) )
+#     also, make sure you add an extra rule so that this only hits the one site, dummy.
 #
 # In #4, the dx4jr bit is your account hash; that is available in CF Images
 #
