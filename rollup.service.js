@@ -7,9 +7,9 @@ import commonjs from '@rollup/plugin-commonjs';
 
 
 export default {
-  input: 'src/luddatumbazo.js',
+  input: './service/src/luddatumbazo.js',
   output: {
-    file: 'output/main.js',
+    file: './output/service.js',
     format: 'es',
   },
   onwarn(warning, handler) {

@@ -1,5 +1,5 @@
 name = "luddatumbazo-api"
-main = "output/main.js"
+main = "./output/service.js"
 compatibility_date = "2023-12-01"
 
 # Dev versions should have no route; production versions go directly to our
@@ -9,7 +9,6 @@ compatibility_date = "2023-12-01"
 # the CF Dashboard.
 workers_dev = false
 routes = [
-    { pattern = "luddatumbazo.odatnurd.net/api/*", zone_id="228f86abc5bc8b04719dc4671eb09dc0" },
     { pattern = "luddatumbazo.odatnurd.net/files/*", zone_id="228f86abc5bc8b04719dc4671eb09dc0" }
 ]
 
@@ -220,7 +219,7 @@ CF_VARIANT_SMALLBOXART = 'entry'
 
 [dev]
 ip = "localhost"
-port = 8000
+port = 3000
 
 
 ################################################################################
@@ -232,4 +231,8 @@ port = 8000
 # When starting the dev mode server OR when doing a deployment, first execute
 # this script, which will generate a file that contains the current commit hash
 # for use in the worker code.
-command = "node ../tools/getCurrentCommit.js && rollup -c"
+command = "node ./tools/getCurrentCommit.js && rollup -c rollup.service.js"
+
+[assets]
+directory = "./output/client"
+binding = "STATICS"

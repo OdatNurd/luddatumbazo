@@ -11,17 +11,48 @@
     "url": "https://odatnurd.net"
   },
   "scripts": {
-    "local:seed-db": "cd backend && npm run local:seed-db",
-    "client:run": "cd client && npm run run",
-    "client:watch": "cd client && npm run watch",
-    "client:build": "cd client && npm run build",
-    "backend:run": "cd backend && npm run run",
-    "backend:deploy": "cd backend && npm run deploy",
+    "local:seed-db": "cd service && npm run local:seed-db",
+    "client:watch": "rollup -c rollup.client.js -w",
+    "client:build": "rollup -c rollup.client.js",
+    "service:run": "wrangler dev --persist-to ~/.config/.wrangler/state/",
+    "service:deploy": "wrangler deploy",
     "db:dump": "node ./tools/dumpLocalDB.js",
     "jwt:create": "node ./tools/makeJwt.js"
   },
-  "devDependencies": {
+  "imports": {
+    "#db/*": "./service/src/db/*.js",
+    "#sql/*": "./service/src/sql/*.sql",
+    "#requests/*": "./service/src/requests/*.js",
+    "#schema/*": "./service/src/schema/*.js",
+    "#lib/*": "./service/src/lib/*.js",
+    "#commit": "./commitReference.js"
+  },
+  "dependencies": {
+    "@axel669/sanic-xml": "^0.1.2",
+    "@axel669/zephyr": "^0.4.6",
+    "@odatnurd/d1-query": "^0.2.2",
+    "dotenv": "^16.4.5",
+    "entities": "^6.0.1",
+    "hono": "^4.9.4",
     "jose": "^6.1.0",
-    "toml": "^3.0.0"
+    "luxon": "^3.4.4",
+    "slug": "^11.0.0",
+    "svelte": "^4.2.15",
+    "zod": "^4.1.4"
+  },
+  "devDependencies": {
+    "@axel669/asuid": "^0.2.1",
+    "@axel669/rollup-copy-static": "^0.2.0",
+    "@axel669/rollup-dollar-path": "^0.1.0",
+    "@axel669/rollup-html-input": "^0.1.2",
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-replace": "^5.0.5",
+    "@rollup/plugin-terser": "^0.4.4",
+    "rollup": "^4.49.0",
+    "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-svelte": "^7.2.0",
+    "toml": "^3.0.0",
+    "wrangler": "^4.33.0"
   }
 }

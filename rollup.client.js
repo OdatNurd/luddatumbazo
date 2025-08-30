@@ -1,7 +1,14 @@
 /******************************************************************************/
 
 
-import 'dotenv/config';
+// Annoyingly, wrangler doesn't use .env or .env.dev, which is too bad because
+// then dotenv would Just Work (tm); instead, we need to manually pull the file
+// to ensure that the right things get set in for the UI build.
+import { config } from 'dotenv';
+config({ path: ['.dev.vars'] });
+
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import commonjs from '@rollup/plugin-commonjs';
 import del from 'rollup-plugin-delete';
@@ -15,7 +22,7 @@ import asuid from "@axel669/asuid/node";
 import copy from '@axel669/rollup-copy-static';
 import html from '@axel669/rollup-html-input';
 
-import { commitReference } from './commitReference.js';
+import { commitReference } from '#commit';
 
 
 /******************************************************************************/
@@ -35,9 +42,9 @@ const buildList = [
     // Input for the build comes from the data-main script in this HTML file;
     // both the resulting JS and the modified HTML file will be send to the
     // output.
-    input: 'src/index.html',
+    input: './client/src/index.html',
     output: {
-      file: `public/app-${asuid()}.js`,
+      file: `./output/client/app-${asuid()}.js`,
       format: 'esm',
       sourcemap: true
     },
@@ -56,17 +63,18 @@ const buildList = [
     plugins: [
       // Copy over the contents of the static folder; this happens only once
       // when running a "watch" build.
-      copy("static"),
+      copy("./client/static"),
 
       // Remove the bundled JS output to make the generated output during
       // development easier to grok.
       del({
         targets: [
-          "public/app-*.js",
-          "public/app-*.js.map"
+          "./output/client/app-*.js",
+          "./output/client/app-*.js.map"
         ],
         force: true
       }),
+
 
       // Do the processing that associates the input HTML with the output JS.
       html(),
@@ -80,13 +88,13 @@ const buildList = [
       // Translate import statements in the client source to make file locations
       // less brittle.
       $path({
-          root: ".",
+          root: '.',
           paths: {
-            $pages: "src/pages",
-            $components: "src/components",
-            $stores: "src/stores",
-            $lib: "src/lib",
-            $api: "src/api/index.js"
+            $pages: "client/src/pages",
+            $components: "client/src/components",
+            $stores: "client/src/stores",
+            $lib: "client/src/lib",
+            $api: "client/src/api/index.js"
           },
           extensions: [".js", ".mjs", ".svelte"]
       }),
