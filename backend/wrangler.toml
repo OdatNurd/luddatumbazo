@@ -1,5 +1,5 @@
 name = "luddatumbazo-api"
-main = "src/luddatumbazo.js"
+main = "output/main.js"
 compatibility_date = "2023-12-01"
 
 # Dev versions should have no route; production versions go directly to our
@@ -232,4 +232,4 @@ port = 8000
 # When starting the dev mode server OR when doing a deployment, first execute
 # this script, which will generate a file that contains the current commit hash
 # for use in the worker code.
-command = "node ../tools/getCurrentCommit.js"
+command = "node ../tools/getCurrentCommit.js && rollup -c"

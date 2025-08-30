@@ -15,6 +15,9 @@
     "deploy": "wrangler deploy"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "rollup": "^4.49.0",
     "wrangler": "^4.33.0"
   },
   "imports": {

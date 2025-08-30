@@ -8,6 +8,9 @@ node_modules/
 # The Svelte build output goes here
 client/public/
 
+# The backend output goes here
+backend/output/
+
 # The file that contains the released git hash of the release; used for both
 # the front and back ends
 commitReference.js
