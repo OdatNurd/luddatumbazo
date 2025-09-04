@@ -21,14 +21,15 @@ export function asNumber(isRequired) {
   // so return back a wrapped version of the actual function that will be used
   // so that it can close over our arguments here.
   return function(value, zCtx) {
+    // An optional field is valid if it's not present at all.
+    if (value === undefined && isRequired === false) {
+      return undefined;
+    }
+
     const parsed = Number(value);
     if (isNaN(parsed) === true) {
-      // If the value is not strictly required, return undefined instead.
-      if (isRequired === false) {
-        return undefined;
-      }
-
-      // Flag this as an issue
+      // If a value *is* present but it's not a number, it's an error,
+      // regardless of whether it was required or not.
       zCtx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Not a number",

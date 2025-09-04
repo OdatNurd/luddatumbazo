@@ -11,13 +11,14 @@
     "url": "https://odatnurd.net"
   },
   "scripts": {
-    "local:seed-db": "cd service && npm run local:seed-db",
-    "client:watch": "rollup -c rollup.client.js -w",
     "client:build": "rollup -c rollup.client.js",
-    "service:run": "wrangler dev --persist-to ~/.config/.wrangler/state/",
-    "service:deploy": "wrangler deploy",
+    "client:watch": "rollup -c rollup.client.js -w",
     "db:dump": "node ./tools/dumpLocalDB.js",
-    "jwt:create": "node ./tools/makeJwt.js"
+    "jwt:create": "node ./tools/makeJwt.js",
+    "local:seed-db": "cd service && npm run local:seed-db",
+    "service:deploy": "wrangler deploy",
+    "service:run": "wrangler dev --persist-to ~/.config/.wrangler/state/",
+    "test": "aegis test/aegis.config.js"
   },
   "imports": {
     "#db/*": "./service/src/db/*.js",
@@ -30,7 +31,8 @@
   "dependencies": {
     "@axel669/sanic-xml": "^0.1.2",
     "@axel669/zephyr": "^0.4.6",
-    "@odatnurd/d1-query": "^0.2.2",
+    "@odatnurd/cf-requests": "^0.1.7",
+    "@odatnurd/d1-query": "^0.2.5",
     "dotenv": "^16.4.5",
     "entities": "^6.0.1",
     "hono": "^4.9.4",
@@ -41,14 +43,18 @@
     "zod": "^4.1.4"
   },
   "devDependencies": {
+    "@axel669/aegis": "^0.3.1",
     "@axel669/asuid": "^0.2.1",
     "@axel669/rollup-copy-static": "^0.2.0",
     "@axel669/rollup-dollar-path": "^0.1.0",
     "@axel669/rollup-html-input": "^0.1.2",
+    "@odatnurd/cf-aegis": "^0.1.2",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-replace": "^5.0.5",
     "@rollup/plugin-terser": "^0.4.4",
+    "fs-jetpack": "^5.1.0",
+    "miniflare": "^4.20250813.0",
     "rollup": "^4.49.0",
     "rollup-plugin-delete": "^2.0.0",
     "rollup-plugin-svelte": "^7.2.0",

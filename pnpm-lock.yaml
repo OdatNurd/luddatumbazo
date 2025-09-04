@@ -14,9 +14,12 @@ importers:
       '@axel669/zephyr':
         specifier: ^0.4.6
         version: 0.4.7
+      '@odatnurd/cf-requests':
+        specifier: ^0.1.7
+        version: 0.1.7(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1))(hono@4.9.5)(miniflare@4.20250823.1)
       '@odatnurd/d1-query':
-        specifier: ^0.2.2
-        version: 0.2.2(fs-jetpack@5.1.0)(miniflare@4.20250823.1)
+        specifier: ^0.2.5
+        version: 0.2.5(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1))(fs-jetpack@5.1.0)(miniflare@4.20250823.1)
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
@@ -42,6 +45,9 @@ importers:
         specifier: ^4.1.4
         version: 4.1.5
     devDependencies:
+      '@axel669/aegis':
+        specifier: ^0.3.1
+        version: 0.3.1
       '@axel669/asuid':
         specifier: ^0.2.1
         version: 0.2.1
@@ -54,6 +60,9 @@ importers:
       '@axel669/rollup-html-input':
         specifier: ^0.1.2
         version: 0.1.2
+      '@odatnurd/cf-aegis':
+        specifier: ^0.1.2
+        version: 0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1)
       '@rollup/plugin-commonjs':
         specifier: ^28.0.6
         version: 28.0.6(rollup@4.49.0)
@@ -66,6 +75,12 @@ importers:
       '@rollup/plugin-terser':
         specifier: ^0.4.4
         version: 0.4.4(rollup@4.49.0)
+      fs-jetpack:
+        specifier: ^5.1.0
+        version: 5.1.0
+      miniflare:
+        specifier: ^4.20250813.0
+        version: 4.20250823.1
       rollup:
         specifier: ^4.49.0
         version: 4.49.0
@@ -87,6 +102,10 @@ packages:
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
+
+  '@axel669/aegis@0.3.1':
+    resolution: {integrity: sha512-NUxJoIBDZxkiitrEz1GeMIf8LGftNhcjsI95Xj28Qjmvv73WVx/c6Af8Bzl0kzXoIB+aq8aP+I7mJTJeOWM2eg==}
+    hasBin: true
 
   '@axel669/asuid@0.2.1':
     resolution: {integrity: sha512-tR+aizUPcSCNSMbI9xQlYtAHk/1qtcm/4tbiU8hVoFDS1IrdcqG5fZ3EvZibkrTo2DKlgrd2y47XzMcFwPekaQ==}
@@ -446,14 +465,46 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@odatnurd/d1-query@0.2.2':
-    resolution: {integrity: sha512-p1YCr05/X+ySJ5E23EF/rjxzuOQSrkJYfVTY9FZ5Mg0EOowah9pXK8X8gKamBV/GG0JT1nM85VeJBn51A1Jvew==}
+  '@odatnurd/cf-aegis@0.1.2':
+    resolution: {integrity: sha512-eMRJdR0KfaTonBAsusGJaVhSQjUQ9c6AbKLnKZt7n4A0cls/9rcBRqkAOz2t2fJKtvP0nv1faIwvvZ+5CRy/HQ==}
     peerDependencies:
       '@axel669/aegis': ^0.3.1
+      miniflare: ^4.20250813.0
+    peerDependenciesMeta:
+      '@axel669/aegis':
+        optional: true
+      miniflare:
+        optional: true
+
+  '@odatnurd/cf-requests@0.1.7':
+    resolution: {integrity: sha512-IF3UIoJ6rjo6E2RnlWhNuOeBtBGJSOIjlDtTnitZlieVdKiBo06Je9jPDmn2L4olUs0ci82Fnknv+ZikjkP5xg==}
+    peerDependencies:
+      '@axel669/aegis': ^0.3.1
+      '@axel669/joker': ^0.3.5
+      '@odatnurd/cf-aegis': ^0.1.2
+      hono: ^4.7.0
+      miniflare: ^4.20250813.0
+    peerDependenciesMeta:
+      '@axel669/aegis':
+        optional: true
+      '@axel669/joker':
+        optional: true
+      '@odatnurd/cf-aegis':
+        optional: true
+      miniflare:
+        optional: true
+
+  '@odatnurd/d1-query@0.2.5':
+    resolution: {integrity: sha512-N6dnsggUHLTGqW6rNc5+oL+B73IGDYiGJqbcyKN/MfjC6EWzppBX65ySuTadMtg93xShH42EOUa5TpbiNlAWzw==}
+    peerDependencies:
+      '@axel669/aegis': ^0.3.1
+      '@odatnurd/cf-aegis': ^0.1.2
       fs-jetpack: ^5.1.0
       miniflare: ^4.20250813.0
     peerDependenciesMeta:
       '@axel669/aegis':
+        optional: true
+      '@odatnurd/cf-aegis':
         optional: true
       fs-jetpack:
         optional: true
@@ -1171,6 +1222,10 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.30
 
+  '@axel669/aegis@0.3.1':
+    dependencies:
+      fast-glob: 3.3.3
+
   '@axel669/asuid@0.2.1': {}
 
   '@axel669/rollup-copy-static@0.2.0':
@@ -1413,8 +1468,23 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@odatnurd/d1-query@0.2.2(fs-jetpack@5.1.0)(miniflare@4.20250823.1)':
+  '@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1)':
     optionalDependencies:
+      '@axel669/aegis': 0.3.1
+      miniflare: 4.20250823.1
+
+  '@odatnurd/cf-requests@0.1.7(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1))(hono@4.9.5)(miniflare@4.20250823.1)':
+    dependencies:
+      hono: 4.9.5
+    optionalDependencies:
+      '@axel669/aegis': 0.3.1
+      '@odatnurd/cf-aegis': 0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1)
+      miniflare: 4.20250823.1
+
+  '@odatnurd/d1-query@0.2.5(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1))(fs-jetpack@5.1.0)(miniflare@4.20250823.1)':
+    optionalDependencies:
+      '@axel669/aegis': 0.3.1
+      '@odatnurd/cf-aegis': 0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1)
       fs-jetpack: 5.1.0
       miniflare: 4.20250823.1
 
