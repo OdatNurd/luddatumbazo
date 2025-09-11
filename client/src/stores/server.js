@@ -25,8 +25,8 @@ function createServerStore() {
     // set the value of the store.
     async function init() {
         // Fetch information on the server and then set it into the store.
-        const [version, gameTypes ] = await Promise.all([api.server.version(), api.session.gameTypes()]);
-        set({ version, gameTypes });
+        const [gameTypes ] = await Promise.all([api.session.gameTypes()]);
+        set({ gameTypes });
 
         // Using the values in the gameTypes array, turn it into an object with
         // keys that are the slug and values that are the object.

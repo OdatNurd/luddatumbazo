@@ -2,7 +2,6 @@
 
 
 import { raw } from './fetch.js';
-import { server } from './server.js';
 import { household } from './household.js';
 import { game } from './game.js';
 import { user } from './user.js';
@@ -17,7 +16,6 @@ import { metadata } from './metadata.js';
  * we imported above. */
 export const api = {
   raw,
-  server,
   user,
   household,
   game,

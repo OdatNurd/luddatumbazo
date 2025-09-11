@@ -37,8 +37,9 @@
     { label: "Sessions", value: "#/sessions" },
   ];
 
-  // Gather the commit that it used for the UI release
-  export const uiCommit = process.env.UI_RELEASE_COMMIT;
+  // Gather the commit and version used to do the build
+  export const version = process.env.APP_VERSION;
+  export const commit = process.env.COMMIT_HASH;
 </script>
 
 <Drawer>
@@ -53,15 +54,8 @@
   <Titlebar slot="footer">
     <Text slot="title" title>
       <Flex direction="row">
-        <Text subtitle> UI: </Text>
-        <Text subtitle> <GitCommitLink commit={uiCommit} /> </Text>
+        <Text subtitle> <GitCommitLink {commit} {version}/> </Text>
       </Flex>
-      {#if $server.version.commit !== undefined }
-        <Flex direction="row">
-          <Text subtitle> API: </Text>
-          <Text subtitle> <GitCommitLink commit={$server.version.commit} /> </Text>
-        </Flex>
-      {/if}
     </Text>
   </Titlebar>
 </Drawer>

@@ -6,6 +6,9 @@
   // Properties
   // ---------------------------------------------------------------------------
 
+  // The version number of the application as taken from package.json
+  export let version;
+
   // The commit hash of the link to generate
   export let commit;
 
@@ -15,10 +18,11 @@
   const rootURI = `${process.env.GITHUB_ROOT_URI}`;
 
   // Determine what the link text would be; this is the first 8 characters of
-  // the commit hash, or Unknown if there is no commit hash given.
+  // the commit hash, or Unknown if there is no commit hash given. In both
+  // cases the version number is prefixed on it
   const linkText = (commit === null)
-      ? 'Unknown'
-      : commit.substr(0, 8);
+      ? `v${version}-unknown`
+      : `v${version}-${commit.substr(0, 8)}`;
 </script>
 
 
