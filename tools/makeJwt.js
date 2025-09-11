@@ -2,7 +2,7 @@
 
 
 import * as jose from 'jose';
-import toml from 'toml';
+import JSON5 from 'json5';
 import fs from 'fs';
 
 
@@ -12,7 +12,7 @@ import fs from 'fs';
 /* The location of the wrangler file that stores the public configuration of the
  * worker that we run during development mode. This file is loaded to get the
  * fields that we need in order to generate the token. */
-const WRANGLER_FILE_PATH = "backend/wrangler.toml"
+const WRANGLER_FILE_PATH = "wrangler.jsonc"
 
 
 /******************************************************************************/
@@ -22,7 +22,7 @@ const WRANGLER_FILE_PATH = "backend/wrangler.toml"
  * return back. The file is assumed to be in TOML format. */
 function getWranglerConfig() {
   const content = fs.readFileSync(WRANGLER_FILE_PATH, { encoding: 'utf-8'});
-  return toml.parse(content);
+  return JSON5.parse(content);
 }
 
 

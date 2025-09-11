@@ -54,11 +54,11 @@
     "@rollup/plugin-replace": "^5.0.5",
     "@rollup/plugin-terser": "^0.4.4",
     "fs-jetpack": "^5.1.0",
+    "json5": "^2.2.3",
     "miniflare": "^4.20250813.0",
     "rollup": "^4.49.0",
     "rollup-plugin-delete": "^2.0.0",
     "rollup-plugin-svelte": "^7.2.0",
-    "toml": "^3.0.0",
     "wrangler": "^4.33.0"
   }
 }
