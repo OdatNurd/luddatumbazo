@@ -15,8 +15,8 @@ importers:
         specifier: ^0.4.6
         version: 0.4.7
       '@odatnurd/cf-requests':
-        specifier: ^0.1.7
-        version: 0.1.7(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1))(hono@4.9.5)(miniflare@4.20250823.1)
+        specifier: ^0.1.8
+        version: 0.1.8(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1))(hono@4.9.5)(miniflare@4.20250823.1)
       '@odatnurd/d1-query':
         specifier: ^0.2.5
         version: 0.2.5(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1))(fs-jetpack@5.1.0)(miniflare@4.20250823.1)
@@ -51,6 +51,9 @@ importers:
       '@axel669/asuid':
         specifier: ^0.2.1
         version: 0.2.1
+      '@axel669/hono-file-routes':
+        specifier: ^1.0.1
+        version: 1.0.1(hono@4.9.5)
       '@axel669/rollup-copy-static':
         specifier: ^0.2.0
         version: 0.2.0
@@ -110,6 +113,11 @@ packages:
   '@axel669/asuid@0.2.1':
     resolution: {integrity: sha512-tR+aizUPcSCNSMbI9xQlYtAHk/1qtcm/4tbiU8hVoFDS1IrdcqG5fZ3EvZibkrTo2DKlgrd2y47XzMcFwPekaQ==}
     hasBin: true
+
+  '@axel669/hono-file-routes@1.0.1':
+    resolution: {integrity: sha512-J8x5bCvXThgp/JLC5lzY0Ht6aJAbwvm16dTvvJAQYMXbsaP2vhwpy9DGw3zlINYsiXDMXkGSUIel9y0nLjxAXA==}
+    peerDependencies:
+      hono: ^4.4.13
 
   '@axel669/rollup-copy-static@0.2.0':
     resolution: {integrity: sha512-ubgU+M93fUehrBksRIvs/EjL77uuVp5LX0Ts/4FiStmRwREgHNY9vsJtwUy+Gf0HyGK6rYXWZeIH9l6Ahdiv8w==}
@@ -476,8 +484,8 @@ packages:
       miniflare:
         optional: true
 
-  '@odatnurd/cf-requests@0.1.7':
-    resolution: {integrity: sha512-IF3UIoJ6rjo6E2RnlWhNuOeBtBGJSOIjlDtTnitZlieVdKiBo06Je9jPDmn2L4olUs0ci82Fnknv+ZikjkP5xg==}
+  '@odatnurd/cf-requests@0.1.8':
+    resolution: {integrity: sha512-+4uJNRzEwN2pETiya6HZ+6jkR/T5XLNWEgnXPQuQS8vgDiybO+Purgzn870q6sTRvTS8re5EtHUxzO/yW1ENGQ==}
     peerDependencies:
       '@axel669/aegis': ^0.3.1
       '@axel669/joker': ^0.3.5
@@ -1230,6 +1238,11 @@ snapshots:
 
   '@axel669/asuid@0.2.1': {}
 
+  '@axel669/hono-file-routes@1.0.1(hono@4.9.5)':
+    dependencies:
+      fast-glob: 3.3.3
+      hono: 4.9.5
+
   '@axel669/rollup-copy-static@0.2.0':
     dependencies:
       fast-glob: 3.3.3
@@ -1475,7 +1488,7 @@ snapshots:
       '@axel669/aegis': 0.3.1
       miniflare: 4.20250823.1
 
-  '@odatnurd/cf-requests@0.1.7(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1))(hono@4.9.5)(miniflare@4.20250823.1)':
+  '@odatnurd/cf-requests@0.1.8(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1))(hono@4.9.5)(miniflare@4.20250823.1)':
     dependencies:
       hono: 4.9.5
     optionalDependencies:

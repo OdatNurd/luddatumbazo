@@ -1,7 +1,7 @@
 import d1sql from '@odatnurd/d1-query/rollup';
-import resolve from "@rollup/plugin-node-resolve"
+import fileRoutes from "@axel669/hono-file-routes";
+import resolve from "@rollup/plugin-node-resolve";
 import commonjs from '@rollup/plugin-commonjs';
-
 
 /******************************************************************************/
 
@@ -22,6 +22,9 @@ export default {
   },
   plugins: [
     commonjs(),
+    fileRoutes({
+      debug: true
+    }),
     resolve(),
     d1sql(),
   ]
