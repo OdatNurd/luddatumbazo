@@ -5,9 +5,15 @@ meta {
 }
 
 get {
-  url: {{luddatumbazo}}/api/v1/images/1234
-  body: none
+  url: {{luddatumbazo}}/api/v1/images/upload
+  body: json
   auth: none
+}
+
+body:json {
+  {
+    "bggId": 69
+  }
 }
 
 settings {

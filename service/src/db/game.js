@@ -484,6 +484,14 @@ export async function dbGameDetails(ctx, idOrSlug, householdId) {
  * because D1 doesn't have the concept of transactions in code paths that
  * require code between DB accesses. */
 export async function dbGameInsert(ctx, gameData) {
+  // Check to see if a game with this slug already exists; if so, bail now.
+  // Otherwise we just get a uniqueness constrain violation, which is decidedly
+  // less interesting.
+  const existing = await dbGameLookup(ctx, gameData.slug);
+  if (existing != null) {
+    return null;
+  }
+
   // Ensure that all of the metadata that we need is available. This does not
   // run in a transaction, so if we bail later, these items will still be in
   // the database; we can look into making that smarter later.

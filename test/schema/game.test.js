@@ -1,6 +1,6 @@
 import { Collection, $check, $ } from "@axel669/aegis";
 import { schemaTest } from "@odatnurd/cf-requests/aegis";
-import { validate } from "../../service/src/requests/common.js"
+import { validateZod } from '#legacyvalidator';
 
 import {
   GameIDSchema,
@@ -31,16 +31,16 @@ import {
 export default Collection`Game Schema Validation`({
   "GameIDSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with a valid numeric string`
-      .value(schemaTest('param', GameIDSchema, { gameId: '123' }, validate))
+      .value(schemaTest('param', GameIDSchema, { gameId: '123' }, validateZod))
       .isObject()
       .eq($.gameId, 123);
 
     await $check`should fail if gameId is not a number`
-      .value(schemaTest('param', GameIDSchema, { gameId: 'abc' }, validate))
+      .value(schemaTest('param', GameIDSchema, { gameId: 'abc' }, validateZod))
       .isResponseWithStatus($, 400);
 
     await $check`should mask fields not in the schema`
-      .value(schemaTest('param', GameIDSchema, { gameId: '123', masked: true }, validate))
+      .value(schemaTest('param', GameIDSchema, { gameId: '123', masked: true }, validateZod))
       .keyCount($, 1);
   },
 
@@ -50,17 +50,17 @@ export default Collection`Game Schema Validation`({
 
   "GameLookupIDSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with a numeric string`
-      .value(schemaTest('param', GameLookupIDSchema, { idOrSlug: '123' }, validate))
+      .value(schemaTest('param', GameLookupIDSchema, { idOrSlug: '123' }, validateZod))
       .isObject()
       .eq($.idOrSlug, 123);
 
     await $check`should succeed with a string slug`
-      .value(schemaTest('param', GameLookupIDSchema, { idOrSlug: 'a-slug' }, validate))
+      .value(schemaTest('param', GameLookupIDSchema, { idOrSlug: 'a-slug' }, validateZod))
       .isObject()
       .eq($.idOrSlug, 'a-slug');
 
     await $check`should fail if idOrSlug is missing`
-      .value(schemaTest('param', GameLookupIDSchema, { }, validate))
+      .value(schemaTest('param', GameLookupIDSchema, { }, validateZod))
       .isResponseWithStatus($, 400);
   },
 
@@ -70,17 +70,17 @@ export default Collection`Game Schema Validation`({
 
   "GameLookupHouseholdSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with a numeric string`
-      .value(schemaTest('query', GameLookupHouseholdSchema, { household: '123' }, validate))
+      .value(schemaTest('query', GameLookupHouseholdSchema, { household: '123' }, validateZod))
       .isObject()
       .eq($.household, 123);
 
     await $check`should succeed with a string slug`
-      .value(schemaTest('query', GameLookupHouseholdSchema, { household: 'a-slug' }, validate))
+      .value(schemaTest('query', GameLookupHouseholdSchema, { household: 'a-slug' }, validateZod))
       .isObject()
       .eq($.household, 'a-slug');
 
     await $check`should succeed when household is optional`
-      .value(schemaTest('query', GameLookupHouseholdSchema, {}, validate))
+      .value(schemaTest('query', GameLookupHouseholdSchema, {}, validateZod))
       .isObject()
       .eq($.household, undefined);
   },
@@ -91,12 +91,12 @@ export default Collection`Game Schema Validation`({
 
   "BGGGameIDListSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with an array of numbers`
-      .value(schemaTest('json', BGGGameIDListSchema, [1, 2, 3], validate))
+      .value(schemaTest('json', BGGGameIDListSchema, [1, 2, 3], validateZod))
       .isArray()
       .eq($.length, 3);
 
     await $check`should fail with an array of strings`
-      .value(schemaTest('json', BGGGameIDListSchema, ['1', '2'], validate))
+      .value(schemaTest('json', BGGGameIDListSchema, ['1', '2'], validateZod))
       .isResponseWithStatus($, 400);
   },
 
@@ -106,7 +106,7 @@ export default Collection`Game Schema Validation`({
 
   "GameLookupIDListSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with an array of numbers and strings`
-      .value(schemaTest('json', GameLookupIDListSchema, [123, 'a-slug'], validate))
+      .value(schemaTest('json', GameLookupIDListSchema, [123, 'a-slug'], validateZod))
       .isArray()
       .eq($[0], 123)
       .eq($[1], 'a-slug');
@@ -118,17 +118,17 @@ export default Collection`Game Schema Validation`({
 
   "GameLookupParamSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with a valid imageType`
-      .value(schemaTest('query', GameLookupParamSchema, { imageType: 'thumbnail' }, validate))
+      .value(schemaTest('query', GameLookupParamSchema, { imageType: 'thumbnail' }, validateZod))
       .isObject()
       .eq($.imageType, 'thumbnail');
 
     await $check`should succeed with no imageType`
-      .value(schemaTest('query', GameLookupParamSchema, {}, validate))
+      .value(schemaTest('query', GameLookupParamSchema, {}, validateZod))
       .isObject()
       .eq($.imageType, undefined);
 
     await $check`should fail with an invalid imageType`
-      .value(schemaTest('query', GameLookupParamSchema, { imageType: 'invalid' }, validate))
+      .value(schemaTest('query', GameLookupParamSchema, { imageType: 'invalid' }, validateZod))
       .isResponseWithStatus($, 400);
   },
 
@@ -138,19 +138,19 @@ export default Collection`Game Schema Validation`({
 
   "GameMetadataSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with just name`
-      .value(schemaTest('json', GameMetadataSchema, [{ name: 'Test Name' }], validate))
+      .value(schemaTest('json', GameMetadataSchema, [{ name: 'Test Name' }], validateZod))
       .isArray()
       .eq($[0].name, 'Test Name')
       .eq($[0].slug, 'test-name')
       .eq($[0].bggId, 0);
 
     await $check`should succeed with all fields`
-      .value(schemaTest('json', GameMetadataSchema, [{ name: 'Test Name', slug: 'provided-slug', bggId: 123 }], validate))
+      .value(schemaTest('json', GameMetadataSchema, [{ name: 'Test Name', slug: 'provided-slug', bggId: 123 }], validateZod))
       .isArray()
       .eq($[0].slug, 'provided-slug');
 
     await $check`should fail if name is missing`
-      .value(schemaTest('json', GameMetadataSchema, [{ slug: 'a-slug' }], validate))
+      .value(schemaTest('json', GameMetadataSchema, [{ slug: 'a-slug' }], validateZod))
       .isResponseWithStatus($, 400);
   },
 
@@ -160,15 +160,15 @@ export default Collection`Game Schema Validation`({
 
   "GameExpansionSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with bggId`
-      .value(schemaTest('json', GameExpansionSchema, [{ isExpansion: true, name: 'expansion', bggId: 123 }], validate))
+      .value(schemaTest('json', GameExpansionSchema, [{ isExpansion: true, name: 'expansion', bggId: 123 }], validateZod))
       .isArray();
 
     await $check`should succeed with gameId`
-      .value(schemaTest('json', GameExpansionSchema, [{ isExpansion: true, name: 'expansion', gameId: 456 }], validate))
+      .value(schemaTest('json', GameExpansionSchema, [{ isExpansion: true, name: 'expansion', gameId: 456 }], validateZod))
       .isArray();
 
     await $check`should fail with neither bggId nor gameId`
-      .value(schemaTest('json', GameExpansionSchema, [{ isExpansion: true, name: 'expansion' }], validate))
+      .value(schemaTest('json', GameExpansionSchema, [{ isExpansion: true, name: 'expansion' }], validateZod))
       .isResponseWithStatus($, 400);
   },
 
@@ -185,17 +185,17 @@ export default Collection`Game Schema Validation`({
     };
 
     await $check`should succeed with minimal valid data`
-      .value(schemaTest('json', NewGameSchema, validGame, validate))
+      .value(schemaTest('json', NewGameSchema, validGame, validateZod))
       .isObject()
       .eq($.bggId, 0)
       .eq($.minPlayers, 1);
 
     await $check`should fail if name is an empty array`
-      .value(schemaTest('json', NewGameSchema, { ...validGame, name: [] }, validate))
+      .value(schemaTest('json', NewGameSchema, { ...validGame, name: [] }, validateZod))
       .isResponseWithStatus($, 400);
 
     await $check`should fail if slug is missing`
-      .value(schemaTest('json', NewGameSchema, { name: ['G'], description: 'D', published: 2025 }, validate))
+      .value(schemaTest('json', NewGameSchema, { name: ['G'], description: 'D', published: 2025 }, validateZod))
       .isResponseWithStatus($, 400);
   },
 
@@ -210,13 +210,13 @@ export default Collection`Game Schema Validation`({
     };
 
     await $check`should succeed with valid data`
-      .value(schemaTest('json', ExpansionUpdateSchema, validUpdate, validate))
+      .value(schemaTest('json', ExpansionUpdateSchema, validUpdate, validateZod))
       .isObject()
       .eq($.gameId, 1)
       .eq($.bggId, 0);
 
     await $check`should fail if gameId is missing`
-      .value(schemaTest('json', ExpansionUpdateSchema, { expansions: [] }, validate))
+      .value(schemaTest('json', ExpansionUpdateSchema, { expansions: [] }, validateZod))
       .isResponseWithStatus($, 400);
   },
 
@@ -226,12 +226,12 @@ export default Collection`Game Schema Validation`({
 
   "MetadataTypeSelectSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with a valid metaType`
-      .value(schemaTest('param', MetadataTypeSelectSchema, { metaType: 'designer' }, validate))
+      .value(schemaTest('param', MetadataTypeSelectSchema, { metaType: 'designer' }, validateZod))
       .isObject()
       .eq($.metaType, 'designer');
 
     await $check`should fail with an invalid metaType`
-      .value(schemaTest('param', MetadataTypeSelectSchema, { metaType: 'invalid' }, validate))
+      .value(schemaTest('param', MetadataTypeSelectSchema, { metaType: 'invalid' }, validateZod))
       .isResponseWithStatus($, 400);
   },
 
@@ -241,17 +241,17 @@ export default Collection`Game Schema Validation`({
 
   "MetadataQuerySchema": async ({ runScope: ctx }) => {
     await $check`should succeed with valid data`
-      .value(schemaTest('param', MetadataQuerySchema, { metaType: 'publisher', idOrSlug: '123' }, validate))
+      .value(schemaTest('param', MetadataQuerySchema, { metaType: 'publisher', idOrSlug: '123' }, validateZod))
       .isObject()
       .eq($.metaType, 'publisher')
       .eq($.idOrSlug, 123);
 
     await $check`should fail if metaType is missing`
-        .value(schemaTest('param', MetadataQuerySchema, { idOrSlug: '123' }, validate))
+        .value(schemaTest('param', MetadataQuerySchema, { idOrSlug: '123' }, validateZod))
         .isResponseWithStatus($, 400);
 
     await $check`should fail if idOrSlug is missing`
-        .value(schemaTest('param', MetadataQuerySchema, { metaType: 'publisher' }, validate))
+        .value(schemaTest('param', MetadataQuerySchema, { metaType: 'publisher' }, validateZod))
         .isResponseWithStatus($, 400);
   },
 
@@ -261,12 +261,12 @@ export default Collection`Game Schema Validation`({
 
   "MetaDataQueryParamsSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with games param`
-      .value(schemaTest('query', MetaDataQueryParamsSchema, { games: 'true' }, validate))
+      .value(schemaTest('query', MetaDataQueryParamsSchema, { games: 'true' }, validateZod))
       .isObject()
       .eq($.games, true);
 
     await $check`should succeed without games param`
-      .value(schemaTest('query', MetaDataQueryParamsSchema, {}, validate))
+      .value(schemaTest('query', MetaDataQueryParamsSchema, {}, validateZod))
       .isObject()
       .eq($.games, false);
   },

@@ -24,7 +24,7 @@ export const BGGGameIDSchema = z.object({
  *
  * If the value is not present, it is returned as undefined instead. */
 export const OptionalBGGGameIDSchema = z.object({
-  bggId: z.string().optional().transform(asNumber(false))
+  bggId: z.number().optional()
 });
 
 

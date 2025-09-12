@@ -5,7 +5,6 @@ import { addCheck } from '@axel669/aegis';
 import { initializeCustomChecks, aegisSetup, aegisTeardown } from "@odatnurd/cf-aegis";
 import { initializeD1Checks } from "@odatnurd/d1-query/aegis";
 import { initializeRequestChecks } from "@odatnurd/cf-requests/aegis";
-import { validate } from '../service/src/requests/common.js';
 
 
 /******************************************************************************/

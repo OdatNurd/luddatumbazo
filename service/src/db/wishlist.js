@@ -15,8 +15,8 @@ import { getDBResult, mapIntFieldsToBool } from '#db/common';
 export async function dbWishlistDetails(ctx, householdId, idOrSlug) {
   const wishlistLookup = await ctx.env.DB.prepare(`
     SELECT * FROM Wishlist
-     WHERE (id == ?1 or slug == ?1)
-  `).bind(idOrSlug).all();
+     WHERE (id == ?1 or slug == ?1) AND householdId = ?2
+  `).bind(idOrSlug, householdId).all();
   const wishlistInfo = getDBResult('dbWishlistDetails', 'find_wishlist', wishlistLookup);
 
   // If that returned no results, we can leave now.
@@ -35,8 +35,8 @@ export async function dbWishlistDetails(ctx, householdId, idOrSlug) {
  * householdId. */
 export async function dbWishlistList(ctx, householdId) {
   const wishlistLookup = await ctx.env.DB.prepare(`
-    SELECT * FROM Wishlist
-  `).all();
+    SELECT * FROM Wishlist WHERE householdId = ?
+  `).bind(householdId).all();
 
   const wishlists = getDBResult('dbWishlistList', 'list_wishlists', wishlistLookup);
   return wishlists.map(entry => mapIntFieldsToBool(entry))

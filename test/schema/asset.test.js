@@ -1,6 +1,6 @@
 import { Collection, $check, $ } from "@axel669/aegis";
 import { schemaTest } from "@odatnurd/cf-requests/aegis";
-import { validate } from "../../service/src/requests/common.js"
+import { validateZod } from '#legacyvalidator';
 
 import {
   AssetUploadSchema,
@@ -20,16 +20,16 @@ import {
 export default Collection`Asset Schema Validation`({
   "AssetUploadSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with valid data`
-      .value(schemaTest('form', AssetUploadSchema, { file: new File([], 'test.txt'), description: 'test' }, validate))
+      .value(schemaTest('form', AssetUploadSchema, { file: new File([], 'test.txt'), description: 'test' }, validateZod))
       .isObject()
       .eq($.description, 'test');
 
     await $check`should fail if file is missing`
-      .value(schemaTest('form', AssetUploadSchema, { description: 'test' }, validate))
+      .value(schemaTest('form', AssetUploadSchema, { description: 'test' }, validateZod))
       .isResponseWithStatus($, 400);
 
     await $check`should fail if description is missing`
-      .value(schemaTest('form', AssetUploadSchema, { file: new File([], 'test.txt') }, validate))
+      .value(schemaTest('form', AssetUploadSchema, { file: new File([], 'test.txt') }, validateZod))
       .isResponseWithStatus($, 400);
   },
 
@@ -39,12 +39,12 @@ export default Collection`Asset Schema Validation`({
 
   "AssetDeleteSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with a valid key`
-      .value(schemaTest('json', AssetDeleteSchema, { key: 'some/key' }, validate))
+      .value(schemaTest('json', AssetDeleteSchema, { key: 'some/key' }, validateZod))
       .isObject()
       .eq($.key, 'some/key');
 
     await $check`should fail if key is not a string`
-      .value(schemaTest('json', AssetDeleteSchema, { key: 123 }, validate))
+      .value(schemaTest('json', AssetDeleteSchema, { key: 123 }, validateZod))
       .isResponseWithStatus($, 400);
   },
 });

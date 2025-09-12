@@ -1,6 +1,6 @@
 import { Collection, $check, $ } from "@axel669/aegis";
 import { schemaTest } from "@odatnurd/cf-requests/aegis";
-import { validate } from "../../service/src/requests/common.js"
+import { validateZod } from '#legacyvalidator';
 
 import {
   CollectionAddGameSchema,
@@ -20,22 +20,22 @@ import {
 export default Collection`Collection Schema Validation`({
   "CollectionAddGameSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with valid data`
-      .value(schemaTest('json', CollectionAddGameSchema, { game: '123', name: 'name', publisher: '456' }, validate))
+      .value(schemaTest('json', CollectionAddGameSchema, { game: '123', name: 'name', publisher: '456' }, validateZod))
       .isObject()
       .eq($.game, 123)
       .eq($.name, 'name')
       .eq($.publisher, 456);
 
     await $check`should fail if game is missing`
-      .value(schemaTest('json', CollectionAddGameSchema, { name: 'name', publisher: '456' }, validate))
+      .value(schemaTest('json', CollectionAddGameSchema, { name: 'name', publisher: '456' }, validateZod))
       .isResponseWithStatus($, 400);
 
     await $check`should fail if name is missing`
-      .value(schemaTest('json', CollectionAddGameSchema, { game: '123', publisher: '456' }, validate))
+      .value(schemaTest('json', CollectionAddGameSchema, { game: '123', publisher: '456' }, validateZod))
       .isResponseWithStatus($, 400);
 
     await $check`should fail if publisher is missing`
-      .value(schemaTest('json', CollectionAddGameSchema, { game: '123', name: 'name' }, validate))
+      .value(schemaTest('json', CollectionAddGameSchema, { game: '123', name: 'name' }, validateZod))
       .isResponseWithStatus($, 400);
   },
 
@@ -45,12 +45,12 @@ export default Collection`Collection Schema Validation`({
 
   "CollectionRemoveGameSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with valid data`
-      .value(schemaTest('json', CollectionRemoveGameSchema, { game: '123' }, validate))
+      .value(schemaTest('json', CollectionRemoveGameSchema, { game: '123' }, validateZod))
       .isObject()
       .eq($.game, 123);
 
     await $check`should fail if game is missing`
-      .value(schemaTest('json', CollectionRemoveGameSchema, {}, validate))
+      .value(schemaTest('json', CollectionRemoveGameSchema, {}, validateZod))
       .isResponseWithStatus($, 400);
   },
 });

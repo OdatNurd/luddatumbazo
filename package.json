@@ -23,9 +23,10 @@
   "imports": {
     "#db/*": "./service/src/db/*.js",
     "#sql/*": "./service/src/sql/*.sql",
-    "#requests/*": "./service/src/requests/*.js",
+    "#routes/*": "./service/src/routes/*.js",
     "#schema/*": "./service/src/schema/*.js",
-    "#lib/*": "./service/src/lib/*.js"
+    "#lib/*": "./service/src/lib/*.js",
+    "#legacyvalidator": "./service/src/lib/validateZod.js"
   },
   "dependencies": {
     "@axel669/sanic-xml": "^0.1.2",

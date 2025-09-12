@@ -1,6 +1,6 @@
 import { Collection, $check, $ } from "@axel669/aegis";
 import { schemaTest } from "@odatnurd/cf-requests/aegis";
-import { validate } from "../../service/src/requests/common.js"
+import { validateZod } from '#legacyvalidator';
 
 import {
   UserIDSchema
@@ -19,12 +19,12 @@ import {
 export default Collection`User Schema Validation`({
   "UserIDSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with a valid numeric string`
-      .value(schemaTest('param', UserIDSchema, { userId: '123' }, validate))
+      .value(schemaTest('param', UserIDSchema, { userId: '123' }, validateZod))
       .isObject()
       .eq($.userId, 123);
 
     await $check`should fail if userId is not a number`
-      .value(schemaTest('param', UserIDSchema, { userId: 'abc' }, validate))
+      .value(schemaTest('param', UserIDSchema, { userId: 'abc' }, validateZod))
       .isResponseWithStatus($, 400);
   },
 });

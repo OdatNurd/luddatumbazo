@@ -1,6 +1,6 @@
 import { Collection, $check, $ } from "@axel669/aegis";
 import { schemaTest } from "@odatnurd/cf-requests/aegis";
-import { validate } from "../../service/src/requests/common.js"
+import { validateZod } from '#legacyvalidator';
 
 import {
   HouseholdCreateSchema,
@@ -20,17 +20,17 @@ import {
 export default Collection`Household Schema Validation`({
   "HouseholdCreateSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with valid data`
-      .value(schemaTest('json', HouseholdCreateSchema, { name: 'The Martins', slug: 'the-martins' }, validate))
+      .value(schemaTest('json', HouseholdCreateSchema, { name: 'The Martins', slug: 'the-martins' }, validateZod))
       .isObject()
       .eq($.name, 'The Martins')
       .eq($.slug, 'the-martins');
 
     await $check`should fail if name is missing`
-      .value(schemaTest('json', HouseholdCreateSchema, { slug: 'the-martins' }, validate))
+      .value(schemaTest('json', HouseholdCreateSchema, { slug: 'the-martins' }, validateZod))
       .isResponseWithStatus($, 400);
 
     await $check`should fail if slug is missing`
-      .value(schemaTest('json', HouseholdCreateSchema, { name: 'The Martins' }, validate))
+      .value(schemaTest('json', HouseholdCreateSchema, { name: 'The Martins' }, validateZod))
       .isResponseWithStatus($, 400);
   },
 
@@ -40,17 +40,17 @@ export default Collection`Household Schema Validation`({
 
   "HouseholdLookupIDSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with a valid numeric string`
-      .value(schemaTest('param', HouseholdLookupIDSchema, { householdIdOrSlug: '123' }, validate))
+      .value(schemaTest('param', HouseholdLookupIDSchema, { householdIdOrSlug: '123' }, validateZod))
       .isObject()
       .eq($.householdIdOrSlug, 123);
 
     await $check`should succeed with a valid string`
-      .value(schemaTest('param', HouseholdLookupIDSchema, { householdIdOrSlug: 'the-martins' }, validate))
+      .value(schemaTest('param', HouseholdLookupIDSchema, { householdIdOrSlug: 'the-martins' }, validateZod))
       .isObject()
       .eq($.householdIdOrSlug, 'the-martins');
 
     await $check`should fail if householdIdOrSlug is missing`
-      .value(schemaTest('param', HouseholdLookupIDSchema, {}, validate))
+      .value(schemaTest('param', HouseholdLookupIDSchema, {}, validateZod))
       .isResponseWithStatus($, 400);
   },
 });

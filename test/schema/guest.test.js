@@ -1,6 +1,6 @@
 import { Collection, $check, $ } from "@axel669/aegis";
 import { schemaTest } from "@odatnurd/cf-requests/aegis";
-import { validate } from "../../service/src/requests/common.js"
+import { validateZod } from '#legacyvalidator';
 
 import {
   NewGuestSchema
@@ -19,23 +19,23 @@ import {
 export default Collection`Guest Schema Validation`({
   "NewGuestSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with valid data`
-      .value(schemaTest('json', NewGuestSchema, [{ firstName: 'John', lastName: 'Doe' }], validate))
+      .value(schemaTest('json', NewGuestSchema, [{ firstName: 'John', lastName: 'Doe' }], validateZod))
       .isArray()
       .eq($[0].firstName, 'John')
       .eq($[0].lastName, 'Doe')
       .eq($[0].displayName, 'John D.');
 
     await $check`should succeed with displayName`
-      .value(schemaTest('json', NewGuestSchema, [{ firstName: 'John', lastName: 'Doe', displayName: 'JD' }], validate))
+      .value(schemaTest('json', NewGuestSchema, [{ firstName: 'John', lastName: 'Doe', displayName: 'JD' }], validateZod))
       .isArray()
       .eq($[0].displayName, 'JD');
 
     await $check`should fail if firstName is missing`
-      .value(schemaTest('json', NewGuestSchema, [{ lastName: 'Doe' }], validate))
+      .value(schemaTest('json', NewGuestSchema, [{ lastName: 'Doe' }], validateZod))
       .isResponseWithStatus($, 400);
 
     await $check`should fail if lastName is missing`
-      .value(schemaTest('json', NewGuestSchema, [{ firstName: 'John' }], validate))
+      .value(schemaTest('json', NewGuestSchema, [{ firstName: 'John' }], validateZod))
       .isResponseWithStatus($, 400);
   },
 });
