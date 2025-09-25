@@ -245,6 +245,6 @@
 
   "build": {
     "command": "rollup -c rollup.service.js",
-    "watch_dir": ["./service"]
+    "watch_dir": ["./service/src"]
   },
 }

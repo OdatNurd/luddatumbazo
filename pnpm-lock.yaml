@@ -15,11 +15,11 @@ importers:
         specifier: ^0.4.6
         version: 0.4.7
       '@odatnurd/cf-requests':
-        specifier: ^0.1.8
-        version: 0.1.8(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1))(hono@4.9.5)(miniflare@4.20250823.1)
+        specifier: ^0.1.9
+        version: 0.1.9(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.4(@axel669/aegis@0.3.1)(json5@2.2.3)(miniflare@4.20250924.0)(smol-toml@1.4.2))(hono@4.9.5)(json5@2.2.3)(miniflare@4.20250924.0)(smol-toml@1.4.2)
       '@odatnurd/d1-query':
-        specifier: ^0.2.5
-        version: 0.2.5(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1))(fs-jetpack@5.1.0)(miniflare@4.20250823.1)
+        specifier: ^0.2.8
+        version: 0.2.8(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.4(@axel669/aegis@0.3.1)(json5@2.2.3)(miniflare@4.20250924.0)(smol-toml@1.4.2))(fs-jetpack@5.1.0)(json5@2.2.3)(miniflare@4.20250924.0)(smol-toml@1.4.2)
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
@@ -64,8 +64,8 @@ importers:
         specifier: ^0.1.2
         version: 0.1.2
       '@odatnurd/cf-aegis':
-        specifier: ^0.1.2
-        version: 0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1)
+        specifier: ^0.1.4
+        version: 0.1.4(@axel669/aegis@0.3.1)(json5@2.2.3)(miniflare@4.20250924.0)(smol-toml@1.4.2)
       '@rollup/plugin-commonjs':
         specifier: ^28.0.6
         version: 28.0.6(rollup@4.49.0)
@@ -85,8 +85,8 @@ importers:
         specifier: ^2.2.3
         version: 2.2.3
       miniflare:
-        specifier: ^4.20250813.0
-        version: 4.20250823.1
+        specifier: ^4.20250923.0
+        version: 4.20250924.0
       rollup:
         specifier: ^4.49.0
         version: 4.49.0
@@ -156,8 +156,20 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@cloudflare/workerd-darwin-64@1.20250924.0':
+    resolution: {integrity: sha512-/+nWoNDIzdQaQib7MrWYEfeDt1vA40Ah68nXlZGXHonkIqJvkjaTP8dzdKZLuwnQokiV/SpnAXNMH0WGH31XMw==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [darwin]
+
   '@cloudflare/workerd-darwin-arm64@1.20250823.0':
     resolution: {integrity: sha512-KJnikUe6J29Ga1QMPKNCc8eHD56DdBlu5XE5LoBH/AYRrbS5UI1d5F844hUWoFKJb8KRaPIH9F849HZWfNa1vw==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@cloudflare/workerd-darwin-arm64@1.20250924.0':
+    resolution: {integrity: sha512-UAjC5mra+WNWy6jMbIDe9orsFmYvvMlfvZdUyn5p3NlQhhU6cc4FkFuXJ/bV+6oVw5hIhlLlFCTnsGatki/uHg==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [darwin]
@@ -168,14 +180,32 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-64@1.20250924.0':
+    resolution: {integrity: sha512-IcwaoZFXGHq+yOBEj91QZH4qU61ws5upE7T43wVcrUAk8VXgxL12IGUVkMCEqfFXTO40PjKZBmK16B2q1HoFow==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [linux]
+
   '@cloudflare/workerd-linux-arm64@1.20250823.0':
     resolution: {integrity: sha512-sODSrSVe4W/maoBu76qb0sJGBhxhSM2Q2tg/+G7q1IPgRZSzArMKIPrW6nBnmBrrG1O0X6aoAdID6w5hfuEM4g==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-arm64@1.20250924.0':
+    resolution: {integrity: sha512-NgKG/cJiRNoJFa8QqweG0/bpkrUYKpR9mA9/qLJcGiwfvJrfK9b+ucw0lCru1BVMlyuS3kWDjagjMWqfujdBkA==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [linux]
+
   '@cloudflare/workerd-windows-64@1.20250823.0':
     resolution: {integrity: sha512-WaNqUOXUnrcEI+i2NI4+okA9CrJMI9n2XTfVtDg/pLvcA/ZPTz23MEFMZU1splr4SslS1th1NBO38RMPnDB4rA==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [win32]
+
+  '@cloudflare/workerd-windows-64@1.20250924.0':
+    resolution: {integrity: sha512-PntewemtjgLO2+8Gjw3G/NowDjpWZNKpKk/n4KmOQaWS9jIRq3IG1LkTqxj/BbMXqa4Oyrywk2kdqspj6QllOw==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
@@ -473,25 +503,29 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@odatnurd/cf-aegis@0.1.2':
-    resolution: {integrity: sha512-eMRJdR0KfaTonBAsusGJaVhSQjUQ9c6AbKLnKZt7n4A0cls/9rcBRqkAOz2t2fJKtvP0nv1faIwvvZ+5CRy/HQ==}
+  '@odatnurd/cf-aegis@0.1.4':
+    resolution: {integrity: sha512-878ExK69TjlllM4wWtjcRQ1CPnNU3Jz2GZHaHHA7SablmXDTe9T9cebWaGR2k8efSpdur3iVkpDVQtfqSG3F3w==}
     peerDependencies:
       '@axel669/aegis': ^0.3.1
-      miniflare: ^4.20250813.0
+      json5: ^2.2.3
+      miniflare: ^4.20250923.0
+      smol-toml: ^1.4.2
     peerDependenciesMeta:
       '@axel669/aegis':
         optional: true
       miniflare:
         optional: true
 
-  '@odatnurd/cf-requests@0.1.8':
-    resolution: {integrity: sha512-+4uJNRzEwN2pETiya6HZ+6jkR/T5XLNWEgnXPQuQS8vgDiybO+Purgzn870q6sTRvTS8re5EtHUxzO/yW1ENGQ==}
+  '@odatnurd/cf-requests@0.1.9':
+    resolution: {integrity: sha512-kt6yhG0ZHRY02jsoRIPN+nEfuv28HNK5FHFaKM5HEnt7erpOl59bWQhomJB+bo3kEd59ZeSWDv7cXgpq4e4Snw==}
     peerDependencies:
       '@axel669/aegis': ^0.3.1
       '@axel669/joker': ^0.3.5
-      '@odatnurd/cf-aegis': ^0.1.2
+      '@odatnurd/cf-aegis': ^0.1.4
       hono: ^4.7.0
-      miniflare: ^4.20250813.0
+      json5: ^2.2.3
+      miniflare: ^4.20250923.0
+      smol-toml: ^1.4.2
     peerDependenciesMeta:
       '@axel669/aegis':
         optional: true
@@ -499,16 +533,18 @@ packages:
         optional: true
       '@odatnurd/cf-aegis':
         optional: true
-      miniflare:
+      json5:
         optional: true
 
-  '@odatnurd/d1-query@0.2.5':
-    resolution: {integrity: sha512-N6dnsggUHLTGqW6rNc5+oL+B73IGDYiGJqbcyKN/MfjC6EWzppBX65ySuTadMtg93xShH42EOUa5TpbiNlAWzw==}
+  '@odatnurd/d1-query@0.2.8':
+    resolution: {integrity: sha512-n5Vk6qmSU3iqQkc5FI6jgsh1g3eVQhZ+iHUDY3689PnPH1cDwKzFGe0B65+ZIORqwXrugCzgvZubwkP9FXXTWA==}
     peerDependencies:
       '@axel669/aegis': ^0.3.1
-      '@odatnurd/cf-aegis': ^0.1.2
+      '@odatnurd/cf-aegis': ^0.1.4
       fs-jetpack: ^5.1.0
-      miniflare: ^4.20250813.0
+      json5: ^2.2.3
+      miniflare: ^4.20250923.0
+      smol-toml: ^1.4.2
     peerDependenciesMeta:
       '@axel669/aegis':
         optional: true
@@ -516,7 +552,7 @@ packages:
         optional: true
       fs-jetpack:
         optional: true
-      miniflare:
+      json5:
         optional: true
 
   '@poppinss/colors@4.1.5':
@@ -1009,6 +1045,11 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
+  miniflare@4.20250924.0:
+    resolution: {integrity: sha512-eQuWHklTeYYOil7sPPWo7Wrw86I4oac1kGAYfYcjg5dqMgMAiPUHvUWXMlTvW8ON6q33Ew23AsGDirm+Bea9ig==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
   minimatch@3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
 
@@ -1134,6 +1175,10 @@ packages:
   smob@1.5.0:
     resolution: {integrity: sha512-g6T+p7QO8npa+/hNx9ohv1E5pVCmWrVCUzUXJyLdMmftX6ER0oiWY/w9knEonLpnOp6b6FenKnMfR8gqwWdwig==}
 
+  smol-toml@1.4.2:
+    resolution: {integrity: sha512-rInDH6lCNiEyn3+hH8KVGFdbjc099j47+OSgbMrfDYX1CmXLfdKd7qi6IfcWj2wFxvSVkuI46M+wPGYfEOEj6g==}
+    engines: {node: '>= 18'}
+
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
@@ -1176,6 +1221,10 @@ packages:
   ufo@1.6.1:
     resolution: {integrity: sha512-9a4/uxlTWJ4+a5i0ooc1rU7C7YOw3wT+UGqdeNNHWnOF9qcMBgLRS+4IYUqbczewFx4mLEig6gawh7X6mFlEkA==}
 
+  undici@7.14.0:
+    resolution: {integrity: sha512-Vqs8HTzjpQXZeXdpsfChQTlafcMQaaIwnGwLam1wudSSjlJeQ3bw1j+TLPePgrCnCpUXx7Ba5Pdpf5OBih62NQ==}
+    engines: {node: '>=20.18.1'}
+
   undici@7.15.0:
     resolution: {integrity: sha512-7oZJCPvvMvTd0OlqWsIxTuItTpJBpU1tcbVl24FMn3xt3+VSunwUasmfPJRE57oNO1KsZ4PgA1xTdAX4hq8NyQ==}
     engines: {node: '>=20.18.1'}
@@ -1185,6 +1234,11 @@ packages:
 
   workerd@1.20250823.0:
     resolution: {integrity: sha512-95lToK9zeaC7bX5ZmlP/wz6zqoUPBk3hhec1JjEMGZrxsXY9cPRkjWNCcjDctQ17U97vjMcY/ymchgx7w8Cfmg==}
+    engines: {node: '>=16'}
+    hasBin: true
+
+  workerd@1.20250924.0:
+    resolution: {integrity: sha512-ovO2vwRCcMOlOm3bNwQQrVb8KDcewE/3rjfbZAYSF535BQQDUZ9dE1kyGBYlGx4W5udH3kqmOr+0YqTBLlycyA==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -1276,16 +1330,31 @@ snapshots:
   '@cloudflare/workerd-darwin-64@1.20250823.0':
     optional: true
 
+  '@cloudflare/workerd-darwin-64@1.20250924.0':
+    optional: true
+
   '@cloudflare/workerd-darwin-arm64@1.20250823.0':
+    optional: true
+
+  '@cloudflare/workerd-darwin-arm64@1.20250924.0':
     optional: true
 
   '@cloudflare/workerd-linux-64@1.20250823.0':
     optional: true
 
+  '@cloudflare/workerd-linux-64@1.20250924.0':
+    optional: true
+
   '@cloudflare/workerd-linux-arm64@1.20250823.0':
     optional: true
 
+  '@cloudflare/workerd-linux-arm64@1.20250924.0':
+    optional: true
+
   '@cloudflare/workerd-windows-64@1.20250823.0':
+    optional: true
+
+  '@cloudflare/workerd-windows-64@1.20250924.0':
     optional: true
 
   '@cspotcode/source-map-support@0.8.1':
@@ -1483,25 +1552,33 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1)':
+  '@odatnurd/cf-aegis@0.1.4(@axel669/aegis@0.3.1)(json5@2.2.3)(miniflare@4.20250924.0)(smol-toml@1.4.2)':
+    dependencies:
+      json5: 2.2.3
+      smol-toml: 1.4.2
     optionalDependencies:
       '@axel669/aegis': 0.3.1
-      miniflare: 4.20250823.1
+      miniflare: 4.20250924.0
 
-  '@odatnurd/cf-requests@0.1.8(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1))(hono@4.9.5)(miniflare@4.20250823.1)':
+  '@odatnurd/cf-requests@0.1.9(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.4(@axel669/aegis@0.3.1)(json5@2.2.3)(miniflare@4.20250924.0)(smol-toml@1.4.2))(hono@4.9.5)(json5@2.2.3)(miniflare@4.20250924.0)(smol-toml@1.4.2)':
     dependencies:
       hono: 4.9.5
+      miniflare: 4.20250924.0
+      smol-toml: 1.4.2
     optionalDependencies:
       '@axel669/aegis': 0.3.1
-      '@odatnurd/cf-aegis': 0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1)
-      miniflare: 4.20250823.1
+      '@odatnurd/cf-aegis': 0.1.4(@axel669/aegis@0.3.1)(json5@2.2.3)(miniflare@4.20250924.0)(smol-toml@1.4.2)
+      json5: 2.2.3
 
-  '@odatnurd/d1-query@0.2.5(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1))(fs-jetpack@5.1.0)(miniflare@4.20250823.1)':
+  '@odatnurd/d1-query@0.2.8(@axel669/aegis@0.3.1)(@odatnurd/cf-aegis@0.1.4(@axel669/aegis@0.3.1)(json5@2.2.3)(miniflare@4.20250924.0)(smol-toml@1.4.2))(fs-jetpack@5.1.0)(json5@2.2.3)(miniflare@4.20250924.0)(smol-toml@1.4.2)':
+    dependencies:
+      miniflare: 4.20250924.0
+      smol-toml: 1.4.2
     optionalDependencies:
       '@axel669/aegis': 0.3.1
-      '@odatnurd/cf-aegis': 0.1.2(@axel669/aegis@0.3.1)(miniflare@4.20250823.1)
+      '@odatnurd/cf-aegis': 0.1.4(@axel669/aegis@0.3.1)(json5@2.2.3)(miniflare@4.20250924.0)(smol-toml@1.4.2)
       fs-jetpack: 5.1.0
-      miniflare: 4.20250823.1
+      json5: 2.2.3
 
   '@poppinss/colors@4.1.5':
     dependencies:
@@ -1952,6 +2029,24 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  miniflare@4.20250924.0:
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      acorn: 8.14.0
+      acorn-walk: 8.3.2
+      exit-hook: 2.2.1
+      glob-to-regexp: 0.4.1
+      sharp: 0.33.5
+      stoppable: 1.1.0
+      undici: 7.14.0
+      workerd: 1.20250924.0
+      ws: 8.18.0
+      youch: 4.1.0-beta.10
+      zod: 3.22.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   minimatch@3.1.2:
     dependencies:
       brace-expansion: 1.1.12
@@ -2105,6 +2200,8 @@ snapshots:
 
   smob@1.5.0: {}
 
+  smol-toml@1.4.2: {}
+
   source-map-js@1.2.1: {}
 
   source-map-support@0.5.21:
@@ -2153,6 +2250,8 @@ snapshots:
 
   ufo@1.6.1: {}
 
+  undici@7.14.0: {}
+
   undici@7.15.0: {}
 
   unenv@2.0.0-rc.19:
@@ -2170,6 +2269,14 @@ snapshots:
       '@cloudflare/workerd-linux-64': 1.20250823.0
       '@cloudflare/workerd-linux-arm64': 1.20250823.0
       '@cloudflare/workerd-windows-64': 1.20250823.0
+
+  workerd@1.20250924.0:
+    optionalDependencies:
+      '@cloudflare/workerd-darwin-64': 1.20250924.0
+      '@cloudflare/workerd-darwin-arm64': 1.20250924.0
+      '@cloudflare/workerd-linux-64': 1.20250924.0
+      '@cloudflare/workerd-linux-arm64': 1.20250924.0
+      '@cloudflare/workerd-windows-64': 1.20250924.0
 
   wrangler@4.33.1:
     dependencies:

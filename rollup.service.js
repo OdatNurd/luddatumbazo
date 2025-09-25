@@ -14,7 +14,8 @@ export default {
   },
   onwarn(warning, handler) {
     if (warning.code === 'CIRCULAR_DEPENDENCY') {
-      if(warning.message.includes('node_modules/hono/')) {
+      if(warning.message.includes('node_modules/hono/') ||
+         warning.message.includes('node_modules/zod/')) {
         return;
       }
     }
