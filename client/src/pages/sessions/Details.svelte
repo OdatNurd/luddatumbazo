@@ -7,8 +7,10 @@
   import LoadZone from '$components/LoadZone.svelte';
   import DataGrid from '$components/DataGrid.svelte';
   import BackButton from '$components/BackButton.svelte';
+  import IconButton from '$components/IconButton.svelte';
   import BGGLink from '$components/links/BGGLink.svelte';
   import GameImage from '$components/GameImage.svelte';
+  import SessionAddDialog from '$components/dialogs/SessionAddDialog.svelte';
 
   import * as cells from '$lib/cells.js';
 
@@ -32,6 +34,11 @@
   let slug = 'unknown';
   let title = routeInfo.params.id;
 
+  // The loaded session report, kept so that the edit dialog can be populated
+  // from it, and the state of that dialog.
+  let loaded = null;
+  let editOpen = false;
+
   // Using the props that we were given, generate out the kinds of links that
   // the table needs to generate internal links to the data that it contains.
   const slugLink = slug => '#/game/:slug'.replaceAll(':slug', slug);
@@ -44,6 +51,7 @@
     name = result.name;
     slug = result.slug;
     title = result.title;
+    loaded = result;
 
     // Convert the incoming session begin and end into DateTime for easier
     // handling.
@@ -82,7 +90,7 @@
       align: 'center',
       sortable: false,
       formatter: (value) => value
-        ? cells.icon('flag-fill', { color: 'var(--wa-color-brand-600)' })
+        ? cells.icon('flag-fill', { color: 'var(--wa-color-brand-600)', title: 'Starting player' })
         : ''
     },
     {
@@ -93,7 +101,7 @@
       align: 'center',
       sortable: false,
       formatter: (value) => value
-        ? cells.icon('trophy-fill', { color: 'var(--wa-color-warning-600)' })
+        ? cells.icon('trophy-fill', { color: 'var(--wa-color-warning-600)', title: 'Winner of the session' })
         : ''
     },
     {
@@ -131,7 +139,7 @@
       align: 'center',
       sortable: false,
       searchable: false,
-      formatter: (value, row) => cells.image(value, row.name)
+      formatter: (value, row) => cells.image(value, row)
     },
     {
       field: 'name',
@@ -166,7 +174,12 @@
   </BackButton>
 
   {#if slug !== 'unknown'}
-    <h3>{title}</h3>
+    <div class="title-row">
+      <h3>{title}</h3>
+      <IconButton fill color="@secondary" title="Edit this session report"
+                  caption="Edit" icon="pencil-fill"
+                  on:click={() => editOpen = true} />
+    </div>
   {/if}
 </div>
 
@@ -208,9 +221,20 @@
   </svelte:fragment>
 </LoadZone>
 
+<SessionAddDialog open={editOpen} session={loaded} on:close={() => editOpen = false} />
+
 <style>
   h3 {
     text-transform: capitalize;
+  }
+
+  /* The report title with its edit control pushed to the far side. */
+  .title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
   }
 
   .session-summary {

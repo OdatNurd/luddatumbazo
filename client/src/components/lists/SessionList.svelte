@@ -27,6 +27,10 @@
   // Set the number of rows that are visible in the data table per page
   export let pageSize = 20;
 
+  // Passed through to the grid so that the user's page size choice is
+  // remembered across visits; only the top level session list provides one.
+  export let gridKey = undefined;
+
   // When this list is the whole page body, set this so the grid fills whatever
   // vertical space the shell leaves for it instead of the page scrolling.
   export let fill = false;
@@ -92,7 +96,7 @@
       align: 'center',
       sortable: false,
       searchable: false,
-      formatter: (value, row) => cells.image(value, row.name)
+      formatter: (value, row) => cells.image(value, row)
     },
     {
       field: 'title',
@@ -128,7 +132,9 @@
 
 
 <LoadZone source={loader()} let:result>
-  <DataGrid data={result} columns={gridColumns} {fill} pageSize={showGames ? pageSize : Math.min(Math.max(result.length, 1), pageSize)} />
+  <DataGrid data={result} columns={gridColumns} {fill} {gridKey} pageSize={showGames ? pageSize : Math.min(Math.max(result.length, 1), pageSize)}>
+    <slot name="actions" slot="actions" />
+  </DataGrid>
 
   <svelte:fragment slot="error" let:error>
     {error}

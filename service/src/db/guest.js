@@ -93,6 +93,7 @@ export async function dbGuestList(ctx, inputGuestList) {
   // Try to find all metadata item of this type.
   const guests = await ctx.env.DB.prepare(`
     SELECT id, firstName, lastName, displayName, name from GuestUser
+     ORDER BY name COLLATE NOCASE
   `).all();
 
   return getDBResult('dbGuestList', 'find_guests', guests);

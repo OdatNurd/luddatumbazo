@@ -13,17 +13,13 @@
 </script>
 
 <h3>Game List</h3>
-<SlugList bggType='boardgame' baseLink='#/game/:slug' {loader}>
-  <!-- The import operations are placeholders for the upcoming BGG import
-       work; the buttons are in place but disabled until those flows land. -->
+<SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} gridKey="games">
+  <!-- BGG import flows are handled through the game dialog's BGG lookup
+       (pending the BGG API token), so no separate import buttons live here. -->
   <svelte:fragment slot="actions">
     <IconButton fill color="@primary" title="Add a new game"
                 caption="Add Game" icon="plus-lg"
                 on:click={() => addDialogOpen = true} />
-    <IconButton disabled outline color="@secondary" title="Coming soon"
-                caption="Import BGG Game" icon="box-arrow-in-right" />
-    <IconButton disabled outline color="@secondary" title="Coming soon"
-                caption="Import BGG Game List" icon="list-ul" />
   </svelte:fragment>
 </SlugList>
 

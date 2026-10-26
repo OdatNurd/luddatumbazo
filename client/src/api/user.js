@@ -19,10 +19,21 @@ async function currentUser () {
 /******************************************************************************/
 
 
+/* Gather the short records for every user known to the system; this is used
+ * where people need to be picked (such as the players of a session report). */
+async function userList () {
+  return raw.get(`/user/list`);
+}
+
+
+/******************************************************************************/
+
+
 /* Export a composed object that collects the related API's together into a
  * single object based on the operations. */
 export const user = {
   current: currentUser,
+  list: userList,
 }
 
 

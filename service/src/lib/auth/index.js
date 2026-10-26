@@ -78,10 +78,16 @@ export async function authGetUser(ctx) {
  * response is returned back for convenience. */
 export function applySessionRenewal(ctx, res) {
   const jwt = ctx.get('auth:renew');
-  if (jwt !== undefined) {
-    res.headers.append('Set-Cookie', sessionCookieHeader(ctx, jwt));
-  }
+  if (jwt === undefined) {
   return res;
+  }
+
+  // Responses handed to us (such as those coming back out of the asset layer)
+  // carry immutable headers that refuse modification; copying the response
+  // into a new one gives us a mutable header set to attach the renewal to.
+  const renewed = new Response(res.body, res);
+  renewed.headers.append('Set-Cookie', sessionCookieHeader(ctx, jwt));
+  return renewed;
 }
 
 

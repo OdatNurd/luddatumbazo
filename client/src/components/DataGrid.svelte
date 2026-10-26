@@ -12,7 +12,15 @@
   export let columns = [];
 
   // The number of rows per page.
-  export let pageSize = 20;
+  export let pageSize = 25;
+
+  // Identifies this grid in localStorage so the user's page size choice is
+  // remembered across visits. Only the top level grids are given a key; grids
+  // that sit inline inside other pages simply use whatever they are given.
+  export let gridKey = undefined;
+
+  // The ladder of page sizes the picker offers.
+  const basePageSizes = [10, 25, 50, 100];
 
   // Show the search box above the grid.
   export let withSearch = true;
@@ -32,6 +40,40 @@
   // machinery through it, since the toolbar lives out here where pages can add
   // their own buttons next to the search.
   let grid = null;
+
+  // Restore the user's remembered page size before the grid first renders;
+  // when there is no remembered value the provided (or default) size stands.
+  if (gridKey !== undefined) {
+    const saved = parseInt(localStorage.getItem(`luddatumbazo:grid-page-size:${gridKey}`) ?? '', 10);
+    if (Number.isInteger(saved) && saved > 0) {
+      pageSize = saved;
+    }
+  }
+
+  // The picker offers the standard ladder plus whatever size is actually in
+  // force. Inline grids clamp their size to their row count (an inline list of
+  // five rows shows five), and without this the picker would display a value
+  // that is not one of its own options.
+  $: pageSizes = [...new Set([...basePageSizes, pageSize])].sort((a, b) => a - b);
+
+  // pageSizeOptions is a property with no attribute form, so it is handed to
+  // the grid directly whenever it or the grid element changes.
+  $: if (grid !== null) {
+    grid.pageSizeOptions = pageSizes;
+  }
+
+  // When the user picks a page size on a grid that opted in, remember the
+  // choice for the next visit.
+  const pageChanged = event => {
+    const size = event.detail?.pageSize;
+
+    if (gridKey === undefined || Number.isInteger(size) === false || size <= 0) {
+      return;
+    }
+
+    localStorage.setItem(`luddatumbazo:grid-page-size:${gridKey}`, String(size));
+    pageSize = size;
+  };
 
   // Push the search terms typed into the toolbar's search box into the grid.
   const search = event => {
@@ -92,6 +134,7 @@
     {striped}
     paginate
     page-size={pageSize}
+    on:wa-page-change={pageChanged}
   ></wa-data-grid>
 </div>
 

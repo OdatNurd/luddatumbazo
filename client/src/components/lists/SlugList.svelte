@@ -33,6 +33,10 @@
   // be displayed in the list.
   export let filter = result => result;
 
+  // Passed through to the grid so that the user's page size choice for this
+  // list is remembered across visits; only the top level pages provide one.
+  export let gridKey = undefined;
+
   // ---------------------------------------------------------------------------
 
   // Using the props that we were given, generate out the kinds of links that
@@ -60,7 +64,7 @@
       align: 'center',
       sortable: false,
       searchable: false,
-      formatter: (value, row) => cells.image(value, row.name)
+      formatter: (value, row) => cells.image(value, row)
     },
     {
       field: 'name',
@@ -82,16 +86,26 @@
     }
   ];
 
-  // Fetch the list of data that we need from the back end API, and return the
-  // result back after filtering it.
-  const loadData = async param => filter (await loader(param));
+  // Fetch the list of data that we need from the back end API, and return
+  // the result back after filtering it. The tick argument exists only to make
+  // the expression below depend on it so that refresh() re-runs the load.
+  const loadData = async (param, tick) => filter (await loader(param));
+
+  // Re-run the load after something has changed the underlying data (such as
+  // the add dialog creating a record). The grid stays mounted, so its sort,
+  // page and search state survive the refresh.
+  let tick = 0;
+
+  export function refresh() {
+    tick += 1;
+  }
 </script>
 
 
-<LoadZone source={loadData(loaderKey)} let:result>
+<LoadZone source={loadData(loaderKey, tick)} let:result>
   <!-- This list is always presented as the whole page body, so the grid fills
        whatever vertical space the shell leaves for it (see app.css). -->
-  <DataGrid data={result} {columns} pageSize={20} fill>
+  <DataGrid data={result} {columns} {gridKey} fill>
     <slot name="actions" slot="actions" />
   </DataGrid>
 

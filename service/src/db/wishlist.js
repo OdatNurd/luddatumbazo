@@ -36,6 +36,7 @@ export async function dbWishlistDetails(ctx, householdId, idOrSlug) {
 export async function dbWishlistList(ctx, householdId) {
   const wishlistLookup = await ctx.env.DB.prepare(`
     SELECT * FROM Wishlist WHERE householdId = ?
+     ORDER BY name COLLATE NOCASE
   `).bind(householdId).all();
 
   const wishlists = getDBResult('dbWishlistList', 'list_wishlists', wishlistLookup);

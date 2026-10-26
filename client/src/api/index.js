@@ -6,6 +6,7 @@ import { household } from './household.js';
 import { game } from './game.js';
 import { user } from './user.js';
 import { session } from './session.js';
+import { guest } from './guest.js';
 import { metadata } from './metadata.js';
 import { bgg } from './bgg.js';
 
@@ -22,6 +23,7 @@ export const api = {
   game,
   metadata,
   session,
+  guest,
   bgg,
 }
 

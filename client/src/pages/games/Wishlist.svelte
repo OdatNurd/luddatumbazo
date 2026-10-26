@@ -32,7 +32,7 @@
       <wa-option value={entry.value}>{entry.label}</wa-option>
     {/each}
   </wa-select>
-  <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} {loaderKey} />
+  <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} {loaderKey} gridKey="wishlists" />
 {:else}
   No wishlists; you do not belong to any households yet!
 {/if}

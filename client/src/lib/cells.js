@@ -43,11 +43,16 @@ export function text(value) {
 }
 
 
-/* An icon glyph from the local bootstrap library. */
-export function icon(name, { color = undefined, size = undefined } = {}) {
+/* An icon glyph from the local bootstrap library.
+ *
+ * A title, when given, becomes a native tooltip on the glyph; grid rows are
+ * built as plain nodes out here in the light DOM, so the attribute is what the
+ * browser reads for the hover text. */
+export function icon(name, { color = undefined, size = undefined, title = undefined } = {}) {
   return element('wa-icon', {
     name,
     library: 'bootstrap',
+    title,
     style: [color && `color:${color}`, size && `font-size:${size}`].filter(Boolean).join(';')
   });
 }
@@ -71,19 +76,57 @@ export function link(href, label, { external = false, icon: iconName = undefined
 }
 
 
+/* Image cells are cached per row and the same node is handed back on every
+ * render.
+ *
+ * The grid runs formatters on every render; its rows are virtualized, so
+ * scrolling re-renders them continuously. A fresh node replaces the previous
+ * one each time.
+ *
+ * A freshly built <img> reloads and repaints from scratch, which shows up as
+ * visible flicker while scrolling. Reusing the node instance (the remedy the
+ * grid's own documentation prescribes for cells that must keep their DOM state)
+ * keeps the picture mounted and the scroll clean.
+ *
+ * The cache is a WeakMap keyed by the row object: entries vanish along with
+ * their data set, and two grids that happen to show the same picture each
+ * get their own node instead of fighting over one. */
+const imageCache = new WeakMap();
+
 /* A small icon sized box art image, as used in the dedicated image column of
  * the various game lists. Returns an empty string when there is no image. */
-export function image(imagePath, name) {
+export function image(imagePath, row) {
   if (imagePath === undefined || imagePath === null || imagePath === '') {
     return '';
   }
 
-  return element('img', {
-    src: imagePath,
-    alt: name ?? 'thumbnail',
-    class: 'cell-image',
-    style: 'display:block;margin:0 auto;width:32px;height:32px;object-fit:contain;border-radius:var(--wa-border-radius-small);'
-  });
+  // Rows always come from the grid, but be safe about the cache key.
+  if (row === undefined || row === null) {
+    return element('img', {
+      src: imagePath,
+      alt: 'thumbnail',
+      class: 'cell-image',
+      style: 'display:block;margin:0 auto;width:32px;height:32px;object-fit:contain;border-radius:var(--wa-border-radius-small);'
+    });
+  }
+
+  let cells = imageCache.get(row);
+  if (cells === undefined) {
+    cells = {};
+    imageCache.set(row, cells);
+  }
+
+  const key = String(imagePath);
+  if (cells[key] === undefined) {
+    cells[key] = element('img', {
+      src: imagePath,
+      alt: row.name ?? 'thumbnail',
+      class: 'cell-image',
+      style: 'display:block;margin:0 auto;width:32px;height:32px;object-fit:contain;border-radius:var(--wa-border-radius-small);'
+    });
+  }
+
+  return cells[key];
 }
 
 

@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { readSession, applySessionRenewal } from '#lib/auth/index';
+import { authGetUser, applySessionRenewal } from '#lib/auth/index';
 import { deniedURL } from '#lib/auth/pages';
 
 
@@ -16,7 +16,9 @@ import { deniedURL } from '#lib/auth/pages';
  *
  *   - shows the styled access denied page if the identity provider bounced
  *     back to us with an error,
- *   - sends the browser off to start a login if there is no valid session,
+ *   - sends the browser off to start a login if the request carries none of
+ *     the credentials the auth system knows about (the same sources the API
+ *     accepts: a session, the service token or the development token),
  *   - and otherwise serves up the client shell as normal.
  *
  * Everything else is handed straight along; API and file routes carry their own
@@ -37,11 +39,13 @@ export const $any = [
       return ctx.redirect(deniedURL(ctx, ctx.req.query('error_description') ?? error));
     }
 
-    // Without a valid session the browser is sent off to start a login; the
+    // Without a valid credential the browser is sent off to start a login; the
     // client keeps any deep link it was given, so after the round trip the user
-    // lands back where they were headed.
-    const session = await readSession(ctx);
-    if (session === null) {
+    // lands back where they were headed. Checking through the full auth entry
+    // point (rather than the session alone) keeps the service and development
+    // token paths able to load the client during local development.
+    const userId = await authGetUser(ctx);
+    if (userId === null) {
       return ctx.redirect('/login');
     }
 

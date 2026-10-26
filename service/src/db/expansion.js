@@ -323,6 +323,7 @@ export async function dbExpansionDetails(ctx, gameId) {
       FROM GameExpansion as A
      WHERE A.baseGameId = ?1
        AND A.expansionGameId is NULL
+     ORDER BY name COLLATE NOCASE
   `);
 
   // This query is as above but instead of finding games that expand the game
@@ -346,6 +347,7 @@ export async function dbExpansionDetails(ctx, gameId) {
       FROM GameExpansion as A
      WHERE A.expansionGameId = ?1
        AND A.baseGameId is NULL
+     ORDER BY name COLLATE NOCASE
   `);
 
   // Batch out the two requests so that we can gather the results of both;

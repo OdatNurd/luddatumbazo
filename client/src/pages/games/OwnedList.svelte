@@ -9,7 +9,7 @@
 
 {#if $user.household}
   <h3>Games owned by {$user.household?.name ?? 'Unknown'}</h3>
-  <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} />
+  <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} gridKey="owned" />
 {:else}
   No collection; you do not belong to any households yet!
 {/if}

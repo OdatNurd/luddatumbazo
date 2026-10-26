@@ -140,6 +140,7 @@ export async function dbMetadataDetails(ctx, metaType, idOrSlug, includeGames) {
       WHERE A.id == B.gameId and B.isPrimary = 1
         AND C.gameId = A.id
         AND C.itemId = ?
+      ORDER BY B.name COLLATE NOCASE
     `).bind(record.id).all();
 
     // Get the result, and then map the image path for all items into a full
@@ -166,6 +167,7 @@ export async function dbMetadataList(ctx, metaType) {
   const metadata = await ctx.env.DB.prepare(`
     SELECT id, bggId, slug, name from GameMetadata
      WHERE metatype = ?
+     ORDER BY name COLLATE NOCASE
   `).bind(metaType).all();
 
   return getDBResult('dbMetadataList', 'find_meta', metadata);

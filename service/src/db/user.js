@@ -18,6 +18,7 @@ export async function dbUserHouseholds(ctx, userId) {
       FROM Household as A, UserHousehold as B
      WHERE A.id = B.householdId
        AND B.userId = ?
+     ORDER BY A.name COLLATE NOCASE
   `).bind(userId).all();
 
   const households = getDBResult('dbUserHouseholds', 'find_households', householdLookup);
@@ -183,6 +184,7 @@ export async function dbUserInsert(ctx, identity) {
 export async function dbUserList(ctx) {
   const result = await ctx.env.DB.prepare(`
     SELECT id, name, displayName, emailAddress From User
+     ORDER BY name COLLATE NOCASE
   `).all();
   return getDBResult('dbUserList', 'list_users', result);
 }

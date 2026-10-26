@@ -61,12 +61,14 @@ export async function dGameAssetList(ctx, gameId) {
     op = 'find_all_assets';
     stmt = ctx.env.DB.prepare(`
       SELECT * FROM GameAssets
+      ORDER BY filename COLLATE NOCASE
     `);
   } else {
     op = 'find_game_assets';
     stmt = ctx.env.DB.prepare(`
       SELECT * FROM GameAssets
       WHERE gameId = ?
+      ORDER BY filename COLLATE NOCASE
     `).bind(gameId);
   }
 

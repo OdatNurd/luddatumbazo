@@ -211,6 +211,7 @@ export async function dbGameList(ctx) {
     SELECT A.id, A.bggId, A.slug, B.name, A.imagePath
       FROM Game as A, GameName as B
      WHERE A.id = B.gameId AND B.isPrimary = 1
+     ORDER BY B.name COLLATE NOCASE
   `).all();
 
   const result = getDBResult('dbGameList', 'find_games', gameList);
@@ -231,6 +232,7 @@ export async function dbGameOwnedList(ctx, householdId) {
       FROM Game as A, GameName as B, GameOwners as C
      WHERE A.id = B.gameId AND A.id = C.gameId AND
            B.id = C.gameName AND C.householdId = ?1
+     ORDER BY B.name COLLATE NOCASE
   `).bind(householdId).all();
 
   const result = getDBResult('dbGameOwnedList', 'find_games', gameList);
@@ -253,6 +255,7 @@ export async function dbGameWishlist(ctx, householdId, wishlistId) {
      WHERE A.id = B.gameId AND
            A.id = C.gameId AND C.wishlistId = ?1  AND
            B.id = C.gameName AND C.householdId = ?2
+     ORDER BY B.name COLLATE NOCASE
   `).bind(wishlistId, householdId).all();
 
   const result = getDBResult('dbGameWishlist', 'find_games', gameList);
