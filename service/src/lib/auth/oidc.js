@@ -26,9 +26,14 @@
 /* Pull the provider configuration out of the environment and collect it into a
  * single object for return back.
  *
- * The redirect URI is the exact URI that the provider has been configured to
- * send the browser back to; it is always taken from configuration and never
- * derived from the incoming request. */
+ * The redirect URI is derived from the request currently being serviced rather
+ * than from configuration: the application is reachable on several hostnames
+ * (the home lab proxy name, the deployed domain, localhost) and a single
+ * configured value would only ever be right for one of them.
+ *
+ * Every one of the origins is registered with the provider as an exact redirect
+ * URI, and the provider rejects any URI outside its allowlist, so a forged
+ * Host header can only ever produce a login that fails there. */
 export function oidcConfig(ctx) {
   return {
     authUrl: ctx.env.OIDC_AUTH_URL,
@@ -37,7 +42,7 @@ export function oidcConfig(ctx) {
 
     clientId: ctx.env.OIDC_CLIENT_ID,
     clientSecret: ctx.env.OIDC_CLIENT_SECRET,
-    redirectUri: ctx.env.OIDC_REDIRECT_URI,
+    redirectUri: loginCallbackURL(ctx),
     scopes: ctx.env.OIDC_SCOPES ?? 'openid profile email groups'
   };
 }
@@ -77,13 +82,44 @@ export function clientAuth(config) {
 /******************************************************************************/
 
 
-/* The public origin of the application itself; this is derived from the
- * configured redirect URI, which is the only trustworthy source for it.
+/* The path of the login callback route; the redirect URI sent to the provider
+ * is always this path under the origin of the current request. */
+const CALLBACK_PATH = '/login/callback';
+
+
+/******************************************************************************/
+
+
+/* The public origin of the application itself, as seen by the browser whose
+ * request is being serviced right now.
  *
- * This is used when we need to build a URL that points back at ourselves (for
- * example the return link of a provider side logout). */
+ * The worker is always behind TLS termination (the local nginx proxy in the
+ * home lab, or the Cloudflare edge itself), so the connection the worker sees
+ * is plain while the browser used HTTPS. The standard X-Forwarded-Proto header
+ * carries the scheme the browser actually used and is honored when it holds a
+ * value we recognize.
+ *
+ * This is used when we need to build a URL that points back at ourselves (the
+ * redirect URI of a login, and the return link of a provider side logout). */
 export function appOrigin(ctx) {
-  return new URL(ctx.env.OIDC_REDIRECT_URI).origin;
+  const url = new URL(ctx.req.url);
+
+  const proto = ctx.req.header('X-Forwarded-Proto')?.split(',')[0].trim();
+  if (proto === 'http' || proto === 'https') {
+    url.protocol = `${proto}:`;
+  }
+
+  return url.origin;
+}
+
+
+/******************************************************************************/
+
+
+/* The full redirect URI that the provider sends the browser back to after a
+ * login; always the callback path under the origin of the current request. */
+export function loginCallbackURL(ctx) {
+  return `${appOrigin(ctx)}${CALLBACK_PATH}`;
 }
 
 

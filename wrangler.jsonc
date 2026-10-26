@@ -110,15 +110,10 @@
     // set this up.
     //"GAME_API_ROOT_URI": "http://localhost:8000",
 
-    // The frontend code needs to access us as the API, but it may be running on
-    // a different hostname than we are (particulary during development). This
-    // sets what the CORS origin header is set to, indicating what hosts are
-    // allowed to talk to us.
-    //
-    // The default value here only works for cases where the Worker and the
-    // Pages sites are both at the same origin (e.g. production); for localhost,
-    // this needs to be overridden in .dev.vars instead.
-    "GAME_UI_ORIGIN": "*",
+    // The repository that holds the deployed version of the code; used at UI
+    // build time to generate the github links to commits that appear as part
+    // of a release. Also a UI build value only; see client/.env.template.
+    //"GITHUB_ROOT_URI": "https://github.com/OdatNurd/luddatumbazo",
 
   //----------------------------------------------------------------------------
   // S T A T I C   G A M E   A S S E T S
@@ -145,11 +140,13 @@
     "OIDC_USERINFO_URL": "https://auth.thedragonland.net/api/oidc/userinfo",
 
     // The client identifier that this application is registered as at the
-    // provider, and the exact URI the provider sends the browser back to after
-    // a login. The redirect URI must match a redirect URI registered for the
-    // client at the provider exactly.
+    // provider. The redirect URI is no longer configured here; it is derived
+    // from the origin of the incoming request (the callback path under the
+    // host the browser actually used), so the same deployment works on every
+    // hostname it is reached by. Each of those origins must be registered with
+    // the provider as an exact redirect URI, which is also what makes a forged
+    // Host header harmless: the provider rejects unregistered URIs.
     "OIDC_CLIENT_ID": "luddatumbazo",
-    "OIDC_REDIRECT_URI": "https://luddatumbazo.thedragonland.net/login/callback",
 
     // An optional client secret for a confidential client registration. This
     // must never hold a real value here; provide it as a secret instead (via

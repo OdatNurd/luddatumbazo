@@ -38,7 +38,7 @@ import {
  * unauthenticated. */
 export async function authGetUser(ctx) {
   // A service token acts as the configured user and nothing else.
-  const service = serviceIdentity(ctx);
+  const service = await serviceIdentity(ctx);
   if (service !== null) {
     return await resolveUser(ctx, service, false);
   }
