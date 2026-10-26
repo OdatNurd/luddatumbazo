@@ -99,6 +99,15 @@ const CALLBACK_PATH = '/login/callback';
  * carries the scheme the browser actually used and is honored when it holds a
  * value we recognize.
  *
+ * The host comes from the request URL, which the Cloudflare edge fills in with
+ * the host the browser actually addressed. The one exception is the local
+ * wrangler dev server: it presents every request as if it arrived at the
+ * configured route hostname, no matter what the client addressed. The nginx
+ * proxy in the home lab sets X-Forwarded-Host with the real host, so when a
+ * proxy has supplied that header it wins. (A forged header can only break the
+ * forger's own login: the identity provider refuses to send a code to a
+ * redirect URI that is not registered.)
+ *
  * This is used when we need to build a URL that points back at ourselves (the
  * redirect URI of a login, and the return link of a provider side logout). */
 export function appOrigin(ctx) {
@@ -107,6 +116,11 @@ export function appOrigin(ctx) {
   const proto = ctx.req.header('X-Forwarded-Proto')?.split(',')[0].trim();
   if (proto === 'http' || proto === 'https') {
     url.protocol = `${proto}:`;
+  }
+
+  const host = ctx.req.header('X-Forwarded-Host')?.split(',')[0].trim();
+  if (host !== undefined && host !== '') {
+    url.host = host;
   }
 
   return url.origin;
