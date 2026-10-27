@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import parseXML from '@axel669/sanic-xml/parse';
+import sanicXML from '@axel669/sanic-xml';
 import { decodeHTML } from 'entities';
 import slug from "slug";
 
@@ -18,32 +18,53 @@ const BGG_API_URL = 'https://boardgamegeek.com/xmlapi';
 /******************************************************************************/
 
 
-/* Given a particular array of input nodes, return back the first tag found
- * whose name is the one that is passed in.
+/* Normalize a value from a parsed sanic-xml object into a list; in the parsed
+ * form, tags that appear once are a bare value while tags that appear multiple
+ * times are an array. This always returns an array, which may be empty. */
+const asArray = value => (value === undefined) ? [] : (Array.isArray(value) ? value : [value]);
+
+
+/* Given a value from a parsed sanic-xml object, determine whether it is an
+ * element node (an object holding attributes/text) as opposed to a plain
+ * text-only value (which is just a string). */
+const isElement = value => (typeof value === 'object' && value !== null);
+
+
+/* Given a value from a parsed sanic-xml object, return its textual content;
+ * text-only nodes are strings directly, while nodes that have attributes or
+ * children carry their text under the __text key.
+ *
+ * The result is trimmed to match how the data was handled previously. */
+const nodeText = value => ((typeof value === 'string') ? value : (value?.__text ?? '')).trim();
+
+
+/* Given a parsed sanic-xml object, return back the first tag found whose name
+ * is the one that is passed in.
  *
  * If there is no such node found, this will return undefined. */
-const getChildNamed = (input, name) => input.children.find(el => el.tag === name);
+const getChildNamed = (input, name) => asArray(input?.[name])[0];
 
 
-/* Given a particular array of input nodes, return back a list of all of the
- * tags found which have that name.
+/* Given a parsed sanic-xml object, return back a list of all of the tags found
+ * which have that name.
  *
  * The return value is always an array, although it may be empty. */
-const getChildrenNamed = (input, name) => input.children.filter(el => el.tag === name);
+const getChildrenNamed = (input, name) => asArray(input?.[name]);
 
 
-/* Given a particular array of input nodes, find the first node whose tag is
- * the one named and, if found, return it's textual content (if any).
+/* Given a parsed sanic-xml object, find the first node whose tag is the one
+ * named and, if found, return it's textual content (if any).
  *
  * This will return undefined if the tag is not found, or if the tag has no
  * text. */
 const getTextOf = (input, name) => {
   const node = getChildNamed(input, name);
-  if (node && node.children.length > 0) {
-    return node.children[0]?.text;
+  if (node === undefined) {
+    return undefined;
   }
 
-  return undefined;
+  const text = nodeText(node);
+  return (text === '') ? undefined : text;
 }
 
 
@@ -76,12 +97,12 @@ const getFloatOf = (input, name) => {
  *
  * Any nodes of this name that don't follow this data pattern are skipped. */
 const getAllItemsOf = (input, name) => getChildrenNamed(input, name)
-  .filter(el => el.children.length > 0 && el.attr?.objectid !== undefined)
+  .filter(el => isElement(el) && nodeText(el) !== '' && el._objectid !== undefined)
   .map(el => {
-    const name = decodeHTML(el.children[0].text);
+    const name = decodeHTML(nodeText(el));
     return {
       name,
-      "bggId": parseInt(el.attr.objectid),
+      "bggId": parseInt(el._objectid),
       "slug": slug(name)
     }
   });
@@ -96,12 +117,12 @@ const getAllItemsOf = (input, name) => getChildrenNamed(input, name)
  * in the list of names. */
 const getGameNames = input => getChildrenNamed(input, 'name').sort((left, right) => {
   // Sort the node that has the "primary" attribute to be first
-  if (left.attr?.primary) return -1;
-  if (right.attr?.primary) return 1;
+  if (isElement(left) && left._primary) return -1;
+  if (isElement(right) && right._primary) return 1;
 
   // Fall back to sorting based on the child text.
-  const lText = (left.children.length > 0) ? left.children[0]?.text : undefined;
-  const rText = (right.children.length > 0) ? right.children[0]?.text : undefined;
+  const lText = (nodeText(left) !== '') ? nodeText(left) : undefined;
+  const rText = (nodeText(right) !== '') ? nodeText(right) : undefined;
 
   // Return the appropriate locale comparison value; Sort a missing item to
   // come after those which exist; when both exist, return the comparison.
@@ -112,7 +133,7 @@ const getGameNames = input => getChildrenNamed(input, 'name').sort((left, right)
   } else {
     return lText.localeCompare(rText, 'en', {sensitivity: 'base'});
   }
-}).map(el => decodeHTML(el.children[0].text));
+}).map(el => decodeHTML(nodeText(el)));
 
 
 /* Given an input tag, find all of the boardgameexpansion records and return
@@ -124,9 +145,9 @@ const getGameNames = input => getChildrenNamed(input, 'name').sort((left, right)
  * and an expansion has records of what games it expands. */
 const getGameExpansions = input => getChildrenNamed(input, 'boardgameexpansion')
    .map(expansion => {
-      const bggId = parseInt(expansion.attr.objectid);
-      const name = expansion.children.length > 0 ? decodeHTML(expansion.children[0]?.text) : 'unknown';
-      const isExpansion = expansion.attr?.inbound === undefined;
+      const bggId = parseInt(isElement(expansion) ? expansion._objectid : undefined);
+      const name = (nodeText(expansion) !== '') ? decodeHTML(nodeText(expansion)) : 'unknown';
+      const isExpansion = (isElement(expansion) ? expansion._inbound : undefined) === undefined;
 
       return { isExpansion, name, bggId }
    });
@@ -227,15 +248,17 @@ export async function bggLookupGame(bggGameId) {
     throw new BGGLookupError(`error looking up BGG game record: ${res.statusText}`, res.status);
   }
 
-  // The BGG API returns XML; load the content and parse it into an object;
-  // this will always return a list, even if the input is not XML, because
-  // that's how sanic-xml rolls.
-  const data = parseXML(await res.text());
+  // The BGG API returns XML; load the content and parse it into an object. If
+  // the input cannot be parsed as XML, the result is an Error.
+  const data = sanicXML.parse(await res.text());
+  if (data instanceof Error) {
+    throw new BGGLookupError('BGG game response was empty or malformed', 502);
+  }
 
-  // Try to find the game entry in the result; the result will be an array of
-  // games, but we only ever ask for one. However, the result might be
-  // malformed and thus empty.
-  const gameEntry = (data.length === 1) ? getChildNamed(data[0], 'boardgame') : undefined;
+  // Try to find the game entry in the result; the game data is nested inside
+  // the root boardgames tag. The result might be well formed but empty.
+  const root = getChildNamed(data, 'boardgames');
+  const gameEntry = (root !== undefined) ? getChildNamed(root, 'boardgame') : undefined;
   if (gameEntry === undefined) {
     throw new BGGLookupError('BGG game response was empty or malformed', 502);
   }
@@ -244,7 +267,7 @@ export async function bggLookupGame(bggGameId) {
   // some issue looking up the data, so return that. For us we're going to
   // assume that the game just doesn't exist, since there is no way to know
   // what other errors might be.
-  if (getChildNamed(gameEntry, 'error')) {
+  if (getChildNamed(gameEntry, 'error') !== undefined) {
     return null;
   }
 

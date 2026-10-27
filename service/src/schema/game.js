@@ -249,7 +249,7 @@ export const MetadataQuerySchema = z.object({
 export const MetaDataQueryParamsSchema = z.object({
   // When present, this value in the query string will cause cause a list of
   // games associated with that metadata to be included in the returned result.
-  games: z.any().transform((value, zCtx) => value !== undefined),
+  games: z.any().optional().transform((value, zCtx) => value !== undefined),
 });
 
 
