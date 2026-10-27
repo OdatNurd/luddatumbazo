@@ -14,3 +14,6 @@ commitReference.js
 
 # Backup databases
 /data/
+
+# Database dumps (tools/dumpLocalDB.js output)
+dump/

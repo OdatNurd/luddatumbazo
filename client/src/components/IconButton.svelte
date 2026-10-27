@@ -82,6 +82,9 @@
 </script>
 
 
+<!-- wa-button renders a real <button> in its shadow DOM, so it is keyboard
+     accessible and interactive; the compiler cannot know that. -->
+<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <wa-button bind:this={button} {variant} {appearance} {disabled} on:click={btnClick}>
   <Icon name={btnIcon()} padRight={btnText() !== '' ? '4px' : undefined}></Icon>
   {btnText()}

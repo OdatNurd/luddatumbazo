@@ -84,6 +84,8 @@
 
       <div class="file-description">{file.description}</div>
 
+      <!-- wa-button wraps a real <button>; the a11y warnings are false positives. -->
+      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
       <wa-button appearance="outlined" variant="neutral" on:click={copyLink}>
         Copy File Link
       </wa-button>

@@ -46,7 +46,11 @@
   <p>{params.message}</p>
 
   <div slot="footer" class="confirm-actions">
+    <!-- wa-button renders a real <button> in its shadow DOM, so it is
+         keyboard accessible and interactive; the compiler cannot know that. -->
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <wa-button appearance="outlined" on:click={() => finish(false)}>Cancel</wa-button>
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <wa-button variant="danger" appearance="filled" on:click={() => finish(true)}>Confirm</wa-button>
   </div>
 </wa-dialog>

@@ -141,12 +141,15 @@
     </div>
 
     <div class="header-actions">
+      <!-- wa-button wraps a real <button>; the a11y warnings are false positives. -->
+      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
       <wa-button class="search-open" appearance="plain" title="Search" on:click={() => searchOpen = true}>
         <Icon name="search" />
       </wa-button>
 
       <!-- The profile button carries the profile picture itself; the avatar
            falls back to a person icon when there is no picture to show. -->
+      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
       <wa-button appearance="outlined" on:click={() => profileOpen = true}>
         <wa-avatar
           slot="start"

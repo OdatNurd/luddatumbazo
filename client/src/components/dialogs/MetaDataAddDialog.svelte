@@ -88,7 +88,7 @@
   <div class="stack">
     <wa-input label="Name" value={name} required
               on:input={e => type(e.target, v => name = v)}
-              on:change={e => type(e.target, v => name = v)} />
+              on:change={e => type(e.target, v => name = v)}></wa-input>
 
     <wa-input label="BGG ID" type="number" value={bggId}
               on:input={e => type(e.target, v => bggId = v)}
@@ -103,7 +103,11 @@
     <div class="muted">New {niceType}</div>
 
     <div class="row">
+      <!-- wa-button renders a real <button> in its shadow DOM, so it is
+           keyboard accessible and interactive; the compiler cannot know that. -->
+      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
       <wa-button appearance="outlined" variant="danger" on:click={abort}>Cancel</wa-button>
+      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
       <wa-button appearance="filled" variant="brand" disabled={!canSave} on:click={save}>Add</wa-button>
     </div>
   </div>

@@ -323,11 +323,11 @@
           <wa-input label="Session Begin" type="datetime-local" value={form.sessionBegin}
                     disabled={editing}
                     on:input={e => type(e.target, v => form.sessionBegin = v)}
-                    on:change={e => type(e.target, v => form.sessionBegin = v)} />
+                    on:change={e => type(e.target, v => form.sessionBegin = v)}></wa-input>
 
           <wa-input label="Session End" type="datetime-local" value={form.sessionEnd}
                     on:input={e => type(e.target, v => form.sessionEnd = v)}
-                    on:change={e => type(e.target, v => form.sessionEnd = v)} />
+                    on:change={e => type(e.target, v => form.sessionEnd = v)}></wa-input>
         </div>
 
         <!-- The length of the session, listed under the dates as soon as an
@@ -376,7 +376,7 @@
                       value={form.newGuests} disabled={editing}
                       on:input={e => form.newGuests = e.target.value ?? []}
                       on:change={e => form.newGuests = e.target.value ?? []}
-                      on:wa-input={e => form.newGuests = e.target.value ?? []} />
+                      on:wa-input={e => form.newGuests = e.target.value ?? []}></wa-tag-input>
 
         <!-- Who took the first turn; the schema's per player isStartingPlayer
              flag is what this collapses down to at save time. -->
@@ -396,11 +396,11 @@
       <div class="stack">
         <wa-input label="Title" value={form.title}
                   on:input={e => type(e.target, v => form.title = v)}
-                  on:change={e => type(e.target, v => form.title = v)} />
+                  on:change={e => type(e.target, v => form.title = v)}></wa-input>
 
         <wa-textarea label="Content" rows="10" value={form.content}
                      on:input={e => type(e.target, v => form.content = v)}
-                     on:change={e => type(e.target, v => form.content = v)} />
+                     on:change={e => type(e.target, v => form.content = v)}></wa-textarea>
       </div>
     </wa-tab-panel>
   </wa-tab-group>
@@ -411,6 +411,8 @@
     </wa-callout>
 
     <div class="row">
+      <!-- wa-button wraps a real <button>; the a11y warnings are false positives. -->
+      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
       <wa-button appearance="outlined" variant="neutral" on:click={abort}>Cancel</wa-button>
       <wa-button appearance="filled" variant="brand" disabled>
         {editing ? 'Save Changes' : 'Add Session Report'}

@@ -310,6 +310,9 @@
         </wa-tab-panel>
 
         <wa-tab-panel name="description">
+          <!-- The stored description is trusted content (household database,
+               BGG import) rendered as HTML by design. -->
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
           {@html gameData.description}
         </wa-tab-panel>
       </wa-tab-group>

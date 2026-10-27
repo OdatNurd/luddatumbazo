@@ -404,6 +404,9 @@
           </wa-input>
 
           {#if editing === false}
+            <!-- wa-button wraps a real <button>; the a11y warnings are false
+                 positives. -->
+            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
             <wa-button appearance="outlined" variant="brand"
                        loading={searching} disabled={searching}
                        on:click={runLookup}>
@@ -516,6 +519,7 @@
     </wa-callout>
 
     <div class="row">
+      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
       <wa-button appearance="outlined" variant="neutral" on:click={abort}>Cancel</wa-button>
       <wa-button appearance="filled" variant="brand" disabled>
         {editing ? 'Save Changes' : 'Add Game'}

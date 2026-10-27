@@ -186,10 +186,13 @@
 <LoadZone source={loadData()} let:result>
   <div class="stack">
     <div class="session-summary">
-      <GameImage imagePath={result.imagePath} name={result.name} />
-      <div class="session-content">
-        {@html result.content}
-      </div>
+      <GameImage imagePath={result.imagePath} name={result.name} />        
+        <div class="session-content">
+          <!-- The stored write-up is trusted content (household database)
+               rendered as HTML by design. -->
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+          {@html result.content}
+        </div>
     </div>
 
     <div class="row-lg">
