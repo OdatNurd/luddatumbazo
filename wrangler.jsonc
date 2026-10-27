@@ -5,7 +5,20 @@
 
   "assets": {
     "binding": "STATICS",
-    "directory": "./output/client"
+    "directory": "./output/client",
+
+    // The worker is the gatekeeper for the application now; these are the
+    // paths that need to be checked before the asset layer gets a chance to
+    // serve anything (the app shell would otherwise be public), along with the
+    // API and file routes, which carry their own guards.
+    "run_worker_first": [
+      "/",
+      "/login",
+      "/login/callback",
+      "/logout",
+      "/api/*",
+      "/files/*"
+    ]
   },
 
   // Dev versions should have no route; production versions go directly to our
@@ -120,49 +133,74 @@
   // A U T H E N T I C A T I O N
   //----------------------------------------------------------------------------
 
-    // When you set up Cloudflare Access, you set up a team name; your
-    // application portal is then rooted at that domain.
+    // Authentication is done against an OpenID Connect provider (currently
+    // Authelia running in the home lab; any OIDC provider, such as Kinde, can
+    // be swapped in purely by changing this section).
     //
-    // The domain is used to mark the issuer of the authentication JWT, and the
-    // incoming JWT is validated to be issued by this domain.
-    "CF_TEAM_DOMAIN": "https://odatnurd.cloudflareaccess.com",
+    // These are the endpoints of that provider. The full URLs are given here
+    // rather than a base URI because different providers name their endpoints
+    // differently.
+    "OIDC_AUTH_URL": "https://auth.thedragonland.net/api/oidc/authorization",
+    "OIDC_TOKEN_URL": "https://auth.thedragonland.net/api/oidc/token",
+    "OIDC_USERINFO_URL": "https://auth.thedragonland.net/api/oidc/userinfo",
 
-    // All CLoudflare Access accounts have a JWKS that is used to provide the
-    // public keys needs to validate that the incoming JWT is authentic.
-    //
-    // This is always the team domain with a specific suburl attached to the
-    // end, which is common to all accounts.
-    "CF_TEAM_JWKS": "https://odatnurd.cloudflareaccess.com/cdn-cgi/access/certs",
+    // The client identifier that this application is registered as at the
+    // provider, and the exact URI the provider sends the browser back to after
+    // a login. The redirect URI must match a redirect URI registered for the
+    // client at the provider exactly.
+    "OIDC_CLIENT_ID": "luddatumbazo",
+    "OIDC_REDIRECT_URI": "https://luddatumbazo.thedragonland.net/login/callback",
 
-    // The Audience Tag for the application, which comes from the Overview tab
-    // of the Application in Cloudflare Access.
+    // The scopes requested when logging in.
+    "OIDC_SCOPES": "openid profile email groups",
+
+    // The URL template used to derive the profile picture of a user from their
+    // username, for providers that do not hand us a picture directly.
+    "PROFILE_URL_TEMPLATE": "https://profiles.thedragonland.net/{username}",
+
+    // How long a minted application session is good for, in seconds; the
+    // default is 8 hours, which comfortably covers a full gaming session.
     //
-    // This is used in the JWT to mark the audience that the token is for, and
-    // like the team domain above the JWT is validated to be directed at this
-    // audience.
-    "CF_AUD_TAG": "b8cb09d687d967fbd2d5541b0fa8502dffe66532eb8a4d964834a04e389347fc",
+    // Sessions are renewed while they are actively being used (a sliding
+    // expiry), so this is effectively how long a session may sit idle before
+    // it lapses.
+    "SESSION_TTL": "28800",
 
     // The production version of the API supports being accessed remotely via
     // test or command line tools via a configured service token.
     //
-    // The values here specify the clientID of the service token that should
-    // have access, what the uuid of the internal user (which must be previously
-    // known to the system) to map it to.
+    // A caller that presents the token as an Authorization bearer token acts as
+    // the configured user, which must be a user that the system already knows.
     //
-    // The authorization code uses the two of them to validate that the token is
-    // the expected one, and to mock the actual user that underlies the token.
-    "CF_SERVICE_CLIENTID": "9a23b214dd414ae8f91105343fd4f4b7.access",
-    "CF_SERVICE_USER": "be916285-a022-5a5f-8006-82bd2e6b097d",
+    // The token itself should *NEVER* be set here; set it via the dashboard and
+    // encrypt it. This is just here as a reminder that the variable needs to
+    // exist, including in the .dev.vars file (if you want local tooling to
+    // work).
+    // "SERVICE_TOKEN": "putsecrettokenhere",
 
-    // Authentication in the application requires that all requests that require
-    // auth contain a a JWT whose claims contain the details of the user. The
-    // code uses the keys in the above JWKS to validate the token.
+    // The external identifier of the user that the service token acts as.
+    "SERVICE_USER": "e2398ed5-0f6e-4273-833d-feb58193b54a",
+
+    // Application sessions are JWTs that we mint and sign ourselves; this is
+    // the symmetric key used to sign them.
     //
+    // The value should *NEVER* be set here; set it via the dashboard and
+    // encrypt it. This is just here as a reminder that the variable needs to
+    // exist, including in the .dev.vars file.
+    // "SESSION_SECRET": "putsecrettokenhere",
+
+    // The two values below are only used to mint and validate the development
+    // token, which is an unsigned JWT accepted only when development mode is
+    // on. They are just claim values; the tools/makeJwt.js script embeds them
+    // into locally minted tokens and the worker validates them on the way in.
+    "CF_TEAM_DOMAIN": "https://odatnurd.cloudflareaccess.com",
+    "CF_AUD_TAG": "b8cb09d687d967fbd2d5541b0fa8502dffe66532eb8a4d964834a04e389347fc",
+
     // If this value is set (which should **NEVER** happen in a real
-    // deployment), the token is decoded but not validated. This allows local
-    // code to work with a structurally intact token without requiring it to be
-    // signed. The value of the variable is inconsequential; just being set to
-    // anything is an indication of development mode.
+    // deployment), development tokens are decoded but not validated. This
+    // allows local code to work with a structurally intact token without
+    // requiring it to be signed. The value of the variable is inconsequential;
+    // just being set to anything is an indication of development mode.
     //
     // This should only ever be set in the .dev.vars file.
     // "CF_DEV_MODE": "true",
@@ -215,20 +253,6 @@
     // exist, including in the .dev.vars file (if you want local code to work).
     // "CF_IMAGES_TOKEN": "secrettokenhere",
 
-    // In order to access information about the currently logged in user, a
-    // token is needed with claims:
-    //     "Access: Audit Logs"
-    //
-    // This is used when an authorization request is made but the UUID of the
-    // user does not exist in the database; we can reach out with to the API to
-    // determine session details and get the information that we need in order
-    // to automatically add the new user to the system.
-    //
-    // This value should *NEVER* be set here; set it via the dashboard and
-    // encrypt it. This is just here as a reminder that the variable needs to
-    // exist, including in the .dev.vars file (if you want local code to work).
-    // "CF_ACCESS_TOKEN": "putsecrettokenhere",
-
     // In order to look games up on BoardGameGeek, a token is needed; since
     // mid-2025 the BGG API requires every request to be authorized with an
     // application token (register at boardgamegeek.com/applications, then
@@ -247,8 +271,10 @@
   // D E V   S E R V E R   S E T T I N G S
   //----------------------------------------------------------------------------
 
+  // The dev server binds to all interfaces so that the local nginx proxy can
+  // reach it and the application can be exercised through the real domain.
   "dev": {
-    "ip": "localhost",
+    "ip": "0.0.0.0",
     "port": 3000
   },
 

@@ -103,13 +103,17 @@ CREATE TABLE User (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     externalId TEXT UNIQUE NOT NULL,
 
+    username TEXT,
+
     firstName TEXT NOT NULL COLLATE NOCASE,
     lastName TEXT NOT NULL COLLATE NOCASE,
     displayName TEXT NOT NULL COLLATE NOCASE,
 
     name GENERATED ALWAYS AS (firstName || ' ' || lastName) STORED,
 
-    emailAddress TEXT NOT NULL
+    emailAddress TEXT NOT NULL,
+
+    picture TEXT
 );
 CREATE INDEX idx_user_ext ON User(externalId);
 

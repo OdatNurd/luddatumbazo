@@ -4,7 +4,11 @@
 /* The base link to the API; where we talk depends on where we are deployed,
  * which is configured via an environment variable. This gets injected into
  * the file at build time, so that the final deployed version appears to be
- * "hard coded" to the correct value. */
+ * "hard coded" to the correct value.
+ *
+ * The value is normally empty, which makes every call relative to wherever the
+ * client itself was served from; that is what the cookie based authentication
+ * wants, since the API and the UI are served from the same origin. */
 const API = `${process.env.GAME_API_ROOT_URI}/api/v1`;
 
 /* Set the base options which can be extended by any options that the caller
@@ -14,9 +18,11 @@ const API = `${process.env.GAME_API_ROOT_URI}/api/v1`;
  * the browser will not pass through the authorization JWT when we call fetch;
  * in such a case we need to override the default credentials. */
 const baseOptions = (() => {
-  // Get the location of the local and remote ends of our connection.
+  // Get the location of the local and remote ends of our connection. The API
+  // root is resolved against the current origin first, so that a relative root
+  // (the normal case) resolves to our own origin.
   const local = new URL(window.location);
-  const remote = new URL(API);
+  const remote = new URL(API, window.location.origin);
 
   // When the origins are different, we need to explicitly turn on inclusion of
   // credentials in the call. This also requires that the API end allow our
@@ -94,6 +100,19 @@ async function api_call(method, endpoint, body, options) {
   // Perform the fetch using the provided options; if there is a network error,
   // this will throw right away. Otherwise, grab the data in the body.
   const response = await fetch(`${API}${endpoint}`, options);
+
+  // If the server does not know who we are, then the session has lapsed (or we
+  // were never logged in at all). Boot the browser back into the login flow,
+  // remembering where we were so that the user can be put back on the same
+  // page once they have authenticated again.
+  if (response.status === 401) {
+    const returnTo = encodeURIComponent(window.location.hash);
+    window.location.assign(`/login?returnTo=${returnTo}`);
+
+    // Unwind whatever was in flight; the page is navigating away.
+    throw new Error('the session has expired; redirecting to the login page');
+  }
+
   const result = await response.json();
 
   // If the response is not valid, throw an error. This occurs when the error is

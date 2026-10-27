@@ -129,8 +129,18 @@
         <Icon name={$theme === 'dark' ? 'sun-fill' : 'moon-stars-fill'} />
       </wa-button>
 
+      <!-- The account button carries the profile picture itself; the avatar
+           falls back to a person icon when there is no picture to show. -->
       <wa-button appearance="outlined" on:click={() => profileOpen = true}>
-        <Icon name="person-fill" padRight="4px"></Icon>
+        <wa-avatar
+          slot="start"
+          image={$user.picture}
+          label={$user.displayName ?? 'Account'}
+          shape="circle"
+          style="--size: 24px"
+        >
+          <Icon name="person-fill" />
+        </wa-avatar>
         Account
       </wa-button>
     </div>
@@ -169,13 +179,29 @@
 
 
 <wa-drawer open={profileOpen} placement="end" label="Account" on:wa-hide={() => profileOpen = false}>
-  <div slot="header">
-    <strong>
-      {$user.displayName ?? 'Unknown User'}
-      {#if $user.household}
-        : {$user.household?.name ?? 'Unknown Household'}
-      {/if}
-    </strong>
+  <div slot="header" class="account-header">
+    <wa-avatar
+      image={$user.picture}
+      label={$user.displayName ?? 'Account'}
+      shape="circle"
+      style="--size: 64px"
+    >
+      <Icon name="person-fill" />
+    </wa-avatar>
+
+    <div class="account-id">
+      <strong>
+        {$user.displayName ?? 'Unknown User'}
+        {#if $user.household}
+          : {$user.household?.name ?? 'Unknown Household'}
+        {/if}
+      </strong>
+      <div class="muted">
+        {#if $user.username}<span>@{$user.username}</span>{/if}
+        {#if $user.username && $user.emailAddress}<span>&bull;</span>{/if}
+        {#if $user.emailAddress}<span>{$user.emailAddress}</span>{/if}
+      </div>
+    </div>
   </div>
 
   <ProfileDrawer close={() => profileOpen = false} />
@@ -190,6 +216,21 @@
 
   h1 {
     margin-bottom: 0;
+  }
+
+  /* The account drawer's profile header; the larger avatar plus the identity
+     of the person it belongs to. */
+  .account-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .account-id .muted {
+    display: flex;
+    gap: 6px;
+    font-size: var(--wa-font-size-small);
+    color: var(--wa-color-text-secondary);
   }
 
   /* The slotted footer inherits wa-page's roomy 3xl padding by default; the

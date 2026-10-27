@@ -1,11 +1,16 @@
-headers {
-  CF-Access-Client-Id: {{clientId}}
-  CF-Access-Client-Secret: {{clientSecret}}
-}
-
 script:pre-request {
+  // The service token path; a tool that has the token configured acts as the
+  // service user without any login at all.
+  const serviceToken = bru.getEnvVar('serviceToken');
+  if (serviceToken !== undefined) {
+    req.setHeader('Authorization', `Bearer ${serviceToken}`);
+  }
+
+  // The development token path; an unsigned JWT minted by tools/makeJwt.js and
+  // injected as a cookie. This is only accepted when the worker is running in
+  // development mode.
   const jwt = bru.getEnvVar('jwt');
   if (jwt !== undefined) {
-    req.setHeader('Cookie', `CF_Authorization=${jwt}; Expires=Wed, 27 Jan 2099 21:53:00 GMT; Path=/; Secure; HttpOnly; SameSite=none; Domain=localhost`);
+    req.setHeader('Cookie', `luddatumbazo_auth=${jwt}; Expires=Wed, 27 Jan 2099 21:53:00 GMT; Path=/; Secure; HttpOnly; SameSite=none; Domain=localhost`);
   }
 }

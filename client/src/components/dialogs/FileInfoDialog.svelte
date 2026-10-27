@@ -1,5 +1,5 @@
 <script>
-  import { createEventDispatcher, onMount } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
   import { DateTime } from 'luxon';
 
   import { toast } from '$lib/toast.js';
@@ -38,8 +38,13 @@
     }
   };
 
-  // Generate a link to an asset file given its bucket key
-  const fileLink = key => `${process.env.GAME_API_ROOT_URI}${key}`;
+  // Generate a link to an asset file given its bucket key; the bucket key is
+  // relative (it has no leading slash), and the result is always an absolute
+  // URL on whichever origin we happen to be running on.
+  const fileLink = key => new URL(
+    `${process.env.GAME_API_ROOT_URI}/${key.replace(/^\/+/, '')}`,
+    window.location.origin
+  ).href;
 
   // Fire a toast to provide extra feedback that a link was copied, and then
   // actually copy the link to the clipboard.

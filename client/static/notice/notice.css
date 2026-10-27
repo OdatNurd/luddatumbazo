@@ -1,0 +1,119 @@
+/* Shared styling for the authentication notice pages.
+ *
+ * These pages are shown before there is a session (and sometimes when there
+ * cannot be one), so they cannot use the application bundle; instead they load
+ * the same theme stylesheets as the application itself and use the same design
+ * tokens, which keeps them looking like a part of the site.
+ *
+ * A bit of a pain in the ass to keep synced, but safe is safe. */
+
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+/* The same slim chrome bars as the application shell; the header carries the
+ * product name and the footer the usual one liner. */
+.notice-header {
+  background: var(--wa-color-surface-lowered);
+  border-bottom: 1px solid var(--wa-color-surface-border);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+}
+
+.notice-header h1 {
+  font-family: var(--wa-font-family-heading);
+  color: var(--wa-color-text-header);
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.notice-footer {
+  background: var(--wa-color-surface-lowered);
+  border-top: 1px solid var(--wa-color-surface-border);
+  padding: 6px 24px;
+  font-family: var(--wa-font-family-body);
+  font-size: var(--wa-font-size-small);
+  color: var(--wa-color-text-secondary);
+}
+
+/* The centered card that holds the actual message. */
+.notice-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.notice-card {
+  background: var(--wa-color-surface-raised);
+  border: 1px solid var(--wa-color-surface-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  max-width: 440px;
+  width: 100%;
+  padding: 32px;
+  text-align: center;
+}
+
+.notice-card h2 {
+  font-family: var(--wa-font-family-heading);
+  color: var(--wa-color-text-header);
+  margin: 0 0 12px;
+}
+
+/* The access denied page marks its heading in the danger colour. */
+.notice-card.danger h2 {
+  color: var(--wa-color-danger-600);
+}
+
+.notice-card p {
+  font-family: var(--wa-font-family-body);
+  color: var(--wa-color-text-secondary);
+  margin: 0 0 24px;
+  overflow-wrap: anywhere;
+}
+
+.notice-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* Buttons are plain anchors dressed up with the theme tokens. */
+.notice-actions a {
+  display: inline-block;
+  font-family: var(--wa-font-family-body);
+  font-size: var(--wa-font-size-small);
+  font-weight: var(--wa-font-weight-semibold);
+  padding: 10px 20px;
+  border-radius: 6px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.notice-actions a.primary {
+  background: var(--wa-color-brand-600);
+  color: #fff;
+}
+
+.notice-actions a.primary:hover {
+  background: var(--wa-color-brand-700);
+}
+
+.notice-actions a.secondary {
+  background: var(--wa-color-surface-lowered);
+  color: var(--wa-color-text-body);
+  border: 1px solid var(--wa-color-surface-border);
+}
+
+.notice-actions a.secondary:hover {
+  background: var(--wa-color-surface-sunken);
+}

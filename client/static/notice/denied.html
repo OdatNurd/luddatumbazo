@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html class="wa-theme-premium wa-palette-anodized wa-brand-azure wa-dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,minimum-scale=1,width=device-width">
+  <title>Access Denied - Luddatumbazo</title>
+
+  <!-- The same stylesheets as the application itself, so that this page looks
+       like a part of the site rather than like an error page. -->
+  <link rel="stylesheet" href="/fonts.css">
+  <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/styles/themes/premium.css">
+  <link rel="stylesheet" href="/styles/native.css">
+  <link rel="stylesheet" href="/notice/notice.css">
+</head>
+<body>
+  <div class="notice-header">
+    <h1>Luddatumbazo!</h1>
+  </div>
+
+  <main class="notice-main">
+    <div class="notice-card danger">
+      <h2>Access Denied</h2>
+      <p data-notice-message>You do not have permission to access this application.</p>
+
+      <div class="notice-actions">
+        <!-- Kills the provider session so a different user can log in. -->
+        <a class="secondary" data-notice-switch-user href="/login?prompt=login">Switch User</a>
+        <!-- Standard retry; e.g. if access was just granted on the identity
+             provider side, this immediately tries the login again. -->
+        <a class="primary" href="/login">Try Again</a>
+      </div>
+    </div>
+  </main>
+
+  <div class="notice-footer">Exactly like BoardGameGeek except not.</div>
+
+  <script src="/notice/notice.js"></script>
+</body>
+</html>

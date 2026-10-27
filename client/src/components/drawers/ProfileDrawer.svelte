@@ -22,7 +22,7 @@
     { label: "---" },
     { label: "Sessions",   value: "#/sessions",         icon: "calendar-event", requiresHousehold: false },
     { label: "---" },
-    { label: `Logout ${$user.firstName ?? ''}`.trim(), value: "/cdn-cgi/access/logout", icon: "box-arrow-in-right", requiresHousehold: false },
+    { label: `Logout ${$user.firstName ?? ''}`.trim(), value: "/logout", icon: "box-arrow-in-right", requiresHousehold: false },
   ];
 </script>
 

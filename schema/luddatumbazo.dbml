@@ -17,8 +17,9 @@ Project Luddatumbazo {
 //
 // In the parlance of the system, a User is someone that has been granted the
 // authorization to log into the application and directly view it; this is done
-// via CloudFlare Zero Trust, which does all of the authentication and provides
-// us with a unique identifier to track the user (externalId).
+// via an OpenID Connect provider (Authelia, currently), which does all of the
+// authentication and provides us with a unique identifier to track the user
+// (externalId).
 //
 // Guests are people that played games that are reported but which do not have
 // access to the application, or people that used to have access and no longer
@@ -29,6 +30,8 @@ Table User {
   userId INTEGER [unique, increment, pk, note: 'internal identifier for this user']
   externalId TEXT [unique, note: 'unique identifier based on the external auth being used']
 
+  username TEXT [note: 'the login handle of the user at the external auth provider']
+
   firstName TEXT [not null]
   lastName TEXT [not null]
   displayName TEXT [not null, note: 'this field is collate nocase']
@@ -38,6 +41,8 @@ Table User {
   name GENERATED [note: 'Generated automatically by SQLite as a concatenation of firstName lastName']
 
   emailAddress TEXT [not null]
+
+  picture TEXT [note: 'URL of the profile picture of this user']
 
   indexes {
     externalId [name: 'idx_user_ext']
