@@ -4,6 +4,7 @@
   import { wishlists } from '$stores/wishlists';
 
   import RecordAddDialog from '$components/dialogs/RecordAddDialog.svelte';
+  import GameEditDialog from '$components/dialogs/GameEditDialog.svelte';
   import Confirm from '$components/Confirm.svelte';
 
   import LoadZone from '$components/LoadZone.svelte';
@@ -70,6 +71,10 @@
   // The properties of the add-to-collection/wishlist dialog while it should be
   // presented, or null when it is closed.
   let addDialog = null;
+
+  // The state of the game add/edit dialog; edit mode is driven by the record
+  // that the page has already loaded.
+  let editDialogOpen = false;
 
   // Fetch the game details; if the current user has a primary household, then
   // this should also fetch ownership information based on that.
@@ -193,7 +198,8 @@
 <LoadZone source={loadData()}>
   <wa-card>
     <div slot="header" class="game-header">
-      <div class="game-title">
+      <div class="game-header-top">
+        <div class="game-title">
         {#if gameData.owned !== undefined}
           <Icon name="star-fill" color="var(--wa-color-warning-600)"></Icon>
           {gameData.owned.name.name} ({gameData.publishedIn})
@@ -205,6 +211,13 @@
             <Icon name="star"></Icon>
             {gameData.primaryName} ({gameData.publishedIn})
           {/if}
+        {/if}
+        </div>
+
+        {#if $user.household}
+          <IconButton fill color="@secondary" title="Edit this game"
+                      caption="Edit" icon="pencil-fill"
+                      on:click={() => editDialogOpen = true} />
         {/if}
       </div>
 
@@ -365,6 +378,9 @@
     </div>
   </wa-card>
 
+  <GameEditDialog open={editDialogOpen} game={gameData}
+                  on:close={() => editDialogOpen = false} />
+
   <svelte:fragment slot="error" let:error>
     {error}
   </svelte:fragment>
@@ -383,6 +399,17 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .game-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .game-header-top :global(wa-button) {
+    flex-shrink: 0;
   }
 
   .game-title {

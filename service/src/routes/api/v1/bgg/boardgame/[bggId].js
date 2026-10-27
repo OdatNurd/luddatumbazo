@@ -30,7 +30,7 @@ export const $get = routeHandler(
     // Try to get the game data; if this returns NULL it means that there is no
     // such game (or BGG has some other error but they use human readable text
     // for those, so we just assume they're all the same error).
-    const gameInfo = await bggLookupGame(bggId);
+    const gameInfo = await bggLookupGame(ctx, bggId);
     if (gameInfo === null) {
       return fail(ctx, `BGG has no record of game with ID ${bggId}`, 404);
     }

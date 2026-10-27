@@ -235,17 +235,40 @@ function makeBggGameData(gameEntry, gameId) {
  *
  * In case of any errors during this operation, we will raise an Exception that
  * allows the calling code to capture the error that occurred. */
-export async function bggLookupGame(bggGameId) {
+export async function bggLookupGame(ctx, bggGameId) {
   // Construct the URI that we want to talk to; we need to ask for stats to get
   // extra information, and also note that there can be no trailing slash after
   // the game ID, or the API freaks out.
   const URI = `${BGG_API_URL}/boardgame/${bggGameId}?stats=1`;
 
+  // Since mid-2025 the BGG API requires every request to be authorized with an
+  // application token, the bastards. You can register at:
+  //     boardgamegeek.com/applications
+  //
+  // The token is sent as a bearer token. Without one the API answers 401 for
+  // everything.
+  const token = ctx.env.BGG_API_TOKEN;
+
+  // Without a token the API just answers 401 with no explanation of its own, so
+  // say what is actually wrong right here instead.
+  if (token === undefined || token === '') {
+    throw new BGGLookupError('BGG API token is not configured; set BGG_API_TOKEN in .dev.vars (see wrangler.jsonc)', 502);
+  }
+
+  const options = {
+    method: "GET",
+    headers: { "Authorization": `Bearer ${token}` }
+  };
+
   // Request data from BoardGameGeek; if this request fails, then we can just
   // immediately return the same error.
-  const res = await fetch(URI, { method: "GET" });
+  const res = await fetch(URI, options);
   if (!res.ok) {
-    throw new BGGLookupError(`error looking up BGG game record: ${res.statusText}`, res.status);
+    const why = (res.status === 401)
+      ? 'BGG rejected the API token (401); check BGG_API_TOKEN in .dev.vars'
+      : `error looking up BGG game record: ${res.statusText}`;
+
+    throw new BGGLookupError(why, res.status);
   }
 
   // The BGG API returns XML; load the content and parse it into an object. If

@@ -228,6 +228,19 @@
     // encrypt it. This is just here as a reminder that the variable needs to
     // exist, including in the .dev.vars file (if you want local code to work).
     // "CF_ACCESS_TOKEN": "putsecrettokenhere",
+
+    // In order to look games up on BoardGameGeek, a token is needed; since
+    // mid-2025 the BGG API requires every request to be authorized with an
+    // application token (register at boardgamegeek.com/applications, then
+    // create a token for the approved application).
+    //
+    // The token is sent as a bearer token; without it every BGG lookup will
+    // fail with a 401.
+    //
+    // This value should *NEVER* be set here; set it via the dashboard and
+    // encrypt it. This is just here as a reminder that the variable needs to
+    // exist, including in the .dev.vars file (if you want local code to work).
+    // "BGG_API_TOKEN": "putsecrettokenhere",
   },
 
   //----------------------------------------------------------------------------

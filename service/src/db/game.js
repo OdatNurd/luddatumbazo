@@ -637,7 +637,7 @@ export async function dbGameInsert(ctx, gameData) {
 export async function dbGameInsertByBGG(ctx, bggGameId) {
   // Look up the game in BoardGameGeek to get it's details; if the game is not
   // found, we can return NULL back.
-  const gameInfo = await bggLookupGame(bggGameId);
+  const gameInfo = await bggLookupGame(ctx, bggGameId);
   if (gameInfo === null) {
     return null;
   }

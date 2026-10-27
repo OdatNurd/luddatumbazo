@@ -86,6 +86,15 @@
   // Keep a select's value up to date regardless of which change style the
   // underlying component fires.
   const pick = (target, set) => set(target.value);
+
+  // The option lists are keyed by their value, so each list is collapsed to its
+  // first entry per value: a game's name list can carry duplicates (and so can
+  // a publisher list), which would otherwise break the keyed list.
+  const dedupe = entries => entries.filter((entry, index) =>
+    entries.findIndex(other => other.value === entry.value) === index);
+
+  $: uniqueNames = dedupe(names);
+  $: uniqueOptions = dedupe(options);
 </script>
 
 <wa-dialog {open} label={title} style="min-width: min(480px, 90vw)" on:wa-hide={dismissed}>
@@ -95,7 +104,7 @@
     <wa-select label="Name" value={name}
                on:change={e => pick(e.target, v => name = v)}
                on:wa-input={e => pick(e.target, v => name = v)}>
-      {#each names as entry (entry.value)}
+      {#each uniqueNames as entry (entry.value)}
         <wa-option value={entry.value}>{entry.label}</wa-option>
       {/each}
     </wa-select>
@@ -103,7 +112,7 @@
     <wa-select label={optionLabel} value={optionValue}
                on:change={e => pick(e.target, v => optionValue = v)}
                on:wa-input={e => pick(e.target, v => optionValue = v)}>
-      {#each options as entry (entry.value)}
+      {#each uniqueOptions as entry (entry.value)}
         <wa-option value={entry.value}>{entry.label}</wa-option>
       {/each}
     </wa-select>

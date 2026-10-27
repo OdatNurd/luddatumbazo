@@ -266,7 +266,7 @@ export async function dbExpansionUpdateByBGG(ctx, bggId) {
 
   // Call the function that will look up bgg game data for our value so that we
   // can pluck the expansions table out of it.
-  const bggData = await bggLookupGame(bggId);
+  const bggData = await bggLookupGame(ctx, bggId);
 
   // Collect the gameId that we need for the sub call.
   const gameId =  gameData[0].id;
