@@ -1,13 +1,11 @@
 <script>
-  import { AsyncButton, Icon } from "@axel669/zephyr";
+  import Icon from '$components/Icon.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
 
-
-  // Control the style of the button that is presented; these props are sent
-  // straight through to the underlying Zephyr button.
+  // Control the style of the button that is presented.
   export let color = '@default';
   export let fill = false;
   export let outline = false;
@@ -18,13 +16,43 @@
   export let icon = 'layout-wtf';
 
   // The handler that the button executes; the handler executes when the button
-  // is clicked and the button will disable itself automagically while the
-  // function is running.
+  // is clicked and the button disables itself and shows its loading state while
+  // the function is running.
   export let handler = async () => null;
+
+  // ---------------------------------------------------------------------------
+
+  // Map the legacy color names to a Web Awesome variant; legacy fill/outline
+  // control the appearance in the same way they used to.
+  const variant = {
+    '@primary': 'brand',
+    '@secondary': 'neutral',
+    '@accent': 'brand',
+    '@danger': 'danger',
+    '@default': 'neutral'
+  }[color] ?? 'neutral';
+
+  const appearance = fill ? 'filled' : (outline ? 'outlined' : 'plain');
+
+  // ---------------------------------------------------------------------------
+
+  let busy = false;
+
+  // Run the handler, holding the button in its loading state until it settles.
+  const run = async () => {
+    busy = true;
+
+    try {
+      await handler();
+    }
+    finally {
+      busy = false;
+    }
+  }
 </script>
 
 
-<AsyncButton {fill} {outline} {color} {disabled} {handler}>
-  <Icon p.r='4px' name={icon}></Icon>
+<wa-button {variant} {appearance} loading={busy} disabled={disabled || busy} on:click={run}>
+  <Icon name={icon} padRight="4px"></Icon>
   {caption}
-</AsyncButton>
+</wa-button>

@@ -25,6 +25,8 @@ import html from '@axel669/rollup-html-input';
 import { execSync } from 'child_process';
 import fs from 'fs';
 
+import { syncStyles } from './tools/syncWebAwesomeAssets.js';
+
 
 
 /******************************************************************************/
@@ -41,6 +43,11 @@ const version = JSON.parse(packageJson).version;
  * builds are not production unless they are explictly set that way. */
 const production = (process.env.BUILD_TYPE === 'production');
 console.log(`build mode: ${production ? 'production' : 'development'}`);
+
+/* Bring the Web Awesome stylesheets over into the client output (with their
+ * remote font imports stripped) before every build. Static assets such as the
+ * vendored fonts and icons are handled by the copy() plugin below. */
+syncStyles();
 
 
 /******************************************************************************/
@@ -114,6 +121,7 @@ const buildList = [
       replace(
       {
         'preventAssignment': true,
+        'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development'),
         'process.env.GAME_API_ROOT_URI': JSON.stringify(process.env.GAME_API_ROOT_URI),
         'process.env.GITHUB_ROOT_URI': JSON.stringify(process.env.GITHUB_ROOT_URI),
         'process.env.APP_VERSION': JSON.stringify(version),

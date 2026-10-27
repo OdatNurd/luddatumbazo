@@ -1,6 +1,5 @@
 <script>
-  import { Link, Icon } from "@axel669/zephyr";
-
+  import Icon from '$components/Icon.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -20,9 +19,9 @@
 
 
 {#if bggId !== 0}
-  <Link href='https://boardgamegeek.com/{bggType}/{bggId}/' target="_blank">
-    <slot>BGG</slot><Icon p.l="4px" name="box-arrow-up-right"></Icon>
-  </Link>
+  <a href='https://boardgamegeek.com/{bggType}/{bggId}/' target="_blank" rel="noreferrer">
+    <slot>BGG</slot><Icon padLeft="4px" name="box-arrow-up-right"></Icon>
+  </a>
 {:else}
   <slot name="nolink">--</slot>
 {/if}

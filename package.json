@@ -30,8 +30,8 @@
     "#legacyvalidator": "./service/src/lib/validateZod.js"
   },
   "dependencies": {
+    "@awesome.me/webawesome-pro": "^3.14.0",
     "@axel669/sanic-xml": "^0.3.0",
-    "@axel669/zephyr": "0.4.7",
     "@odatnurd/cf-requests": "^0.1.16",
     "@odatnurd/d1-query": "^0.3.2",
     "dotenv": "^18.0.8",

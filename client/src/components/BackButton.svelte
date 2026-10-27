@@ -1,7 +1,5 @@
 <script>
-  import { Flex } from "@axel669/zephyr";
-  import IconButton from '$components/IconButton';
-
+  import IconButton from '$components/IconButton.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -9,8 +7,17 @@
 
 </script>
 
-<Flex direction="row">
+<div class="back-button">
   <IconButton fill color="@secondary" caption="" icon="arrow-left" on:click={() => window.history.back()} />
   <slot />
-</Flex>
+</div>
 
+<style>
+  .back-button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+</style>

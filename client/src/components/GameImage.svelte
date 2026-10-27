@@ -23,19 +23,24 @@
 
   // ---------------------------------------------------------------------------
 
-  // Control Windstorm attributes based on wether or not the image is an icon
-  // or not.
-  const wsx = (icon === false) ? null : "[p.r 2px] [w 32px] [h 32px]";
 </script>
 
 
 {#if imagePath !== undefined}
-  <img ws-x={wsx} src={imagePath} alt="{name}">
+  <img class:icon src={imagePath} alt="{name}">
 {/if}
 
 <style>
   img {
     vertical-align: middle;
     object-fit: contain;
+    max-width: 100%;
+    border-radius: var(--wa-border-radius-small);
+  }
+
+  img.icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 2px;
   }
 </style>

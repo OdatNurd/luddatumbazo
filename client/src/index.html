@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html class="wa-theme-premium wa-palette-anodized wa-brand-azure wa-dark">
 <head>
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -7,10 +7,32 @@
   <link rel="manifest" href="/site.webmanifest">
   <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
   <meta name="msapplication-TileColor" content="#da532c">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#12151c">
   <meta charset="utf-8">
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,minimum-scale=1,width=device-width">
   <title>Luddatumbazo</title>
+
+  <!-- Web Awesome theme styles (copied locally at build time; their remote font
+       import is stripped and the fonts are vendored under /fonts). -->
+  <link rel="stylesheet" href="/fonts.css">
+  <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/styles/themes/premium.css">
+  <link rel="stylesheet" href="/styles/native.css">
+  <link rel="stylesheet" href="/styles/utilities.css">
+
+  <!-- Apply the stored color scheme before first paint to avoid a flash. -->
+  <script>
+    try {
+      const stored = localStorage.getItem('luddatumbazo.theme');
+      if (stored === 'light') {
+        document.documentElement.classList.remove('wa-dark');
+        document.documentElement.classList.add('wa-light');
+      }
+    }
+    catch (error) {
+      // Leave the dark default in place when storage is unavailable.
+    }
+  </script>
 </head>
 <body>
     <script type="module" data-main src="./index.js"></script>

@@ -1,7 +1,4 @@
 <script>
-  import { Link } from "@axel669/zephyr"
-
-
   // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
@@ -14,6 +11,6 @@
 </script>
 
 
-<Link href={`#/games/wishlisted/${wishlist.slug}`}>
+<a href={`#/games/wishlisted/${wishlist.slug}`}>
   {wishlist.name}
-</Link>
+</a>

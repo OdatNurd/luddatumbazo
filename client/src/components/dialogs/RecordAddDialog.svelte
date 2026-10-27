@@ -1,18 +1,16 @@
 <script>
-  import { AsyncButton, Button, Dialog, Titlebar, Text, Icon, Select, handler$ } from "@axel669/zephyr";
+  import { createEventDispatcher, onMount } from 'svelte';
 
   import { user } from '$stores/user';
 
-  import { onMount } from 'svelte';
   import { api } from '$api';
 
   // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
 
-  // The component that opens the drawer gives us a close prop as a function
-  // that we can invoke in order to close the drawer.
-  export let close;
+  // Whether the dialog is currently presented.
+  export let open = false;
 
   export let title = "Title Goes Here"
   export let description = "Short term on what the dialog is for";
@@ -25,8 +23,26 @@
 
   // ---------------------------------------------------------------------------
 
+  // Fired when the dialog closes; the detail is { result, dataType } where
+  // result is null on cancellation or the new record when applied.
+  const dispatch = createEventDispatcher();
+
   let name;
   let optionValue;
+
+  // Ensure we only report a close once, no matter how the dialog goes away.
+  let settled = false;
+
+  $: if (open === true) {
+    settled = false;
+  }
+
+  const settle = detail => {
+    if (settled === false) {
+      settled = true;
+      dispatch('close', detail);
+    }
+  };
 
   // ---------------------------------------------------------------------------
 
@@ -42,13 +58,19 @@
   });
 
   // Abort the dialog, returning back that no operation took place.
-  const abort = handler$(result => close({ result: null, dataType }));
+  const abort = () => settle({ result: null, dataType });
+
+  // Close only when the dialog itself hides (escape, overlay click); the
+  // selects inside of us emit hide events of their own when their dropdowns
+  // close, and those bubble up here without meaning the dialog is going away.
+  const dismissed = event => {
+    if (event.target === event.currentTarget) {
+      abort();
+    }
+  };
 
   // Apply the data change, returning back the new record.
-  const apply = async(game, name, optionValue) => {
-    // TODO:
-    // Disable the form buttons and controls
-
+  const apply = async () => {
     // Determine what action we need to carry out.
     const action = (dataType === 'collection')
       ? api.household.collection.add
@@ -58,31 +80,52 @@
     const result = await action($user.household, game, name, optionValue);
 
     // Send the loaded data back to the caller, along with it's type.
-    close({ dataType, result });
+    settle({ dataType, result });
   }
 
+  // Keep a select's value up to date regardless of which change style the
+  // underlying component fires.
+  const pick = (target, set) => set(target.value);
 </script>
 
-<Dialog >
-  <Titlebar slot="header">
-    <Text slot="title" title> {title} </Text>
+<wa-dialog {open} label={title} style="min-width: min(480px, 90vw)" on:wa-hide={dismissed}>
+  <h3 slot="header">{title}</h3>
 
-    <Button m="2px" w="44px" color="@primary" slot="action" on:click={abort(null)}>
-      <Icon name="x-square"></Icon>
-    </Button>
-  </Titlebar>
+  <div class="stack">
+    <wa-select label="Name" value={name}
+               on:change={e => pick(e.target, v => name = v)}
+               on:wa-input={e => pick(e.target, v => name = v)}>
+      {#each names as entry (entry.value)}
+        <wa-option value={entry.value}>{entry.label}</wa-option>
+      {/each}
+    </wa-select>
 
-  <Select bind:value={name} color="@primary" options={names} label="Name" />
-  <Select bind:value={optionValue} color="@primary" {options} label={optionLabel} />
-  <Titlebar slot="footer">
-    <Button fill m="2px" w="44px" color="@danger" slot="menu" on:click={abort(null)}>
-      <Icon name="x"></Icon>
-    </Button>
+    <wa-select label={optionLabel} value={optionValue}
+               on:change={e => pick(e.target, v => optionValue = v)}
+               on:wa-input={e => pick(e.target, v => optionValue = v)}>
+      {#each options as entry (entry.value)}
+        <wa-option value={entry.value}>{entry.label}</wa-option>
+      {/each}
+    </wa-select>
+  </div>
 
-    <Text slot="title" subtitle> {description} </Text>
+  <div slot="footer" class="record-actions">
+    <div class="muted">{description}</div>
 
-    <AsyncButton fill m="2px" w="44px" color="@secondary" slot="action" handler={async () => apply(game, name, optionValue)}>
-      <Icon name="check"></Icon>
-    </AsyncButton>
-  </Titlebar>
-</Dialog>
+    <div class="row">
+      <wa-button appearance="outlined" variant="danger" on:click={abort}>Cancel</wa-button>
+      <wa-button appearance="filled" variant="brand" on:click={apply}>Apply</wa-button>
+    </div>
+  </div>
+</wa-dialog>
+
+<style>
+  .record-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+</style>

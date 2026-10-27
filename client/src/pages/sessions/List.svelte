@@ -8,4 +8,4 @@
 </script>
 
 <h3>Session Reports</h3>
-<SessionList {loader} />
+<SessionList {loader} fill />

@@ -19,6 +19,31 @@ const imagesURI = ctx => `https://api.cloudflare.com/client/v4/accounts/${ctx.en
 /******************************************************************************/
 
 
+/* Determine whether Cloudflare Images API access is enabled in this
+ * environment.
+ *
+ * All access to the Cloudflare Images API requires the CF_IMAGES_TOKEN secret.
+ * In a local development environment that token deliberately does not exist,
+ * and in that case we must guarantee that no request is ever made to the
+ * Images API (in particular, no image may ever be uploaded).
+ *
+ * The functions below all refuse to perform any network operation when this
+ * returns false. Displaying images is unaffected; it is done via plain URLs
+ * built from CF_IMAGEURL_TEMPLATE and never touches the API. */
+function imagesEnabled(ctx) {
+  return (ctx.env.CF_IMAGES_TOKEN !== undefined && ctx.env.CF_IMAGES_TOKEN !== '');
+}
+
+
+/* The error raised by any Images API helper when the API is disabled. */
+function imagesDisabledError() {
+  return new BGGLookupError('Cloudflare Images access is disabled in this environment (CF_IMAGES_TOKEN is not set)', 503);
+}
+
+
+/******************************************************************************/
+
+
 /* Given the Cloudflare Images name of an image (the name that you see in the
  * dashboard in Images Overview, e.g 'luddatumbazo/game/game293.png'), look
  * up the details for that image via the CF Images API and return the result
@@ -30,6 +55,11 @@ const imagesURI = ctx => `https://api.cloudflare.com/client/v4/accounts/${ctx.en
  * This can raise an exception, but only on errors such as transport issues and
  * the like; CF reports errors regarding missing images by returning null. */
 export async function cfRawImageLookup(ctx, imageName) {
+  // Never talk to the Images API when it is disabled in this environment.
+  if (imagesEnabled(ctx) === false) {
+    throw imagesDisabledError();
+  }
+
   // To fetch details about the image, we need to create an authorized GET
   // request with our images token.
   const options = {
@@ -110,6 +140,13 @@ export async function cfImagesLookup(ctx, image) {
  *
  * The custom id is used as a part of the image URL to serve the image. */
 export async function cfImagesURLUpload(ctx, image, checkForExisting) {
+  // Never talk to the Images API when it is disabled in this environment; in
+  // particular this makes it impossible to upload an image from a local
+  // development setup.
+  if (imagesEnabled(ctx) === false) {
+    throw imagesDisabledError();
+  }
+
   // Before we attempt to upload the image, if we were requested to do so, then
   // attempt to check to see if the image already exists prior to uploading it.
   if (checkForExisting === true) {
@@ -180,6 +217,11 @@ export async function cfImagesURLUpload(ctx, image, checkForExisting) {
  * This will raise an exception if any configured internal image type does not
  * map to an external variant. */
 export async function cfImagesGetVariants(ctx) {
+  // Never talk to the Images API when it is disabled in this environment.
+  if (imagesEnabled(ctx) === false) {
+    throw imagesDisabledError();
+  }
+
   // The URI uses to talk to the CloudFlare Images API; it requires our Account
   // ID.
   const variantURI = `${imagesURI(ctx)}/variants`;

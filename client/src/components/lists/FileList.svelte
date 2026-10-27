@@ -1,10 +1,9 @@
 <script>
-  import { EntryButton, Modal, LoadZone, DataTable, TH, Link, Icon, sorts, filters } from "@axel669/zephyr";
-
+  import LoadZone from '$components/LoadZone.svelte';
+  import DataGrid from '$components/DataGrid.svelte';
   import FileInfoDialog from '$components/dialogs/FileInfoDialog.svelte';
 
-
-  import { api } from '$api';
+  import * as cells from '$lib/cells.js';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -35,6 +34,47 @@
 
   // ---------------------------------------------------------------------------
 
+  // The file whose details are currently presented in the info dialog, if any.
+  let infoFile = null;
+
+  // Open the file info dialog for the file in the given row.
+  const showInfo = row => infoFile = row;
+
+  // The columns of the grid; the name links to the underlying file and the info
+  // column opens a dialog with the file's details.
+  const columns = [
+    {
+      field: 'id',
+      label: 'ID',
+      width: 72,
+      sortFn: 'alphanumeric'
+    },
+    {
+      field: 'description',
+      label: 'Name',
+      filterable: true,
+      filterType: 'text',
+      flex: 1,
+      formatter: (value, row) => cells.link(fileLink(row.bucketKey), row.description, { external: true })
+    },
+    {
+      id: 'info',
+      label: 'Info',
+      width: 72,
+      align: 'center',
+      sortable: false,
+      formatter: (value, row) => {
+        const button = document.createElement('wa-button');
+        button.setAttribute('appearance', 'plain');
+        button.setAttribute('title', 'File details');
+        button.append(cells.icon('info-circle-fill'));
+        button.addEventListener('click', () => showInfo(row));
+
+        return button;
+      }
+    }
+  ];
+
   // Fetch the list of data that we need from the back end API, and return
   // the result back after filtering it.
   const loadData = async param => filter (await loader(param));
@@ -44,29 +84,15 @@
 
 </script>
 
-<Modal component={FileInfoDialog} />
+<FileInfoDialog
+  file={infoFile}
+  {gameName}
+  open={infoFile !== null}
+  on:close={() => infoFile = null}
+/>
 
 <LoadZone source={loadData(loaderKey)} let:result>
-  <DataTable data={result} pageSize={Math.min(result.length, pageSize)} color="@secondary">
-    <svelte:fragment slot="header">
-      <TH w="64px" sort={sorts.natural("id")}>ID</TH>
-      <TH filter={filters.text("description")} sort={sorts.natural("name")}>Name</TH>
-      <TH w="64px">Info</TH>
-    </svelte:fragment>
-    <svelte:fragment slot="row" let:row>
-      <td>{row.id}</td>
-      <td>
-        <Link href="{fileLink(row.bucketKey)}" target="_blank">
-          {row.description}
-        </Link>
-      </td>
-      <td>
-        <EntryButton this={Modal} component={FileInfoDialog} props={{ file: row, gameName }}>
-          <Icon name="info-circle-fill"></Icon>
-        </EntryButton>
-      </td>
-    </svelte:fragment>
-  </DataTable>
+  <DataGrid data={result} {columns} pageSize={Math.min(Math.max(result.length, 1), pageSize)} />
 
   <svelte:fragment slot="error" let:error>
     {error}

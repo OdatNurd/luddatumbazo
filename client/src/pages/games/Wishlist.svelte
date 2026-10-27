@@ -1,6 +1,4 @@
 <script>
-  import { Select } from "@axel669/zephyr";
-
   import { api } from '$api';
   import { user } from '$stores/user';
   import { wishlists } from '$stores/wishlists';
@@ -21,16 +19,19 @@
   let loaderKey = routeInfo.params.wishlist ?? 'root';
   const loader = async wishlistSlug => api.household.wishlist.contents.get($user.household, wishlistSlug);
 
-  const loadWishlistNames = async () => {
-    const rawData = await api.household.wishlist.lists.list($user.household);
-    return rawData.map(e => ({ label: e.name, value: e.slug}));
-  }
+  // Keep the list selection up to date regardless of which change style the
+  // underlying component fires.
+  const pick = event => loaderKey = event.target.value;
 
 </script>
 
 {#if $user.household}
   <h3>Games Wishlists for {$user.household?.name ?? 'Unknown'}</h3>
-  <Select label="Wishlist" color="@primary" options={$wishlists} bind:value={loaderKey} />
+  <wa-select label="Wishlist" value={loaderKey} on:change={pick} on:wa-input={pick}>
+    {#each $wishlists as entry (entry.value)}
+      <wa-option value={entry.value}>{entry.label}</wa-option>
+    {/each}
+  </wa-select>
   <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} {loaderKey} />
 {:else}
   No wishlists; you do not belong to any households yet!

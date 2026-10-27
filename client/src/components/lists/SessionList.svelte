@@ -1,13 +1,12 @@
 <script>
-  import { Link, Icon, LoadZone, DataTable, TH, sorts, filters } from "@axel669/zephyr";
   import { DateTime } from 'luxon';
+
+  import LoadZone from '$components/LoadZone.svelte';
+  import DataGrid from '$components/DataGrid.svelte';
 
   import { server } from '$stores/server';
 
-  import GameImage from '$components/GameImage.svelte';
-
-  import { api } from '$api';
-
+  import * as cells from '$lib/cells.js';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -28,8 +27,9 @@
   // Set the number of rows that are visible in the data table per page
   export let pageSize = 20;
 
-  // The color to use for the table
-  export let color = "@primary";
+  // When this list is the whole page body, set this so the grid fills whatever
+  // vertical space the shell leaves for it instead of the page scrolling.
+  export let fill = false;
 
   // ---------------------------------------------------------------------------
 
@@ -45,58 +45,90 @@
   const session = id => baseLink.replaceAll(':id', id);
   const game = slug => gameLink.replaceAll(':slug', slug);
 
-
   // ---------------------------------------------------------------------------
 
-  // This is a duplicate of the natural sort order from sorts.natural() but
-  // based on how we may want to have incoming dates be actual dates and not
-  // strings, I'm going to leave this here so that when the time comes I can
-  // do less work, cause lazy.
-  const dateSort = (propName) => {
-    const comparitor = new Intl.Collator(undefined, { numeric: true })
-    return (a, b) => comparitor.compare(a[propName], b[propName])
-  }
+  // The columns of the session grid. The icon columns present the game type of
+  // the session and whether it was a learning game, the name links to the
+  // session report, and (optionally) the game column links to the game the
+  // session was for.
+  const columns = [
+    {
+      field: 'id',
+      label: 'ID',
+      width: 72,
+      sortFn: 'alphanumeric'
+    },
+    {
+      id: 'playType',
+      field: 'playType',
+      label: '',
+      width: 40,
+      align: 'center',
+      sortable: false,
+      formatter: (value) => {
+        const glyph = cells.icon(server.gameTypeIcon(value), { color: 'var(--wa-color-brand-600)' });
+        glyph.setAttribute('title', server.gameTypeName(value));
+        return glyph;
+      }
+    },
+    {
+      id: 'learning',
+      field: 'isLearning',
+      label: '',
+      width: 40,
+      align: 'center',
+      sortable: false,
+      formatter: (value) => value
+        ? (() => { const glyph = cells.icon('mortarboard-fill', { color: 'var(--wa-color-warning-600)' }); glyph.setAttribute('title', 'Learning game'); return glyph; })()
+        : ''
+    },
+    {
+      // The cell shows a picture; its underlying URL is not searchable text.
+      // (Every image URL contains the image account name, so leaving this
+      // searchable makes common substrings match every row in the grid.)
+      field: 'imagePath',
+      label: '',
+      width: 56,
+      align: 'center',
+      sortable: false,
+      searchable: false,
+      formatter: (value, row) => cells.image(value, row.name)
+    },
+    {
+      field: 'title',
+      label: 'Name',
+      filterable: true,
+      filterType: 'text',
+      flex: 1,
+      formatter: (value, row) => cells.link(session(row.id), value)
+    },
+    {
+      field: 'sessionBegin',
+      label: 'Date',
+      width: 160,
+      sortFn: 'datetime',
+      formatter: (value) => cells.text(DateTime.fromISO(value).toLocaleString(DateTime.DATETIME_SHORT))
+    }
+  ];
+
+  // The optional trailing column that links to the game for the session.
+  const gameColumn = {
+    id: 'game',
+    label: 'Game',
+    width: 72,
+    align: 'center',
+    sortable: false,
+    formatter: (value, row) => cells.link(game(row.slug), '', { icon: 'link-45deg' })
+  };
+
+  // Assemble the actual column list based on whether game links should show.
+  $: gridColumns = (showGames === true) ? [...columns, gameColumn] : columns;
+
 </script>
 
 
 <LoadZone source={loader()} let:result>
-  <DataTable data={result} pageSize={showGames ? pageSize : Math.min(result.length, pageSize)} {color}>
-    <svelte:fragment slot="header">
-      <TH w="64px" sort={sorts.natural("id")}>ID</TH>
-      <TH w="32px"></TH>
-      <TH w="32px"></TH>
-      <TH filter={filters.text("title")} sort={sorts.natural("title")}>Name</TH>
-      <TH sort={dateSort("sessionBegin")} w="64px">Date</TH>
-      {#if showGames === true}
-        <TH w="64px">Game</TH>
-      {/if}
-    </svelte:fragment>
-    <svelte:fragment slot="row" let:row>
-      <td>{row.id}</td>
-      <td>
-        <Icon c="@primary" name={server.gameTypeIcon(row.playType)}></Icon>
-      </td>
-      <td>
-        {#if row.isLearning}
-          <Icon c="@secondary" name="mortarboard-fill"></Icon>
-        {/if}
-      </td>
-      <td>
-        <GameImage imagePath={row.imagePath} name={row.name} icon={true} />
-        <a href="{session(row.id)}">{row.title}</a>
-      </td>
-      <td>
-        {DateTime.fromISO(row.sessionBegin).toLocaleString(DateTime.DATETIME_SHORT)}
-      </td>
-      {#if showGames === true}
-        <td>
-          <Link href="{game(row.slug)}">
-            <Icon name="link-45deg"></Icon>
-          </Link>
-        </td>
-      {/if}
-    </svelte:fragment>
-  </DataTable>
+  <DataGrid data={result} columns={gridColumns} {fill} pageSize={showGames ? pageSize : Math.min(Math.max(result.length, 1), pageSize)} />
 
   <svelte:fragment slot="error" let:error>
     {error}

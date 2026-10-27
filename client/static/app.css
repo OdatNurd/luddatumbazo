@@ -1,0 +1,226 @@
+/* Application styles for the Web Awesome based UI.
+ *
+ * The theme itself comes from the vendored Web Awesome stylesheets (see
+ * index.html); this file only carries the app's own layout and cell styling. */
+
+
+/* -------------------------------------------------------------------------- */
+
+
+/* The page body leans on the theme's body font. */
+body {
+  margin: 0;
+  font-family: var(--wa-font-family-body);
+  background: var(--wa-color-surface-default);
+  color: var(--wa-color-text-body);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--wa-font-family-heading);
+  color: var(--wa-color-text-header);
+  margin: 0 0 8px 0;
+}
+
+a {
+  color: var(--wa-color-brand-600);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+/* Page chrome; the app shell regions get their own surface so the header,
+ * navigation and footer read as distinct bars instead of blending into the
+ * content area.
+ *
+ * The bars use the theme's lowered (recessed) surface beneath the default
+ * canvas in both schemes, with hairline borders marking the seams. */
+wa-page {
+  --app-chrome: var(--wa-color-surface-lowered);
+  --app-canvas: var(--wa-color-surface-default);
+}
+
+/* The shell is pinned to the viewport and the document itself never scrolls:
+ * the header and the left navigation stay put and only the main content area
+ * scrolls, so the scrollbar spans just the content column instead of the full
+ * window height. */
+wa-page {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+wa-page::part(page) {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+wa-page::part(body) {
+  min-height: 0;
+}
+
+/* The main column is the app's only scroll container.
+ *
+ * The middle grid row (the content) carries an auto minimum so that long pages
+ * grow the row instead of letting content overflow it invisibly. Short pages
+ * still fill exactly. */
+wa-page::part(main) {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--app-canvas);
+  grid-template-rows: minmax(0, auto) minmax(auto, 1fr) minmax(0, auto);
+}
+
+wa-page::part(header),
+wa-page::part(navigation-desktop),
+wa-page::part(drawer),
+wa-page::part(footer) {
+  background: var(--app-chrome);
+}
+
+wa-page::part(header) {
+  border-bottom: 1px solid var(--wa-color-surface-border);
+}
+
+wa-page::part(navigation-desktop) {
+  border-right: 1px solid var(--wa-color-surface-border);
+}
+
+/* The footer is the page level `footer` slot: a full width bar at the bottom of
+ * the shell (the grid's last row), sharing the header's chrome so the two bars
+ * frame the app together. */
+wa-page::part(footer) {
+  border-top: 1px solid var(--wa-color-surface-border);
+}
+
+/* Keep page content off the contrasting edges of the chrome around it. Pages
+ * lay their content out in a column so that page level data grids can take up
+ * whatever vertical space the layout has left over. */
+wa-page::part(main-content) {
+  padding: clamp(16px, 3vw, 32px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* The account drawer panel sits on the raised (elevated) surface so it reads
+ * as a floating layer above the recessed chrome. (Tried on review and kept;
+ * drop the background declaration to return to the theme's default surface.) */
+wa-drawer::part(dialog) {
+  background: var(--wa-color-surface-raised);
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
+/* Data grid boxes (components/DataGrid.svelte). The toolbar row and the grid
+ * share one bordered box; the grid's own border and corners are stripped so
+ * the seam between them stays single.
+ *
+ * Page level lists pass `fill`: the grid then takes all of the vertical space
+ * the layout has left over and scrolls its rows internally, instead of the page
+ * growing a stray scrollbar that matches nothing visible. */
+.grid-wrap wa-data-grid::part(data-grid) {
+  border: none;
+  border-radius: 0;
+}
+
+/* `contain: size` keeps the grid's own content (all of its rows) out of the
+ * content area's intrinsic height, so the layout decides the grid's size and
+ * not the other way around. */
+.grid-wrap.fill {
+  flex: 1 1 0;
+  min-height: 0;
+  contain: size;
+}
+
+.grid-wrap.fill > wa-data-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.grid-wrap.fill wa-data-grid::part(data-grid) {
+  height: 100%;
+}
+
+.grid-wrap.fill wa-data-grid::part(table) {
+  max-height: none;
+  flex: 1 1 auto;
+  min-height: 8rem;
+}
+
+/* Pack the grid's tracks (header row, body of rows) at the start of the table.
+ * The table is a grid container that is often taller than its rows; after a
+ * search or filter shrinks the result set, or on a fill grid whose height the
+ * layout decides.
+ *
+ * Its default `align-content` stretches the auto-sized tracks to absorb that
+ * leftover space, which inflates the black header band down toward the rows and
+ * drops the rows off the top of the box. Packing at the start keeps the header
+ * at its natural height and the results tied to the top; the empty space stays
+ * at the bottom of the body instead. */
+.grid-wrap wa-data-grid::part(table) {
+  align-content: start;
+}
+
+/* Data grid cell content is built by the DOM builders in lib/cells.js and is
+ * styled inline there; the grid renders it inside of its own shadow tree, which
+ * rules in this file cannot reach. */
+
+
+/* -------------------------------------------------------------------------- */
+
+
+/* Small layout helpers used by the pages. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.row-lg {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.grid-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.muted {
+  color: var(--wa-color-text-secondary);
+}
+
+.page-subtitle {
+  font-family: var(--wa-font-family-body);
+  font-size: var(--wa-font-size-small);
+  color: var(--wa-color-text-secondary);
+  font-weight: var(--wa-font-weight-regular);
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.capitalize {
+  text-transform: capitalize;
+}

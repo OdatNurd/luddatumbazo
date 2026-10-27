@@ -1,5 +1,5 @@
 <script>
-  import { Link } from "@axel669/zephyr"
+  import Icon from '$components/Icon.svelte';
 
   import { user } from '$stores/user';
 
@@ -7,12 +7,14 @@
   // Properties
   // ---------------------------------------------------------------------------
 
-  // The function that can be invoked in order to close the menu.
-  export let close;
+  // The function that can be invoked to close the menu that contains us.
+  export let close = () => {};
 
-  // The list of navigation links. This is an array of objects that have
-  // "label" and "value" arguments that specify where the navigation links
-  // should go, and what text to display.
+  // The list of navigation links. This is an array of objects that have "label"
+  // and "value" arguments that specify where the navigation links should go,
+  // and what text to display.
+  //
+  // An optional "icon" names a bootstrap icon glyph to lead with.
   //
   // A label that is three dashes is output as a separator.
   export let links;
@@ -20,23 +22,55 @@
   // ---------------------------------------------------------------------------
 
   // Check if a link should be disabled; disable any link that requires a
-  // household if there is not a household on the current user.
-  const disabled = link => link.requiresHousehold === true ? !($user.household) : false;
+  // household if the given user does not have one.
+  //
+  // The user is passed in from the template rather than read from the store
+  // here, so that every use of this helper is a real dependency on the store
+  // and re-renders when the user data arrives.
+  const disabled = (link, current) => link.requiresHousehold === true ? !(current.household) : false;
 </script>
 
-{#each links as link (link.value) }
+{#each links as link (link)}
   {#if link.label === '---'}
-    <hr />
+    <hr class="nav-separator" />
+  {:else if disabled(link, $user)}
+    <span class="nav-link nav-link-disabled">
+      {#if link.icon}<Icon name={link.icon} padRight="8px"></Icon>{/if}
+      {link.label}
+    </span>
   {:else}
-    <Link disabled={disabled(link)} href={link.value} button outline on:click={close}>{link.label}</Link>
+    <a class="nav-link" href={link.value} on:click={close}>
+      {#if link.icon}<Icon name={link.icon} padRight="8px"></Icon>{/if}
+      {link.label}
+    </a>
   {/if}
 {/each}
 
-
 <style>
-  hr {
+  .nav-link {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: var(--wa-border-radius-medium);
+    color: var(--wa-color-text-body);
+    text-decoration: none;
+    transition: background var(--wa-transition-normal);
+  }
+
+  .nav-link:hover {
+    background: var(--wa-color-surface-background-hover);
+    text-decoration: none;
+  }
+
+  .nav-link-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .nav-separator {
     width: 64px;
-    margin-top: 16px;
-    margin-bottom: 16px;
+    margin: 12px 0;
+    border: none;
+    border-top: 1px solid var(--wa-color-surface-border);
   }
 </style>

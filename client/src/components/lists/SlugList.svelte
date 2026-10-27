@@ -1,11 +1,8 @@
 <script>
-  import { LoadZone, DataTable, TH, sorts, filters } from "@axel669/zephyr";
+  import LoadZone from '$components/LoadZone.svelte';
+  import DataGrid from '$components/DataGrid.svelte';
 
-
-  import BGGLink from '$components/links/BGGLink.svelte';
-  import GameImage from '$components/GameImage.svelte';
-
-  import { api } from '$api';
+  import * as cells from '$lib/cells.js';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -44,30 +41,59 @@
 
   // ---------------------------------------------------------------------------
 
-  // Fetch the list of data that we need from the back end API, and return
-  // the result back after filtering it.
+  // The columns of the grid; name links to the entry and, when the entry has a
+  // BGG id, the external column links to BoardGameGeek.
+  const columns = [
+    {
+      field: 'id',
+      label: 'ID',
+      width: 72,
+      sortFn: 'alphanumeric'
+    },
+    {
+      // The cell shows a picture; its underlying URL is not searchable text.
+      // (Every image URL contains the image account name, so leaving this
+      // searchable makes common substrings match every row in the grid.)
+      field: 'imagePath',
+      label: '',
+      width: 56,
+      align: 'center',
+      sortable: false,
+      searchable: false,
+      formatter: (value, row) => cells.image(value, row.name)
+    },
+    {
+      field: 'name',
+      label: 'Name',
+      filterable: true,
+      filterType: 'text',
+      flex: 1,
+      formatter: (value, row) => cells.link(slugLink(row.slug), value)
+    },
+    {
+      field: 'bggId',
+      label: 'Ext',
+      width: 80,
+      align: 'center',
+      sortable: false,
+      formatter: (value) => (value === 0 || value === null || value === undefined)
+        ? '--'
+        : cells.link(`https://boardgamegeek.com/${bggType}/${value}/`, 'BGG', { external: true, icon: 'box-arrow-up-right' })
+    }
+  ];
+
+  // Fetch the list of data that we need from the back end API, and return the
+  // result back after filtering it.
   const loadData = async param => filter (await loader(param));
 </script>
 
 
 <LoadZone source={loadData(loaderKey)} let:result>
-  <DataTable data={result} pageSize={20} color="@primary">
-    <svelte:fragment slot="header">
-      <TH w="64px" sort={sorts.natural("id")}>ID</TH>
-      <TH filter={filters.text("name")} sort={sorts.natural("name")}>Name</TH>
-      <TH w="64px">Ext</TH>
-    </svelte:fragment>
-    <svelte:fragment slot="row" let:row>
-      <td>{row.id}</td>
-      <td>
-        <GameImage imagePath={row.imagePath} name={row.name} icon={true} />
-        <a href="{slugLink(row.slug)}">{row.name}</a>
-      </td>
-      <td>
-        <BGGLink {bggType} bggId={row.bggId} />
-      </td>
-    </svelte:fragment>
-  </DataTable>
+  <!-- This list is always presented as the whole page body, so the grid fills
+       whatever vertical space the shell leaves for it (see app.css). -->
+  <DataGrid data={result} {columns} pageSize={20} fill>
+    <slot name="actions" slot="actions" />
+  </DataGrid>
 
   <svelte:fragment slot="error" let:error>
     {error}

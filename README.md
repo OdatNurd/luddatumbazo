@@ -29,7 +29,7 @@ following technology:
 Libraries that are used in this project include (but are not limited to, based
 on my ability to remember to update this):
 
-- [@axel669/Windstorm](https://windstorm.axel669.net/)/[@axel669/Zephyr](https://zephyr.axel669.net/) for the front end interface
+- [Web Awesome Pro](https://webawesome.com/) for the front end interface
 - [@axel669/sanic-xml](https://www.npmjs.com/package/@axel669/sanic-xml) for handling XML API data from BoardGameGeek
 
 

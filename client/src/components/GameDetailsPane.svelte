@@ -1,12 +1,13 @@
 <script>
-  import { Button, EntryButton, Confirm, Flex, Grid, Icon, Link, LoadZone, Modal, Paper, Tabs, Text, Titlebar } from "@axel669/zephyr";
-
   import { api } from '$api';
   import { user } from '$stores/user';
   import { wishlists } from '$stores/wishlists';
 
   import RecordAddDialog from '$components/dialogs/RecordAddDialog.svelte';
+  import Confirm from '$components/Confirm.svelte';
 
+  import LoadZone from '$components/LoadZone.svelte';
+  import Icon from '$components/Icon.svelte';
   import IconButton from '$components/IconButton.svelte';
   import AsyncIconButton from '$components/AsyncIconButton.svelte';
   import BGGLink from '$components/links/BGGLink.svelte';
@@ -29,27 +30,6 @@
   export let slug;
 
   // ---------------------------------------------------------------------------
-
-  // The core data that is available on the game; the list of images that are
-  // available, the list of attached files, and the descriptive text for the
-  // game.
-  const coreOptions = [
-      { label: "Images",      value: "images"      },
-      { label: "Files",       value: "files"       },
-      { label: "Description", value: "description" },
-  ];
-  let coreValue = coreOptions[0].value;
-
-  // The underlying data options; information on the production of the game, the
-  // various gameplay categories and mechanics, the expansions that are
-  // available and the session reports for the game (if any).
-  const dataOptions = [
-      { label: "Production", value: 'production' },
-      { label: "Gameplay",   value: 'gameplay'   },
-      { label: "Expansions", value: 'expansions' },
-      { label: "Sessions",   value: 'sessions'   },
-  ];
-  let dataValue = dataOptions[0].value;
 
   // The meta keys that are related to the production tab.
   const productionMetaKeys = [
@@ -86,6 +66,10 @@
 
   // The loaded game data for the page; populated on page load
   let gameData = undefined;
+
+  // The properties of the add-to-collection/wishlist dialog while it should be
+  // presented, or null when it is closed.
+  let addDialog = null;
 
   // Fetch the game details; if the current user has a primary household, then
   // this should also fetch ownership information based on that.
@@ -144,6 +128,9 @@
     // Pull the dialog result out of the close event
     const { result, dataType } = event.detail;
 
+    // Close the dialog either way.
+    addDialog = null;
+
     // If we got a result, then update the game record with the new data.
     if (result !== null) {
 
@@ -197,124 +184,157 @@
   <h3>Game Details</h3>
 </BackButton>
 
-<Modal component={RecordAddDialog} />
-<Modal component={Confirm} bind:this={confirmModal} />
+<Confirm bind:this={confirmModal} />
+
+{#if addDialog !== null}
+  <RecordAddDialog open {...addDialog} on:close={addDialogResult} />
+{/if}
 
 <LoadZone source={loadData()}>
-  <Paper>
-    <Titlebar slot="header">
-      <Flex p="0px" gap="0px" slot="title">
-        <Text title>
-          {#if gameData.owned !== undefined}
-            <Icon name="star-fill">{gameData.owned.name.name} ({gameData.publishedIn})</Icon>
+  <wa-card>
+    <div slot="header" class="game-header">
+      <div class="game-title">
+        {#if gameData.owned !== undefined}
+          <Icon name="star-fill" color="var(--wa-color-warning-600)"></Icon>
+          {gameData.owned.name.name} ({gameData.publishedIn})
+        {:else}
+          {#if gameData.wishlist !== undefined}
+            <Icon name="heart-fill" color="var(--wa-color-danger-600)"></Icon>
+            {gameData.wishlist.name.name} ({gameData.publishedIn})
           {:else}
-            {#if gameData.wishlist !== undefined}
-              <Icon name="heart-fill">{gameData.wishlist.name.name} ({gameData.publishedIn})</Icon>
+            <Icon name="star"></Icon>
+            {gameData.primaryName} ({gameData.publishedIn})
+          {/if}
+        {/if}
+      </div>
+
+      <div class="stat-row">
+        <div class="stat">
+          <span class="stat-label">Players</span>
+          <span class="stat-value">
+            {#if gameData.minPlayers === gameData.maxPlayers}
+              {gameData.minPlayers}
             {:else}
-              <Icon name="star">{gameData.primaryName} ({gameData.publishedIn})</Icon>
+              {gameData.minPlayers}-{gameData.maxPlayers}
             {/if}
-          {/if}
-        </Text>
-        <Text subtitle>
-          <Flex direction="row" gap="16px" fl.wr="wrap">
-            <span>
-              <strong>Players:</strong>
-                {#if gameData.minPlayers === gameData.maxPlayers}
-                  {gameData.minPlayers}
-                {:else}
-                  {gameData.minPlayers}-{gameData.maxPlayers}
-                {/if}
-            </span>
-            <span>
-              <strong>Play Time:</strong>
-                {#if gameData.minPlaytime === gameData.maxPlaytime}
-                  {gameData.minPlaytime} minutes
-                {:else}
-                  {gameData.minPlaytime}-{gameData.maxPlaytime} minutes
-                {/if}
-              </span>
-            <span><strong>Age:</strong> {gameData.minPlayerAge}+</span>
-            <span><strong>Weight:</strong> {gameData.complexity.toFixed(2)}/5</span>
-          </Flex>
-        </Text>
-      </Flex>
-    </Titlebar>
-    <Flex gap="16px" fl.wr="wrap">
-      <Text subtitle>
-        {#if gameData.wishlist !== undefined}
-          <Flex direction="row" gap="8px">
-            Added to Wishlist <WishlistLink wishlist={gameData.wishlist.wishlist} />
-            by <strong>{gameData.wishlist.wishlister.name}</strong>
-          </Flex>
+          </span>
+        </div>
+
+        <div class="stat">
+          <span class="stat-label">Play Time</span>
+          <span class="stat-value">
+            {#if gameData.minPlaytime === gameData.maxPlaytime}
+              {gameData.minPlaytime} min
+            {:else}
+              {gameData.minPlaytime}-{gameData.maxPlaytime} min
+            {/if}
+          </span>
+        </div>
+
+        <div class="stat">
+          <span class="stat-label">Age</span>
+          <span class="stat-value">{gameData.minPlayerAge}+</span>
+        </div>
+
+        <div class="stat">
+          <span class="stat-label">Weight</span>
+          <span class="stat-value">{gameData.complexity.toFixed(2)}/5</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack">
+      {#if gameData.wishlist !== undefined}
+        <div class="row">
+          <span>Added to Wishlist <WishlistLink wishlist={gameData.wishlist.wishlist} /></span>
+          <span>by <strong>{gameData.wishlist.wishlister.name}</strong></span>
+        </div>
+      {/if}
+
+      {#if gameData.names.length > 1}
+        <div class="row">
+          <strong>Also Known As:</strong>
+          <span>{gameData.names.map(el => el.name).join(', ')}</span>
+        </div>
+      {/if}
+
+      <div class="row-lg">
+        {#if gameData.teachingURL !== ''}
+          <a href={gameData.teachingURL} target="_blank" rel="noreferrer">
+            Learn to Play <Icon padLeft="4px" name="box-arrow-up-right"></Icon>
+          </a>
+        {:else}
+          <span class="muted"><Icon name="pencil-fill" padRight="4px"></Icon>No Learning Video available</span>
         {/if}
-        {#if gameData.names.length > 1}
-          <Flex direction="row" gap="8px">
-            <strong>Also Known As:</strong>
-            {gameData.names.map(el => el.name).join(', ')}
-          </Flex>
+
+        {#if gameData.officialURL !== ''}
+          <a href={gameData.officialURL} target="_blank" rel="noreferrer">
+            View Official Site <Icon padLeft="4px" name="box-arrow-up-right"></Icon>
+          </a>
+        {:else}
+          <span class="muted"><Icon name="pencil-fill" padRight="4px"></Icon>No Official Site Available</span>
         {/if}
-        <Flex direction="row" gap="32px" fl.wr="wrap">
-          {#if gameData.teachingURL !== ''}
-            <Link href={gameData.teachingURL} target="_blank">
-              Learn to Play <Icon p.l="4px" name="box-arrow-up-right"></Icon>
-            </Link>
-          {:else}
-            <Icon name="pencil-fill">No Learning Video available</Icon>
-          {/if}
 
-          {#if gameData.officialURL !== ''}
-            <Link href={gameData.officialURL} target="_blank">
-              View Official Site <Icon p.l="4px" name="box-arrow-up-right"></Icon>
-            </Link>
-          {:else}
-            <Icon name="pencil-fill">No Official Site Available</Icon>
-          {/if}
+        <BGGLink bggId={gameData.bggId}>
+          View on BoardGameGeek
+          <span slot="nolink">No BGG Link available</span>
+        </BGGLink>
+      </div>
 
-          <BGGLink bggId={gameData.bggId}>
-            View on BoardGameGeek
-            <span slot="nolink">No BGG Link available</span>
-          </BGGLink>
+      <wa-tab-group>
+        <wa-tab slot="nav" panel="images">Images</wa-tab>
+        <wa-tab slot="nav" panel="files">Files</wa-tab>
+        <wa-tab slot="nav" panel="description">Description</wa-tab>
 
-        </Flex>
-      </Text>
-
-      <Tabs bind:value={coreValue} options={coreOptions} color="@primary" fill />
-      <tab-content>
-        {#if coreValue === "images"}
-          <Flex fl.wr="wrap">
+        <wa-tab-panel name="images">
+          <div class="game-image">
             <GameImage imagePath={gameData.imagePath} name={gameData.primaryName} />
-          </Flex>
-        {:else if coreValue === "description"}
-          {@html gameData.description}
-        {:else}
+          </div>
+        </wa-tab-panel>
+
+        <wa-tab-panel name="files">
           <FileList loader={loadFileData} gameName={gameData.primaryName} />
-        {/if}
-      </tab-content>
+        </wa-tab-panel>
 
-      <Tabs bind:value={dataValue} options={dataOptions} color="@secondary" fill />
-      <tab-content>
-        {#if dataValue === "production"}
+        <wa-tab-panel name="description">
+          {@html gameData.description}
+        </wa-tab-panel>
+      </wa-tab-group>
+
+      <wa-tab-group>
+        <wa-tab slot="nav" panel="production">Production</wa-tab>
+        <wa-tab slot="nav" panel="gameplay">Gameplay</wa-tab>
+        <wa-tab slot="nav" panel="expansions">Expansions</wa-tab>
+        <wa-tab slot="nav" panel="sessions">Sessions</wa-tab>
+
+        <wa-tab-panel name="production">
           <MetaDataList {gameData} keyList={productionMetaKeys} />
+        </wa-tab-panel>
 
-        {:else if dataValue === "gameplay"}
+        <wa-tab-panel name="gameplay">
           <MetaDataList {gameData} keyList={gameplayMetaKeys} />
+        </wa-tab-panel>
 
-        {:else if dataValue === "expansions"}
-          <ExpansionList data={gameData.expansionGames} title="Expansions:" />
-          <ExpansionList data={gameData.baseGames} title="Expansion For:" />
+        <wa-tab-panel name="expansions">
+          <div class="stack">
+            <ExpansionList data={gameData.expansionGames} title="Expansions:" />
+            <ExpansionList data={gameData.baseGames} title="Expansion For:" />
+          </div>
+        </wa-tab-panel>
 
-        {:else}
-          <Grid gr.cols="repeat(auto-fit, minmax(0, 1fr))" gap="8px">
-            <IconButton disabled fill color="@secondary" icon="plus" caption="Log a Session" />
-          </Grid>
+        <wa-tab-panel name="sessions">
+          <div class="stack">
+            <div class="grid-auto">
+              <IconButton disabled fill color="@secondary" icon="plus" caption="Log a Session" />
+            </div>
 
-          <SessionList loader={loadSessionData} pageSize={5} color="@secondary" showGames={false} />
-        {/if}
-      </tab-content>
-
+            <SessionList loader={loadSessionData} pageSize={5} showGames={false} />
+          </div>
+        </wa-tab-panel>
+      </wa-tab-group>
 
       {#if $user.household}
-        <Grid gr.cols="1fr 1fr" gap="8px">
+        <div class="actions">
           {#if gameData.owned !== undefined}
             <AsyncIconButton fill color="@primary"
                              caption="Remove from Collection"
@@ -322,31 +342,28 @@
                              handler={async () => removeFromCollection(gameData.slug)} />
 
           {:else}
-
-            <EntryButton fill color="@primary" this={Modal} component={RecordAddDialog} props={collectionProps} on:entry={addDialogResult}>
-              <Icon p.r="4px" name="star-fill"></Icon>
-              Add to Collection
-            </EntryButton>
+            <IconButton fill color="@primary"
+                        caption="Add to Collection"
+                        icon="star-fill"
+                        on:click={() => addDialog = collectionProps()} />
 
             {#if gameData.wishlist !== undefined}
               <AsyncIconButton fill color="@secondary"
                                caption="Remove from Wishlist"
-                               icon="heart"
+                               icon="heart-slash"
                                handler={async () => removeFromWishlist(gameData.slug)} />
 
             {:else}
-              <EntryButton fill color="@secondary" this={Modal} component={RecordAddDialog} props={wishlistProps} on:entry={addDialogResult}>
-                <Icon p.r="4px" name="heart-fill"></Icon>
-                Add to Wishlist
-              </EntryButton>
+              <IconButton fill color="@secondary"
+                          caption="Add to Wishlist"
+                          icon="heart-fill"
+                          on:click={() => addDialog = wishlistProps()} />
             {/if}
           {/if}
-        </Grid>
+        </div>
       {/if}
-
-
-    </Flex>
-  </Paper>
+    </div>
+  </wa-card>
 
   <svelte:fragment slot="error" let:error>
     {error}
@@ -362,8 +379,56 @@
     text-transform: capitalize;
   }
 
-  tab-content {
-    padding-bottom: 16px;
-    border-bottom: 1.5px solid gray;
+  .game-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .game-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--wa-font-family-heading);
+    font-size: var(--wa-font-size-x-large);
+    color: var(--wa-color-text-header);
+  }
+
+  .stat-row {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-label {
+    font-size: var(--wa-font-size-small);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--wa-color-text-secondary);
+  }
+
+  .stat-value {
+    font-size: var(--wa-font-size-large);
+    font-weight: var(--wa-font-weight-semibold);
+    color: var(--wa-color-text-header);
+  }
+
+  .game-image {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--wa-color-surface-border);
   }
 </style>

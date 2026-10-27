@@ -1,16 +1,16 @@
 <script>
-  import { LoadZone, Table, Flex, Grid, Icon, Text, Chip } from "@axel669/zephyr";
+  import { DateTime, Interval } from 'luxon';
 
   import { api } from '$api';
   import { server } from '$stores/server';
 
-  import { DateTime, Interval } from 'luxon';
-
+  import LoadZone from '$components/LoadZone.svelte';
+  import DataGrid from '$components/DataGrid.svelte';
   import BackButton from '$components/BackButton.svelte';
   import BGGLink from '$components/links/BGGLink.svelte';
   import GameImage from '$components/GameImage.svelte';
 
-
+  import * as cells from '$lib/cells.js';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -64,9 +64,99 @@
 
     return result;
   };
+
+  // The columns of the players grid; the flag and trophy glyph columns mark the
+  // starting player and the winner of the session.
+  const playerColumns = [
+    {
+      field: 'userId',
+      label: 'ID',
+      width: 128,
+      sortFn: 'alphanumeric'
+    },
+    {
+      id: 'starting',
+      field: 'isStartingPlayer',
+      label: '',
+      width: 40,
+      align: 'center',
+      sortable: false,
+      formatter: (value) => value
+        ? cells.icon('flag-fill', { color: 'var(--wa-color-brand-600)' })
+        : ''
+    },
+    {
+      id: 'winner',
+      field: 'isWinner',
+      label: '',
+      width: 40,
+      align: 'center',
+      sortable: false,
+      formatter: (value) => value
+        ? cells.icon('trophy-fill', { color: 'var(--wa-color-warning-600)' })
+        : ''
+    },
+    {
+      field: 'name',
+      label: 'Name',
+      filterable: true,
+      filterType: 'text',
+      flex: 1
+    },
+    {
+      field: 'score',
+      label: 'Score',
+      width: 96,
+      align: 'end',
+      sortFn: 'basic'
+    }
+  ];
+
+  // The columns of the expansions grid; the name links to the expansion's own
+  // page when it has one.
+  const expansionColumns = [
+    {
+      field: 'gameId',
+      label: 'ID',
+      width: 96,
+      sortFn: 'alphanumeric'
+    },
+    {
+      // The cell shows a picture; its underlying URL is not searchable text.
+      // (Every image URL contains the image account name, so leaving this
+      // searchable makes common substrings match every row in the grid.)
+      field: 'imagePath',
+      label: '',
+      width: 56,
+      align: 'center',
+      sortable: false,
+      searchable: false,
+      formatter: (value, row) => cells.image(value, row.name)
+    },
+    {
+      field: 'name',
+      label: 'Expansion',
+      filterable: true,
+      filterType: 'text',
+      flex: 1,
+      formatter: (value, row) => (row.slug !== null && row.slug !== undefined)
+        ? cells.link(slugLink(row.slug), value)
+        : cells.text(value)
+    },
+    {
+      field: 'bggId',
+      label: 'Ext',
+      width: 80,
+      align: 'center',
+      sortable: false,
+      formatter: (value) => (value === 0 || value === null || value === undefined)
+        ? '--'
+        : cells.link(`https://boardgamegeek.com/boardgame/${value}/`, 'BGG', { external: true, icon: 'box-arrow-up-right' })
+    }
+  ];
 </script>
 
-<Flex direction="column">
+<div class="stack">
   <BackButton>
     {#if slug !== 'unknown'}
       <h3><a href="{slugLink(slug)}">{name}</a></h3>
@@ -78,82 +168,40 @@
   {#if slug !== 'unknown'}
     <h3>{title}</h3>
   {/if}
-</Flex>
+</div>
 
 <LoadZone source={loadData()} let:result>
-  <Grid cols="max-content auto" gap="8px">
-    <GameImage imagePath={result.imagePath} name={result.name} />
-      <Text p="8px" b.l="1.5px solid gray">
+  <div class="stack">
+    <div class="session-summary">
+      <GameImage imagePath={result.imagePath} name={result.name} />
+      <div class="session-content">
         {@html result.content}
-      </Text>
-  </Grid>
-  <Flex gap="16px" fl.wr="wrap" direction="row">
-    {#if result.isLearning}
-      <Chip color="@accent" fill>Learning Game!</Chip>
+      </div>
+    </div>
+
+    <div class="row-lg">
+      {#if result.isLearning}
+        <wa-badge variant="warning">Learning Game!</wa-badge>
+      {/if}
+      <wa-badge variant="brand">{server.gameTypeName(result.playType)}</wa-badge>
+      <wa-badge variant="neutral">
+        Played {result.sessionBegin.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)}
+        @
+        {result.sessionBegin.toLocaleString(DateTime.TIME_SIMPLE)}
+        &#x276F;
+        {result.sessionEnd.toLocaleString(DateTime.TIME_SIMPLE)}
+        ({result.sessionDuration.toHuman({'unitDisplay': 'short'})})
+      </wa-badge>
+    </div>
+
+    <h4>Players</h4>
+    <DataGrid data={result.players} columns={playerColumns} pageSize={10} />
+
+    {#if result.expansions.length > 0}
+      <h4>Expansions</h4>
+      <DataGrid data={result.expansions} columns={expansionColumns} pageSize={5} />
     {/if}
-    <Chip color="@accent" fill>{server.gameTypeName(result.playType)}</Chip>
-    <Chip color="@secondary" fill>
-      Played {result.sessionBegin.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)}
-
-      @
-      {result.sessionBegin.toLocaleString(DateTime.TIME_SIMPLE)}
-      <Icon name="caret-right-fill"></Icon>
-      {result.sessionEnd.toLocaleString(DateTime.TIME_SIMPLE)}
-
-      ({result.sessionDuration.toHuman({'unitDisplay': 'short'})})
-    </Chip>
-  </Flex>
-
-  <Table data={result.players} fillHeader color="@primary">
-    <tr slot="header">
-      <th ws-x="[w 128px]">ID</th>
-      <th ws-x="[w 16px]"></th>
-      <th ws-x="[w 16px]"></th>
-      <th>Name</th>
-      <th ws-x="[w 16px]">Score</th>
-    </tr>
-    <tr slot="row" let:row>
-      <td>{row.userId}</td>
-      <td>
-        {#if row.isStartingPlayer}
-          <Icon name="flag-fill" c="@primary"></Icon>
-        {/if}
-      </td>
-      <td>
-        {#if row.isWinner}
-          <Icon name="trophy-fill" c="@secondary"></Icon>
-        {/if}
-      </td>
-      <td>
-        {row.name}
-      </td>
-      <td>
-        {row.score}
-      </td>
-    </tr>
-  </Table>
-
-  {#if result.expansions.length > 0}
-  <Table data={result.expansions} fillHeader color="@secondary">
-    <tr slot="header">
-      <th ws-x="[w 128px]">ID</th>
-      <th>Expansion</th>
-      <th ws-x="[w 16px]">Ext</th>
-    </tr>
-    <tr slot="row" let:row>
-      <td>
-        {row.gameId}
-      </td>
-      <td>
-        <GameImage imagePath={row.imagePath} name={row.name} icon={true} />
-        <a href="{slugLink(row.slug)}">{row.name}</a>
-      </td>
-      <td>
-        <BGGLink bggId={row.bggId} />
-      </td>
-    </tr>
-  </Table>
-  {/if}
+  </div>
 
   <svelte:fragment slot="error" let:error>
     {error}
@@ -163,5 +211,17 @@
 <style>
   h3 {
     text-transform: capitalize;
+  }
+
+  .session-summary {
+    display: grid;
+    grid-template-columns: max-content auto;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .session-content {
+    padding-left: 12px;
+    border-left: 1.5px solid var(--wa-color-surface-border);
   }
 </style>

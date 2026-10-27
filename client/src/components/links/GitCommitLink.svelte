@@ -1,7 +1,4 @@
 <script>
-  import { Link } from "@axel669/zephyr"
-
-
   // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
@@ -27,9 +24,9 @@
 
 
 {#if commit === null }
-  {linkText}
+  <span class="muted">{linkText}</span>
 {:else}
-  <Link href="{rootURI}/commit/{commit}" target="_blank">
+  <a href="{rootURI}/commit/{commit}" target="_blank" rel="noreferrer">
     {linkText}
-  </Link>
+  </a>
 {/if}

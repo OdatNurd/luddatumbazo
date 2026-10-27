@@ -1,47 +1,29 @@
 <script>
-  import { Drawer, Titlebar, Text } from "@axel669/zephyr"
+  import DrawerLinks from '$components/drawers/DrawerLinks.svelte';
 
   import { user } from '$stores/user';
-
-  import DrawerLinks from '$components/drawers/DrawerLinks.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
 
-  // The component that opens the drawer gives us a close prop as a function
-  // that we can invoke in order to close the drawer.
-  export let close;
-
-  // Export the property that allows other components to know how to cancel us.
-  // The underlying modal system uses this to close us when we click outside of
-  // the bounds of the drawer.
-  export const cancel = () => close(null);
-
-  // ---------------------------------------------------------------------------
+  // Invoked when a navigation link is taken, so the host can close the drawer
+  // that displays us.
+  export let close = () => {};
 
   // The list of links that are available in the profile menu on the page. Items
   // with dashed labels are separators.
-  const links = [
-    { label: "Collection", value: "#/games/owned", requiresHousehold: true },
-    { label: "Wishlist",   value: "#/games/wishlisted", requiresHousehold: true },
-    { label: "---"},
-    { label: "Sessions",   value: "#/sessions", requiresHousehold: false },
-    { label: "---"},
-    { label: `Logout ${$user.firstName}`, value: "/cdn-cgi/access/logout", requiresHousehold: false },
+  //
+  // This is a reactive statement so that labels which embed user details (such
+  // as the logout link) update once the user data has actually loaded.
+  $: links = [
+    { label: "Collection", value: "#/games/owned",      icon: "star-fill",  requiresHousehold: true },
+    { label: "Wishlist",   value: "#/games/wishlisted", icon: "heart-fill", requiresHousehold: true },
+    { label: "---" },
+    { label: "Sessions",   value: "#/sessions",         icon: "calendar-event", requiresHousehold: false },
+    { label: "---" },
+    { label: `Logout ${$user.firstName ?? ''}`.trim(), value: "/cdn-cgi/access/logout", icon: "box-arrow-in-right", requiresHousehold: false },
   ];
-
 </script>
 
-<Drawer type="action">
-  <Titlebar slot="header">
-    <Text slot="title" title>
-      {$user.displayName ?? 'Unknown User'}
-      {#if $user.household}
-        : {$user.household?.name ?? 'Unknown Household'}
-      {/if}
-    </Text>
-  </Titlebar>
-
-  <DrawerLinks {close} {links} />
-</Drawer>
+<DrawerLinks {close} {links} />
