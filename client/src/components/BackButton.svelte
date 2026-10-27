@@ -8,7 +8,7 @@
 </script>
 
 <div class="back-button">
-  <IconButton fill color="@secondary" caption="" icon="arrow-left" on:click={() => window.history.back()} />
+  <IconButton fill color="@secondary" caption="" icon="arrow-left" onclick={() => window.history.back()} />
   <slot />
 </div>
 

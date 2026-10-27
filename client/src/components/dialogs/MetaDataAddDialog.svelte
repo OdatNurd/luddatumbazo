@@ -1,6 +1,4 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
-
   import { api } from '$api';
 
   // ---------------------------------------------------------------------------
@@ -17,9 +15,9 @@
 
   // ---------------------------------------------------------------------------
 
-  // Fired when the dialog closes; the detail is { result } where result is the
-  // list of records on success or null on cancellation.
-  const dispatch = createEventDispatcher();
+  // Invoked when the dialog closes; the detail is { result } where result is
+  // the list of records on success or null on cancellation.
+  export let onclose = undefined;
 
   // The fields of the new record. The slug is not asked for: the back end
   // derives it from the name. A missing BGG id is filled in as 0 by the schema,
@@ -39,7 +37,7 @@
   const settle = detail => {
     if (settled === false) {
       settled = true;
-      dispatch('close', detail);
+      onclose?.(detail);
     }
   };
 

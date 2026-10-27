@@ -19,8 +19,8 @@
   <svelte:fragment slot="actions">
     <IconButton fill color="@primary" title="Add a new game"
                 caption="Add Game" icon="plus-lg"
-                on:click={() => addDialogOpen = true} />
+                onclick={() => addDialogOpen = true} />
   </svelte:fragment>
 </SlugList>
 
-<GameEditDialog open={addDialogOpen} on:close={() => addDialogOpen = false} />
+<GameEditDialog open={addDialogOpen} onclose={() => addDialogOpen = false} />

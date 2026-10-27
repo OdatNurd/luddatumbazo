@@ -1,5 +1,4 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
   import { DateTime, Interval } from 'luxon';
 
   import { api } from '$api';
@@ -23,7 +22,7 @@
 
   // Fired when the dialog closes; the detail is { result } where result is the
   // new or updated report on success or null on cancellation.
-  const dispatch = createEventDispatcher();
+  export let onclose = undefined;
 
   // The ways a game can be played, as the API enumerates them.
   const playTypes = [
@@ -83,7 +82,7 @@
   const settle = detail => {
     if (settled === false) {
       settled = true;
-      dispatch('close', detail);
+      onclose?.(detail);
     }
   };
 
@@ -109,7 +108,7 @@
   // The combobox data source; the control calls this with the typed query and
   // displays exactly what we return, so the game list is filtered as the user
   // types instead of scrolling through every game in the system.
-  const dataSource = async ({ query, signal }) => {
+  const dataSource = async ({ query }) => {
     const needle = (query ?? '').trim().toLowerCase();
 
     return games
@@ -152,11 +151,12 @@
     ...form.newGuests.map(name => ({ key: `n:${name}`, label: name }))
   ];
 
-  // The starting player is one of the chosen players; when that player is
-  // removed from the session the flag is cleared rather than left dangling.
-  $: if (form.startingKey !== null && playerRows.some(row => row.key === form.startingKey) === false) {
-    form.startingKey = null;
-  }
+  // The starting player is one of the chosen players. This derived value is
+  // what the select displays: a choice that points at a player who has since
+  // been removed simply falls back to nothing. It is derived rather than
+  // cleared back into the form, because a reactive statement that writes the
+  // state it depends on (playerRows depends on form) is a reactive cycle.
+  $: startingKey = playerRows.some(row => row.key === form.startingKey) ? form.startingKey : null;
 
   // ---------------------------------------------------------------------------
 
@@ -380,7 +380,7 @@
 
         <!-- Who took the first turn; the schema's per player isStartingPlayer
              flag is what this collapses down to at save time. -->
-        <wa-select label="Starting player" value={form.startingKey ?? ''}
+        <wa-select label="Starting player" value={startingKey ?? ''}
                    placeholder="Not recorded" disabled={editing}
                    on:input={e => form.startingKey = (e.target.value === '') ? null : e.target.value}
                    on:change={e => form.startingKey = (e.target.value === '') ? null : e.target.value}>

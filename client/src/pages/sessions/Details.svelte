@@ -178,7 +178,7 @@
       <h3>{title}</h3>
       <IconButton fill color="@secondary" title="Edit this session report"
                   caption="Edit" icon="pencil-fill"
-                  on:click={() => editOpen = true} />
+                  onclick={() => editOpen = true} />
     </div>
   {/if}
 </div>
@@ -224,7 +224,7 @@
   </svelte:fragment>
 </LoadZone>
 
-<SessionAddDialog open={editOpen} session={loaded} on:close={() => editOpen = false} />
+<SessionAddDialog open={editOpen} session={loaded} onclose={() => editOpen = false} />
 
 <style>
   h3 {

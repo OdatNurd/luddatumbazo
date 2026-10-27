@@ -93,7 +93,7 @@
   file={infoFile}
   {gameName}
   open={infoFile !== null}
-  on:close={() => infoFile = null}
+  onclose={() => infoFile = null}
 />
 
 <LoadZone source={loadData(loaderKey)} let:result>

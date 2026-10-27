@@ -1,6 +1,4 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
-
   import { api } from '$api';
 
   import Confirm from '$components/Confirm.svelte';
@@ -18,10 +16,10 @@
 
   // ---------------------------------------------------------------------------
 
-  // Fired when the dialog closes; the detail is always { result: null } for
+  // Invoked when the dialog closes; the detail is always { result: null } for
   // now, since saving is not implemented yet and both commit buttons are
-  // disabled. The event exists so that the caller can dismiss us.
-  const dispatch = createEventDispatcher();
+  // disabled. The callback exists so that the caller can dismiss us.
+  export let onclose = undefined;
 
   // The five metadata list types; each gets a multi-select on the Details tab.
   const metaTypes = ['designer', 'artist', 'publisher', 'category', 'mechanic'];
@@ -346,7 +344,7 @@
   // Close the dialog, reporting that nothing was applied.
   const abort = () => {
     lightbox = null;
-    dispatch('close', { result: null });
+    onclose?.({ result: null });
   };
 
   // Close only when the dialog itself hides (escape, overlay click); the

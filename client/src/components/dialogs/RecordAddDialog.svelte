@@ -1,5 +1,5 @@
 <script>
-  import { createEventDispatcher, onMount } from 'svelte';
+  import { onMount } from 'svelte';
 
   import { user } from '$stores/user';
 
@@ -23,9 +23,9 @@
 
   // ---------------------------------------------------------------------------
 
-  // Fired when the dialog closes; the detail is { result, dataType } where
+  // Invoked when the dialog closes; the detail is { result, dataType } where
   // result is null on cancellation or the new record when applied.
-  const dispatch = createEventDispatcher();
+  export let onclose = undefined;
 
   let name;
   let optionValue;
@@ -40,7 +40,7 @@
   const settle = detail => {
     if (settled === false) {
       settled = true;
-      dispatch('close', detail);
+      onclose?.(detail);
     }
   };
 

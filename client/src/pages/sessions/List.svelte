@@ -18,8 +18,8 @@
   <svelte:fragment slot="actions">
     <IconButton fill color="@primary" title="Add a new session report"
                 caption="Add Session" icon="plus-lg"
-                on:click={() => addDialogOpen = true} />
+                onclick={() => addDialogOpen = true} />
   </svelte:fragment>
 </SessionList>
 
-<SessionAddDialog open={addDialogOpen} on:close={() => addDialogOpen = false} />
+<SessionAddDialog open={addDialogOpen} onclose={() => addDialogOpen = false} />

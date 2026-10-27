@@ -1,6 +1,4 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
-
   import Icon from '$components/Icon.svelte';
 
   // ---------------------------------------------------------------------------
@@ -50,7 +48,8 @@
 
   // ---------------------------------------------------------------------------
 
-  const dispatch = createEventDispatcher();
+  // Invoked when the button is clicked.
+  export let onclick = undefined;
 
   // The button element; the tooltip is applied as a plain attribute because
   // assigning `title` as a property on a custom element does not reflect it,
@@ -64,7 +63,7 @@
   let btnClicked = false;
   const btnClick = () => {
     // Send out a click event to our parent.
-    dispatch('click');
+    onclick?.();
 
     // If any of the button state is supposed to be different during a click,
     // set the flag and reset it after the given timeout to make the display

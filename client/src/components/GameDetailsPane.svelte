@@ -127,11 +127,11 @@
   }
 
   // Invoked when the dialog used to add a game to a collection or wishlist is
-  // closed; the details on the event will be either null if the operation was
-  // cancelled, or the new ownership record.
-  const addDialogResult = event => {
-    // Pull the dialog result out of the close event
-    const { result, dataType } = event.detail;
+  // closed; the details will be either null if the operation was cancelled, or
+  // the new ownership record.
+  const addDialogResult = detail => {
+    // Pull the dialog result out of the close details
+    const { result, dataType } = detail;
 
     // Close the dialog either way.
     addDialog = null;
@@ -192,7 +192,7 @@
 <Confirm bind:this={confirmModal} />
 
 {#if addDialog !== null}
-  <RecordAddDialog open {...addDialog} on:close={addDialogResult} />
+  <RecordAddDialog open {...addDialog} onclose={addDialogResult} />
 {/if}
 
 <LoadZone source={loadData()}>
@@ -217,7 +217,7 @@
         {#if $user.household}
           <IconButton fill color="@secondary" title="Edit this game"
                       caption="Edit" icon="pencil-fill"
-                      on:click={() => editDialogOpen = true} />
+                      onclick={() => editDialogOpen = true} />
         {/if}
       </div>
 
@@ -361,7 +361,7 @@
             <IconButton fill color="@primary"
                         caption="Add to Collection"
                         icon="star-fill"
-                        on:click={() => addDialog = collectionProps()} />
+                        onclick={() => addDialog = collectionProps()} />
 
             {#if gameData.wishlist !== undefined}
               <AsyncIconButton fill color="@secondary"
@@ -373,7 +373,7 @@
               <IconButton fill color="@secondary"
                           caption="Add to Wishlist"
                           icon="heart-fill"
-                          on:click={() => addDialog = wishlistProps()} />
+                          onclick={() => addDialog = wishlistProps()} />
             {/if}
           {/if}
         </div>
@@ -382,7 +382,7 @@
   </wa-card>
 
   <GameEditDialog open={editDialogOpen} game={gameData}
-                  on:close={() => editDialogOpen = false} />
+                  onclose={() => editDialogOpen = false} />
 
   <svelte:fragment slot="error" let:error>
     {error}

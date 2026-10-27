@@ -26,10 +26,10 @@
 
   // When the dialog completes with a new record, refresh the list so that the
   // record shows up in it.
-  const added = event => {
+  const added = detail => {
     addDialogOpen = false;
 
-    if (event.detail?.result != null) {
+    if (detail?.result != null) {
       list?.refresh();
     }
   };
@@ -41,11 +41,11 @@
   <svelte:fragment slot="actions">
     <IconButton fill color="@primary" title="Add a new {metaType}"
                 caption="Add {niceType}" icon="plus-lg"
-                on:click={() => addDialogOpen = true} />
+                onclick={() => addDialogOpen = true} />
   </svelte:fragment>
 </SlugList>
 
-<MetaDataAddDialog open={addDialogOpen} {metaType} on:close={added} />
+<MetaDataAddDialog open={addDialogOpen} {metaType} onclose={added} />
 
 <style>
   h3 {

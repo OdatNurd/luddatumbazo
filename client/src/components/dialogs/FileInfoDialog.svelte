@@ -1,5 +1,4 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
   import { DateTime } from 'luxon';
 
   import { toast } from '$lib/toast.js';
@@ -20,9 +19,9 @@
 
   // ---------------------------------------------------------------------------
 
-  // Fired when the dialog closes; the detail is always null (the dialog is
-  // informational only).
-  const dispatch = createEventDispatcher();
+  // Invoked when the dialog closes; the detail is always { result: null }
+  // (the dialog is informational only).
+  export let onclose = undefined;
 
   // Ensure we only report a close once, no matter how the dialog goes away.
   let settled = false;
@@ -34,7 +33,7 @@
   const dismiss = () => {
     if (settled === false) {
       settled = true;
-      dispatch('close', { result: null });
+      onclose?.({ result: null });
     }
   };
 
