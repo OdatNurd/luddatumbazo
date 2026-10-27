@@ -102,6 +102,7 @@ export {
 
 export {
   oidcConfig,
+  clientAuth,
   appOrigin,
   providerOrigin,
   generatePKCE,

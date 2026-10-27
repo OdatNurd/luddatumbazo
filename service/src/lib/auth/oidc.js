@@ -36,9 +36,41 @@ export function oidcConfig(ctx) {
     userinfoUrl: ctx.env.OIDC_USERINFO_URL,
 
     clientId: ctx.env.OIDC_CLIENT_ID,
+    clientSecret: ctx.env.OIDC_CLIENT_SECRET,
     redirectUri: ctx.env.OIDC_REDIRECT_URI,
     scopes: ctx.env.OIDC_SCOPES ?? 'openid profile email groups'
   };
+}
+
+
+/******************************************************************************/
+
+
+/* Build the client authentication header for a token endpoint request.
+ *
+ * When a client secret is configured the client is confidential and
+ * authenticates itself with HTTP Basic, as described by RFC 6749 section 2.3.1
+ * (the identifier and the secret are each form urlencoded before being base64
+ * encoded together).
+ *
+ * Without a secret the client is public and has nothing to authenticate with;
+ * it names itself with the bare client id in the request body instead. In that
+ * case the return value is null.
+ *
+ * This is a pure helper (it takes the already gathered configuration) so that
+ * the authentication formatting can be tested without making a network
+ * request. */
+export function clientAuth(config) {
+  const { clientId, clientSecret } = config;
+
+  if (clientSecret === undefined || clientSecret === null || clientSecret === '') {
+    return null;
+  }
+
+  const encode = value => encodeURIComponent(value);
+  const credentials = `${encode(clientId)}:${encode(clientSecret)}`;
+
+  return `Basic ${btoa(credentials)}`;
 }
 
 
@@ -136,21 +168,38 @@ export function authRedirectURL(ctx, challenge, state, prompt) {
  * exchange.
  *
  * The token endpoint is called directly from here; the browser never sees any
- * part of this. On success the token response (which includes the access token)
- * is returned; on any failure the return value is null. */
+ * part of this. A configured client secret authenticates the exchange with
+ * HTTP Basic (confidential client); without one the client names itself with
+ * the bare client id (public client), which is exactly the old behaviour. On
+ * success the token response (which includes the access token) is returned; on
+ * any failure the return value is null. */
 export async function exchangeCode(ctx, code, verifier) {
   const config = oidcConfig(ctx);
 
+  const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+
+  const body = new URLSearchParams({
+    grant_type: 'authorization_code',
+    code: code,
+    redirect_uri: config.redirectUri,
+    code_verifier: verifier
+  });
+
+  // RFC 6749 allows exactly one authentication method per request, so the
+  // client id moves into the Basic header when a secret is present instead of
+  // being sent in the body as well.
+  const auth = clientAuth(config);
+  if (auth === null) {
+    body.set('client_id', config.clientId);
+  }
+  else {
+    headers['Authorization'] = auth;
+  }
+
   const response = await fetch(config.tokenUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: config.clientId,
-      grant_type: 'authorization_code',
-      code: code,
-      redirect_uri: config.redirectUri,
-      code_verifier: verifier
-    })
+    headers,
+    body
   });
 
   if (response.ok === false) {

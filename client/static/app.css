@@ -99,6 +99,34 @@ wa-page::part(footer) {
   border-top: 1px solid var(--wa-color-surface-border);
 }
 
+/* On narrow screens the navigation collapses to a menu button; pull it closer
+ * to the title so it reads as the start of the header row instead of floating
+ * on its own. */
+wa-page::part(navigation-toggle) {
+  margin-inline-start: var(--wa-space-s);
+  margin-inline-end: 0;
+}
+
+/* The sidebar's link list is its own scroll container.
+ *
+ * The shell lays the navigation out as a three row grid (header / links /
+ * version) whose middle row is capped at the leftover height; without an
+ * explicit overflow a long link list spills out of that row and paints over the
+ * version bar underneath it. Scrolling inside the row keeps the version clear
+ * of the text at any list length. */
+wa-page nav[slot='navigation'] {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* The version link sits in the navigation's footer row as a pinned bar: the
+ * chrome surface and top rule make it read as a bar instead of as loose text
+ * floating over the menu. */
+wa-page span[slot='navigation-footer'] {
+  background: var(--app-chrome);
+  border-top: 1px solid var(--wa-color-surface-border);
+}
+
 /* Keep page content off the contrasting edges of the chrome around it. Pages
  * lay their content out in a column so that page level data grids can take up
  * whatever vertical space the layout has left over. */

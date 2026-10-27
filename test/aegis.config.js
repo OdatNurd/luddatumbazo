@@ -21,6 +21,7 @@ initializeRequestChecks();
 
 export const config = {
   files: [
+    "test/auth/oidc.test.js",
     "test/schema/asset.test.js",
     "test/schema/bgg.test.js",
     "test/schema/collection.test.js",

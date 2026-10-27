@@ -151,6 +151,16 @@
     "OIDC_CLIENT_ID": "luddatumbazo",
     "OIDC_REDIRECT_URI": "https://luddatumbazo.thedragonland.net/login/callback",
 
+    // An optional client secret for a confidential client registration. This
+    // must never hold a real value here; provide it as a secret instead (via
+    // `wrangler secret put OIDC_CLIENT_SECRET` when deployed, or in .dev.vars
+    // for local development).
+    //
+    // When the secret is present the token exchange authenticates with HTTP
+    // Basic; when it is absent the client behaves as a public client exactly as
+    // it always has.
+    // "OIDC_CLIENT_SECRET": "",
+
     // The scopes requested when logging in.
     "OIDC_SCOPES": "openid profile email groups",
 

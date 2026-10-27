@@ -67,10 +67,15 @@
     cursor: not-allowed;
   }
 
+  /* The rule is mixed from the current text color rather than taken from the
+   * theme's surface border token: on the drawer's raised surface that token is
+   * the same colour as the background in the dark scheme, which made the
+   * separators vanish there. Mixing with currentColor keeps the hairline at a
+   * constant contrast against whatever surface it sits on, in both schemes. */
   .nav-separator {
     width: 64px;
     margin: 12px 0;
     border: none;
-    border-top: 1px solid var(--wa-color-surface-border);
+    border-top: 1px solid color-mix(in srgb, currentColor 25%, transparent);
   }
 </style>
