@@ -15,9 +15,6 @@
 
   const loader = async () => api.metadata.list(metaType);
 
-  // The capitalized type, for button and dialog captions.
-  $: niceType = metaType.charAt(0).toUpperCase() + metaType.slice(1);
-
   // The list itself, so that it can be refreshed once a new record is added.
   let list = null;
 
@@ -39,8 +36,8 @@
 <SlugList bind:this={list} bggType='boardgame{metaType}' baseLink='#/{metaType}/:slug'
           {loader} gridKey={`meta:${metaType}`}>
   <svelte:fragment slot="actions">
-    <IconButton fill color="@primary" title="Add a new {metaType}"
-                caption="Add {niceType}" icon="plus-lg"
+    <IconButton variant="brand" appearance="filled" title="Add a new {metaType}"
+                caption="" icon="plus-lg"
                 onclick={() => addDialogOpen = true} />
   </svelte:fragment>
 </SlugList>

@@ -176,8 +176,8 @@
   {#if slug !== 'unknown'}
     <div class="title-row">
       <h3>{title}</h3>
-      <IconButton fill color="@secondary" title="Edit this session report"
-                  caption="Edit" icon="pencil-fill"
+      <IconButton variant="brand" appearance="filled" title="Edit this session report"
+                  caption="" icon="pencil-fill"
                   onclick={() => editOpen = true} />
     </div>
   {/if}

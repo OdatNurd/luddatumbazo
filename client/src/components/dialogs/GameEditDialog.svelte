@@ -618,7 +618,7 @@
   /* The WIP admonition stays out of the way of the buttons themselves. */
   .edit-actions .wip {
     flex: 1 1 220px;
-    font-size: var(--wa-font-size-small);
+    font-size: var(--wa-font-size-s);
   }
 
   .lightbox-img {

@@ -328,7 +328,7 @@
   .account-id .muted {
     display: flex;
     gap: 6px;
-    font-size: var(--wa-font-size-small);
+    font-size: var(--wa-font-size-s);
     color: var(--wa-color-text-secondary);
   }
 
@@ -337,7 +337,7 @@
      (roughly a quarter of the stock height). */
   footer {
     color: var(--wa-color-text-secondary);
-    font-size: var(--wa-font-size-small);
+    font-size: var(--wa-font-size-s);
     padding: 6px var(--wa-space-3xl);
     align-items: center;
   }

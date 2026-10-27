@@ -1,6 +1,6 @@
 {
   "name": "luddatumbazo",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "A home grown tool for tracking board game ownership and plays",
   "type": "module",

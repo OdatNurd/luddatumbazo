@@ -14,6 +14,11 @@
   // record is what puts the dialog into edit mode.
   export let session = null;
 
+  // Optional starting values for a new report, applied over the blank form
+  // when the dialog opens in add mode. This is how a game page can offer to
+  // log a session with the game, start time and title already filled in.
+  export let preset = null;
+
   // ---------------------------------------------------------------------------
 
   // This dialog is a work in progress: it lays out the shape of a session
@@ -237,11 +242,17 @@
 
     form = (editing === true) ? fromSession(session) : blankForm();
 
+    // A preset lays its starting values over the blank form in add mode.
+    if (editing !== true && preset !== null && preset !== undefined) {
+      Object.assign(form, preset);
+    }
+
     // The combobox shows the picked game's name; in add mode it starts empty
-    // and the value only lands once the user picks something.
+    // (unless a preset supplied the game) and the value only lands once the
+    // user picks something.
     if (gameBox !== null) {
       gameBox.value = (form.gameId === null) ? '' : String(form.gameId);
-      gameBox.inputValue = (editing === true) ? form.gameName : '';
+      gameBox.inputValue = form.gameName ?? '';
     }
   };
 
@@ -524,6 +535,6 @@
   /* The WIP admonition stays out of the way of the buttons themselves. */
   .edit-actions .wip {
     flex: 1 1 220px;
-    font-size: var(--wa-font-size-small);
+    font-size: var(--wa-font-size-s);
   }
 </style>

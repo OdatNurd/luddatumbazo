@@ -39,7 +39,7 @@ body {
   border-top: 1px solid var(--wa-color-surface-border);
   padding: 6px 24px;
   font-family: var(--wa-font-family-body);
-  font-size: var(--wa-font-size-small);
+  font-size: var(--wa-font-size-s);
   color: var(--wa-color-text-secondary);
 }
 
@@ -91,7 +91,7 @@ body {
 .notice-actions a {
   display: inline-block;
   font-family: var(--wa-font-family-body);
-  font-size: var(--wa-font-size-small);
+  font-size: var(--wa-font-size-s);
   font-weight: var(--wa-font-weight-semibold);
   padding: 10px 20px;
   border-radius: 6px;

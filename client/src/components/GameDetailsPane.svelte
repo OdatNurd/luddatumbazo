@@ -3,8 +3,11 @@
   import { user } from '$stores/user';
   import { wishlists } from '$stores/wishlists';
 
+  import { DateTime } from 'luxon';
+
   import RecordAddDialog from '$components/dialogs/RecordAddDialog.svelte';
   import GameEditDialog from '$components/dialogs/GameEditDialog.svelte';
+  import SessionAddDialog from '$components/dialogs/SessionAddDialog.svelte';
   import Confirm from '$components/Confirm.svelte';
 
   import LoadZone from '$components/LoadZone.svelte';
@@ -75,6 +78,24 @@
   // The state of the game add/edit dialog; edit mode is driven by the record
   // that the page has already loaded.
   let editDialogOpen = false;
+
+  // The state of the log-a-session dialog and the starting values it opens
+  // with: this game, right now as the start, and the same default title that
+  // the backend would give a report that arrives without one.
+  let logSessionOpen = false;
+  let logSessionPreset = null;
+
+  const logSession = () => {
+    logSessionPreset = {
+      gameId: gameData.id,
+      gameName: gameData.primaryName,
+      image: gameData.imagePath,
+      sessionBegin: DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"),
+      title: `Play of ${gameData.primaryName}`
+    };
+
+    logSessionOpen = true;
+  };
 
   // Fetch the game details; if the current user has a primary household, then
   // this should also fetch ownership information based on that.
@@ -215,8 +236,8 @@
         </div>
 
         {#if $user.household}
-          <IconButton fill color="@secondary" title="Edit this game"
-                      caption="Edit" icon="pencil-fill"
+          <IconButton variant="brand" appearance="filled" title="Edit this game"
+                      caption="" icon="pencil-fill"
                       onclick={() => editDialogOpen = true} />
         {/if}
       </div>
@@ -341,7 +362,9 @@
         <wa-tab-panel name="sessions">
           <div class="stack">
             <div class="grid-auto">
-              <IconButton disabled fill color="@secondary" icon="plus" caption="Log a Session" />
+              <IconButton variant="brand" appearance="filled" icon="plus" caption="Log a Session"
+                          title="Log a session of this game"
+                          onclick={logSession} />
             </div>
 
             <SessionList loader={loadSessionData} pageSize={5} showGames={false} />
@@ -352,25 +375,25 @@
       {#if $user.household}
         <div class="actions">
           {#if gameData.owned !== undefined}
-            <AsyncIconButton fill color="@primary"
+            <AsyncIconButton variant="brand" appearance="filled"
                              caption="Remove from Collection"
                              icon="star"
                              handler={async () => removeFromCollection(gameData.slug)} />
 
           {:else}
-            <IconButton fill color="@primary"
+            <IconButton variant="brand" appearance="filled"
                         caption="Add to Collection"
                         icon="star-fill"
                         onclick={() => addDialog = collectionProps()} />
 
             {#if gameData.wishlist !== undefined}
-              <AsyncIconButton fill color="@secondary"
+              <AsyncIconButton variant="neutral" appearance="filled"
                                caption="Remove from Wishlist"
                                icon="heart-slash"
                                handler={async () => removeFromWishlist(gameData.slug)} />
 
             {:else}
-              <IconButton fill color="@secondary"
+              <IconButton variant="neutral" appearance="filled"
                           caption="Add to Wishlist"
                           icon="heart-fill"
                           onclick={() => addDialog = wishlistProps()} />
@@ -383,6 +406,9 @@
 
   <GameEditDialog open={editDialogOpen} game={gameData}
                   onclose={() => editDialogOpen = false} />
+
+  <SessionAddDialog open={logSessionOpen} preset={logSessionPreset}
+                    onclose={() => logSessionOpen = false} />
 
   <svelte:fragment slot="error" let:error>
     {error}
@@ -437,7 +463,7 @@
   }
 
   .stat-label {
-    font-size: var(--wa-font-size-small);
+    font-size: var(--wa-font-size-s);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--wa-color-text-secondary);

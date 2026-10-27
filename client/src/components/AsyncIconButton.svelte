@@ -5,10 +5,11 @@
   // Properties
   // ---------------------------------------------------------------------------
 
-  // Control the style of the button that is presented.
-  export let color = '@default';
-  export let fill = false;
-  export let outline = false;
+  // Control the style of the button that is presented; these are Web Awesome's
+  // own variant and appearance vocabulary, passed straight through to the
+  // underlying wa-button.
+  export let variant = 'neutral';
+  export let appearance = 'plain';
   export let disabled = false;
 
   // The caption of the button and the icon to use within it
@@ -21,18 +22,6 @@
   export let handler = async () => null;
 
   // ---------------------------------------------------------------------------
-
-  // Map the legacy color names to a Web Awesome variant; legacy fill/outline
-  // control the appearance in the same way they used to.
-  const variant = {
-    '@primary': 'brand',
-    '@secondary': 'neutral',
-    '@accent': 'brand',
-    '@danger': 'danger',
-    '@default': 'neutral'
-  }[color] ?? 'neutral';
-
-  const appearance = fill ? 'filled' : (outline ? 'outlined' : 'plain');
 
   // ---------------------------------------------------------------------------
 

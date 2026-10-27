@@ -48,14 +48,35 @@ wa-page {
 /* The shell is pinned to the viewport and the document itself never scrolls:
  * the header and the left navigation stay put and only the main content area
  * scrolls, so the scrollbar spans just the content column instead of the full
- * window height. */
+ * window height.
+ *
+ * The shell is sized in svh -- the height the screen has with the browser bars
+ * shown, the smallest the viewport ever gets. That is deliberately not vh or
+ * dvh: percentage and vh heights resolve against the large viewport (the
+ * height with the bars hidden), and some tablet browsers resolve dvh larger
+ * than the area the bars leave visible too, which pushed the shell past the
+ * screen edge (header under the address bar, dead space under the footer).
+ * svh never exceeds the visible area, so there is no overflow to drag or
+ * restore; where a bar hides and the screen grows, the slack under the shell
+ * is same-colored canvas and invisible (the footer itself only shows on
+ * larger screens; see its rule below).
+ *
+ * The document is contained as well (overflow hidden/clip,
+ * overscroll-behavior none) so no stale scroll offset can leave the page
+ * nudged; that is what kills the old "ghost" drag past the footer. */
+html, body {
+  overflow: hidden;
+  overflow: clip;
+  overscroll-behavior: none;
+}
+
 wa-page {
-  height: 100dvh;
+  height: 100svh;
   overflow: hidden;
 }
 
 wa-page::part(page) {
-  height: 100dvh;
+  height: 100svh;
   min-height: 0;
   overflow: hidden;
 }
@@ -97,6 +118,18 @@ wa-page::part(navigation-desktop) {
  * frame the app together. */
 wa-page::part(footer) {
   border-top: 1px solid var(--wa-color-surface-border);
+}
+
+/* The footer bar is desktop chrome. On phones and tablets it only steals
+ * height from content on screens that have none to spare, so it is hidden
+ * there entirely and the shell's bottom edge becomes the content area. The
+ * query keys off the input type and the width, so a PC sized window keeps the
+ * bar while small and touch layouts do not. */
+@media (pointer: coarse), (max-width: 1023px) {
+  wa-page::part(footer),
+  wa-page > footer {
+    display: none;
+  }
 }
 
 /* On narrow screens the navigation collapses to a menu button; pull it closer
@@ -240,7 +273,7 @@ wa-drawer::part(dialog) {
 
 .page-subtitle {
   font-family: var(--wa-font-family-body);
-  font-size: var(--wa-font-size-small);
+  font-size: var(--wa-font-size-s);
   color: var(--wa-color-text-secondary);
   font-weight: var(--wa-font-weight-regular);
   display: flex;

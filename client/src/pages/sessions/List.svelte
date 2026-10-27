@@ -16,8 +16,8 @@
 <h3>Session Reports</h3>
 <SessionList {loader} fill gridKey="sessions">
   <svelte:fragment slot="actions">
-    <IconButton fill color="@primary" title="Add a new session report"
-                caption="Add Session" icon="plus-lg"
+    <IconButton variant="brand" appearance="filled" title="Add a new session report"
+                caption="" icon="plus-lg"
                 onclick={() => addDialogOpen = true} />
   </svelte:fragment>
 </SessionList>

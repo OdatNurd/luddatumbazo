@@ -17,8 +17,8 @@
   <!-- BGG import flows are handled through the game dialog's BGG lookup
        (pending the BGG API token), so no separate import buttons live here. -->
   <svelte:fragment slot="actions">
-    <IconButton fill color="@primary" title="Add a new game"
-                caption="Add Game" icon="plus-lg"
+    <IconButton variant="brand" appearance="filled" title="Add a new game"
+                caption="" icon="plus-lg"
                 onclick={() => addDialogOpen = true} />
   </svelte:fragment>
 </SlugList>
