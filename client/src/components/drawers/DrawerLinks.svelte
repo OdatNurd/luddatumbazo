@@ -28,6 +28,13 @@
   // here, so that every use of this helper is a real dependency on the store
   // and re-renders when the user data arrives.
   const disabled = (link, current) => link.requiresHousehold === true ? !(current.household) : false;
+
+  // Follow a link: run its action (if any) before the browser moves on. The
+  // logout link uses this to clear the app's navigation trail on the way out.
+  const follow = link => {
+    link.action?.();
+    close();
+  };
 </script>
 
 {#each links as link (link)}
@@ -39,7 +46,7 @@
       {link.label}
     </span>
   {:else}
-    <a class="nav-link" href={link.value} on:click={close}>
+    <a class="nav-link" href={link.value} on:click={() => follow(link)}>
       {#if link.icon}<Icon name={link.icon} padRight="8px"></Icon>{/if}
       {link.label}
     </a>

@@ -1,6 +1,8 @@
 <script>
   import { onMount } from 'svelte';
 
+  import { currentQuery, replaceQuery } from '$lib/router.js';
+
   // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
@@ -50,6 +52,87 @@
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // URL state sync (top level grids only)
+  // ---------------------------------------------------------------------------
+
+  // A keyed grid keeps its view state -- the search term, the sort and the page
+  // -- in the route's query (q, sort, page) so that the navigation stack's
+  // recorded return target carries it: coming back to a list lands exactly
+  // where the user left it. Inline grids have no key and never touch the URL.
+
+  // The search term to start with, read from the URL before first paint so the
+  // toolbar box displays it along with the grid filtering on it.
+  const initialSearch = (gridKey === undefined) ? '' : (currentQuery().q ?? '');
+
+  // Parse the sort query ("name:desc,id:asc") into the grid's sort shape;
+  // multi column sorts ride along as comma separated entries.
+  const parseSort = value => (value ?? '')
+    .split(',')
+    .filter(entry => entry !== '')
+    .map(entry => {
+      const [id, desc] = entry.split(':');
+      return { id, desc: desc === 'desc' };
+    });
+
+  // Serialize the grid's sort state back into the URL parameter.
+  const formatSort = sort => (sort ?? [])
+    .map(entry => `${entry.id}:${entry.desc ? 'desc' : 'asc'}`)
+    .join(',');
+
+  // Write the grid's current view state into the URL query in place. Values at
+  // their defaults are passed empty and dropped by the router, keeping ordinary
+  // URLs clean. The grid numbers pages from zero (its page property is a
+  // 0-based index) while the URL counts them from one, the way a reader would.
+  const syncURL = () => {
+    if (gridKey === undefined || grid === null) {
+      return;
+    }
+
+    const state = grid.getState();
+    replaceQuery({
+      q: state.search ?? '',
+      sort: formatSort(state.sort),
+      page: (state.page > 0) ? String(state.page + 1) : ''
+    });
+  };
+
+  // Typing in the search box should not rewrite the URL on every keystroke.
+  let searchTimer = null;
+  const syncURLSoon = () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(syncURL, 250);
+  };
+
+  // Restore the view state the URL carries, through the grid's own state API.
+  // Search and page are handed over together so that restoring a search does
+  // not bounce the grid back to page 1. The URL counts pages from one; the
+  // grid's state API indexes them from zero.
+  const restoreURL = () => {
+    if (gridKey === undefined) {
+      return;
+    }
+
+    const query = currentQuery();
+    const sort = parseSort(query.sort);
+    const page = parseInt(query.page ?? '', 10);
+
+    const state = { version: 1 };
+    if (query.q !== undefined && query.q !== '') {
+      state.search = query.q;
+    }
+    if (sort.length > 0) {
+      state.sort = sort;
+    }
+    if (Number.isInteger(page) && page > 1) {
+      state.page = page - 1;
+    }
+
+    if (Object.keys(state).length > 1) {
+      grid.setState(state);
+    }
+  };
+
   // The picker offers the standard ladder plus whatever size is actually in
   // force. Inline grids clamp their size to their row count (an inline list of
   // five rows shows five), and without this the picker would display a value
@@ -65,6 +148,8 @@
   // When the user picks a page size on a grid that opted in, remember the
   // choice for the next visit.
   const pageChanged = event => {
+    syncURL();
+
     const size = event.detail?.pageSize;
 
     if (gridKey === undefined || Number.isInteger(size) === false || size <= 0) {
@@ -75,11 +160,14 @@
     pageSize = size;
   };
 
-  // Push the search terms typed into the toolbar's search box into the grid.
+  // Push the search terms typed into the toolbar's search box into the grid,
+  // and the resulting view state into the URL.
   const search = event => {
     if (grid !== null) {
       grid.searchTerm = event.target.value;
     }
+
+    syncURLSoon();
   };
 
   // wa-data-grid measures its own header labels after layout and widens any
@@ -94,10 +182,20 @@
   onMount(() => {
     remeasure();
 
+    // Bring the grid back to the state the URL carries once its data and
+    // columns have been processed; the custom element's first update is still
+    // pending at this point.
+    if (gridKey !== undefined) {
+      Promise.resolve(grid.updateComplete ?? undefined).then(restoreURL);
+    }
+
     const observer = new ResizeObserver(remeasure);
     observer.observe(grid);
 
-    return () => observer.disconnect();
+    return () => {
+      clearTimeout(searchTimer);
+      observer.disconnect();
+    };
   });
 </script>
 
@@ -111,6 +209,7 @@
         size="m"
         label="Search"
         placeholder="Search"
+        value={initialSearch}
         with-clear
         on:input={search}
       >
@@ -135,6 +234,7 @@
     paginate
     page-size={pageSize}
     on:wa-page-change={pageChanged}
+    on:wa-sort-change={syncURL}
   ></wa-data-grid>
 </div>
 

@@ -25,6 +25,16 @@
   // anything there to start with.
   let name = routeInfo.params.slug;
 
+  // The list page for each kind of metadata; where the back button falls to
+  // when there is no recorded trail to retrace (a cold deep link, say).
+  const listPages = {
+    category:  '#/categories',
+    mechanic:  '#/mechanics',
+    designer:  '#/designers',
+    artist:    '#/artists',
+    publisher: '#/publishers'
+  };
+
   // Our loader queries the details for all games that are associated with the
   // provided metadata.
   const loader = async () => api.metadata.details(metaType, name, true);
@@ -48,11 +58,12 @@
 </script>
 
 
-<BackButton>
+<BackButton to={listPages[metaType]}>
   <h3>{metaType}: {name}</h3>
 </BackButton>
 
-<SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} filter={gameFilter} />
+<SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} filter={gameFilter}
+          gridKey={`meta-games:${metaType}:${routeInfo.params.slug}`} />
 
 
 <style>

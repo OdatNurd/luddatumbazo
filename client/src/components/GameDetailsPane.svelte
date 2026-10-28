@@ -206,7 +206,7 @@
 <!-- *********************************************************************** -->
 
 
-<BackButton>
+<BackButton to="#/games">
   <h3>Game Details</h3>
 </BackButton>
 

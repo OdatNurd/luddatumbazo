@@ -1,5 +1,5 @@
 <script>
-  import { route, matchRoute } from '$lib/router.js';
+  import { route, matchRoute, initStack } from '$lib/router.js';
 
   import { user } from '$stores/user';
   import { server } from '$stores/server';
@@ -76,6 +76,11 @@
   const ready = (async () => {
     // Get information on the current user and the server
     await Promise.all([user.init(), server.init()]);
+
+    // Start recording navigations now that we know who is signed in; the
+    // stack adopts or discards any trail a previous session left behind based
+    // on whether it was this same person (see $lib/router.js).
+    initStack($user.id);
 
     // Using the loaded data for the user, if they have a household also load
     // the list of wishlists.

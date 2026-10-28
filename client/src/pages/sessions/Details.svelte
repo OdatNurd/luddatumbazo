@@ -165,7 +165,7 @@
 </script>
 
 <div class="stack">
-  <BackButton>
+  <BackButton to="#/sessions">
     {#if slug !== 'unknown'}
       <h3><a href="{slugLink(slug)}">{name}</a></h3>
     {:else}
