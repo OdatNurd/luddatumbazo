@@ -194,9 +194,10 @@ export default Collection`Game Schema Validation`({
       .value(schemaTest('json', NewGameSchema, { ...validGame, name: [] }, validateZod))
       .isResponseWithStatus($, 400);
 
-    await $check`should fail if slug is missing`
-      .value(schemaTest('json', NewGameSchema, { name: ['G'], description: 'D', published: 2025 }, validateZod))
-      .isResponseWithStatus($, 400);
+    await $check`should derive a slug when one is not provided`
+      .value(schemaTest('json', NewGameSchema, { name: ['Five Crowns'], description: 'D', published: 1996 }, validateZod))
+      .isObject()
+      .eq($.slug, 'five-crowns');
   },
 
 

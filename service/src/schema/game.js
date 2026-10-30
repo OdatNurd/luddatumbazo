@@ -137,8 +137,9 @@ export const NewGameSchema = z.object({
   // least one name, and the first name is the "primary" name.
   name: z.array(z.string()).min(1),
 
-  // The textual slug that the game is known by.
-  slug: z.string(),
+  // The textual slug that the game is known by. If this is not provided, the
+  // transform at the end of the schema derives it from the primary name.
+  slug: z.string().default(''),
 
   // A descriptive text of the game itself.
   description: z.string(),
@@ -177,7 +178,7 @@ export const NewGameSchema = z.object({
   // should be ingested into the image system and used to set up the final
   // image.
   image: z.string().default('')
-});
+}).transform(makeSlug('name', 'slug'));
 
 
 /******************************************************************************/

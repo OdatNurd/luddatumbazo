@@ -16,9 +16,9 @@
 
   // ---------------------------------------------------------------------------
 
-  // Invoked when the dialog closes; the detail is always { result: null } for
-  // now, since saving is not implemented yet and both commit buttons are
-  // disabled. The callback exists so that the caller can dismiss us.
+  // Invoked when the dialog closes; the detail is { result: newGame } when a
+  // game was added, or { result: null } when the dialog was cancelled. Editing
+  // is not implemented yet, so edit mode always reports null.
   export let onclose = undefined;
 
   // The five metadata list types; each gets a multi-select on the Details tab.
@@ -74,6 +74,14 @@
 
   // True while a BGG lookup is in flight.
   let searching = false;
+
+  // True while the add request is in flight.
+  let saving = false;
+
+  // The expansion links returned by the last BGG lookup. They are not shown in
+  // the dialog, but travel with the save so that adding a game through the
+  // dialog keeps the same expansion links as the BGG-only import path.
+  let lookupExpansions = [];
 
   // The reference to the confirm dialog used before a lookup would replace data
   // that is already in the form.
@@ -169,7 +177,9 @@
     warning = null;
 
     try {
-      form = fromBGG(await api.bgg.lookup(bggId));
+      const data = await api.bgg.lookup(bggId);
+      form = fromBGG(data);
+      lookupExpansions = data.expansions ?? [];
     }
     catch (error) {
       warning = error.message ?? 'the lookup failed';
@@ -315,6 +325,7 @@
   const populate = async () => {
     warning = null;
     lightbox = null;
+    lookupExpansions = [];
 
     metaLoading = true;
     try {
@@ -346,6 +357,12 @@
 
   // Close the dialog, reporting that nothing was applied.
   const abort = () => {
+    // Don't let escape/overlay/cancel close the dialog while the add request
+    // is still in flight; the result would otherwise be lost.
+    if (saving === true) {
+      return;
+    }
+
     lightbox = null;
     onclose?.({ result: null });
   };
@@ -355,6 +372,13 @@
   // close, and those bubble up here without meaning the dialog is going away.
   const dismissed = event => {
     if (event.target === event.currentTarget) {
+      // A save in flight must not be interrupted; cancelling the hide keeps
+      // the dialog on screen and its controlled open prop in sync with us.
+      if (saving === true) {
+        event.preventDefault();
+        return;
+      }
+
       abort();
     }
   };
@@ -372,6 +396,67 @@
 
     set((raw === '' || raw === null) ? null : Number(raw));
     form = form;
+  };
+
+  // Build the NewGameSchema payload from the form. The slug is deliberately
+  // absent: the API derives it from the primary name. Cleared numeric fields
+  // are sent as their schema defaults rather than null.
+  const buildGame = () => ({
+    bggId: Number(form.bggIdText) || 0,
+    name: [form.primaryName ?? '', ...(form.altNames ?? [])]
+      .map(name => String(name).trim())
+      .filter(name => name !== ''),
+    description: form.description,
+    published: form.published,
+    minPlayers: form.minPlayers ?? 1,
+    maxPlayers: form.maxPlayers ?? 1,
+    minPlayerAge: form.minPlayerAge ?? 1,
+    playTime: form.playTime ?? 1,
+    minPlayTime: form.minPlayTime ?? 1,
+    maxPlayTime: form.maxPlayTime ?? 1,
+    complexity: form.complexity ?? 1.0,
+    officialUrl: form.officialUrl,
+    teachingUrl: form.teachingUrl,
+    image: form.image,
+    category: form.category,
+    mechanic: form.mechanic,
+    designer: form.designer,
+    artist: form.artist,
+    publisher: form.publisher,
+    expansions: lookupExpansions
+  });
+
+  // Save a new game. Edit mode remains disabled until there is an update
+  // endpoint; the cover image is only ingested on add.
+  const save = async () => {
+    if (editing === true || saving === true || searching === true || metaLoading === true) {
+      return;
+    }
+
+    if ((form.primaryName ?? '').trim() === '') {
+      warning = 'Enter a name for the game before saving.';
+      return;
+    }
+
+    if (Number.isFinite(form.published) === false) {
+      warning = 'Enter the year the game was published before saving.';
+      return;
+    }
+
+    saving = true;
+    warning = null;
+
+    try {
+      const result = await api.game.add(buildGame());
+      lightbox = null;
+      onclose?.({ result });
+    }
+    catch (error) {
+      warning = error.message ?? 'unable to add the game';
+    }
+    finally {
+      saving = false;
+    }
   };
 </script>
 
@@ -409,7 +494,7 @@
                  positives. -->
             <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
             <wa-button appearance="outlined" variant="brand"
-                       loading={searching} disabled={searching}
+                       loading={searching} disabled={searching || saving}
                        on:click={runLookup}>
               Search
             </wa-button>
@@ -519,14 +604,20 @@
   </wa-tab-group>
 
   <div slot="footer" class="edit-actions">
-    <wa-callout variant="warning" class="wip">
-      Work in progress -- saving is not implemented yet.
-    </wa-callout>
+    {#if editing}
+      <wa-callout variant="warning" class="wip">
+        Work in progress -- editing is not implemented yet.
+      </wa-callout>
+    {/if}
 
     <div class="row">
       <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-      <wa-button appearance="outlined" variant="neutral" on:click={abort}>Cancel</wa-button>
-      <wa-button appearance="filled" variant="brand" disabled>
+      <wa-button appearance="outlined" variant="neutral" on:click={abort}
+                 disabled={saving}>Cancel</wa-button>
+      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+      <wa-button appearance="filled" variant="brand"
+                 loading={saving} disabled={editing || saving || searching || metaLoading}
+                 on:click={save}>
         {editing ? 'Save Changes' : 'Add Game'}
       </wa-button>
     </div>
@@ -637,6 +728,12 @@
     gap: 16px;
     width: 100%;
     flex-wrap: wrap;
+  }
+
+  /* Keep the buttons on the right even when there is no edit-mode callout to
+     take up the space on the left. */
+  .edit-actions .row {
+    margin-left: auto;
   }
 
   /* The WIP admonition stays out of the way of the buttons themselves. */

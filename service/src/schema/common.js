@@ -73,7 +73,8 @@ export function numberOrString(value, zCtx) {
  * has a field named slugField that is set. If there is, nothing happens.
  *
  * Otherwise, the value from the name field is used to populate the slug into
- * the slug field.
+ * the slug field. When the name field is an array of names, the first entry is
+ * used as the primary name.
  *
  * The returned value is the input object. */
 export function makeSlug(nameField, slugField) {
@@ -81,9 +82,14 @@ export function makeSlug(nameField, slugField) {
   // so return back a wrapped version of the actual function that will be used
   // so that it can close over our arguments here.
   return function(value, zCtx) {
-    // If there's no slug field, add one.
+    // If there's no slug field, add one. A field that holds a list of names
+    // uses its first entry, which is the primary name.
     if (value[slugField] === undefined || value[slugField] === '') {
-      value[slugField] = slug(value[nameField]);
+      const name = Array.isArray(value[nameField])
+        ? value[nameField][0]
+        : value[nameField];
+
+      value[slugField] = slug(name);
     }
 
     // All good

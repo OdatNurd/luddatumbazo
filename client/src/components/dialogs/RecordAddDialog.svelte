@@ -30,11 +30,20 @@
   let name;
   let optionValue;
 
+  // True while the add request is in flight; holds the Apply button in its
+  // loading state and keeps the dialog from closing underneath it.
+  let saving = false;
+
+  // The error from the last failed add, or null.
+  let warning = null;
+
   // Ensure we only report a close once, no matter how the dialog goes away.
   let settled = false;
 
   $: if (open === true) {
     settled = false;
+    saving = false;
+    warning = null;
   }
 
   const settle = detail => {
@@ -58,29 +67,59 @@
   });
 
   // Abort the dialog, returning back that no operation took place.
-  const abort = () => settle({ result: null, dataType });
+  const abort = () => {
+    if (saving === true) {
+      return;
+    }
+
+    settle({ result: null, dataType });
+  };
 
   // Close only when the dialog itself hides (escape, overlay click); the
   // selects inside of us emit hide events of their own when their dropdowns
   // close, and those bubble up here without meaning the dialog is going away.
   const dismissed = event => {
     if (event.target === event.currentTarget) {
+      // A request in flight must not be interrupted; cancelling the hide keeps
+      // the dialog on screen and its controlled open prop in sync with us.
+      if (saving === true) {
+        event.preventDefault();
+        return;
+      }
+
       abort();
     }
   };
 
-  // Apply the data change, returning back the new record.
+  // Apply the data change, returning back the new record. The request holds
+  // the Apply button in its loading state until it settles; the dialog stays
+  // open on failure so that the error can be shown and the add retried.
   const apply = async () => {
+    if (saving === true) {
+      return;
+    }
+
     // Determine what action we need to carry out.
     const action = (dataType === 'collection')
       ? api.household.collection.add
-      : api.household.wishlist.contents.add
+      : api.household.wishlist.contents.add;
 
-    // Perform the actual insertion and gather the result back.
-    const result = await action($user.household, game, name, optionValue);
+    saving = true;
+    warning = null;
 
-    // Send the loaded data back to the caller, along with it's type.
-    settle({ dataType, result });
+    try {
+      // Perform the actual insertion and gather the result back.
+      const result = await action($user.household, game, name, optionValue);
+
+      // Send the loaded data back to the caller, along with its type.
+      settle({ dataType, result });
+    }
+    catch (error) {
+      warning = error.message ?? `unable to update the ${dataType}`;
+    }
+    finally {
+      saving = false;
+    }
   }
 
   // Keep a select's value up to date regardless of which change style the
@@ -99,6 +138,10 @@
 
 <wa-dialog {open} label={title} style="min-width: min(480px, 90vw)" on:wa-hide={dismissed}>
   <h3 slot="header">{title}</h3>
+
+  {#if warning !== null}
+    <wa-callout variant="warning">{warning}</wa-callout>
+  {/if}
 
   <div class="stack">
     <wa-select label="Name" value={name}
@@ -125,9 +168,11 @@
       <!-- wa-button renders a real <button> in its shadow DOM, so it is
            keyboard accessible and interactive; the compiler cannot know that. -->
       <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-      <wa-button appearance="outlined" variant="danger" on:click={abort}>Cancel</wa-button>
+      <wa-button appearance="outlined" variant="danger" on:click={abort}
+                 disabled={saving}>Cancel</wa-button>
       <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-      <wa-button appearance="filled" variant="brand" on:click={apply}>Apply</wa-button>
+      <wa-button appearance="filled" variant="brand" on:click={apply}
+                 loading={saving} disabled={saving}>Apply</wa-button>
     </div>
   </div>
 </wa-dialog>

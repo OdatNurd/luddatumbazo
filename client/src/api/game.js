@@ -46,11 +46,24 @@ async function fileList(game) {
 /******************************************************************************/
 
 
+/* Add a new game to the database from the data gathered by the game dialog.
+ * The back end builds the slug from the primary name, stores the names and
+ * metadata, and ingests the image URL into Cloudflare Images when that is
+ * configured. */
+async function gameAdd(game) {
+  return raw.put('/game/data/details/add', game);
+}
+
+
+/******************************************************************************/
+
+
 /* Export a composed object that collects the related API's together into a
  * single object based on the operations. */
 export const game = {
   details: gameDetails,
   list: gameList,
+  add: gameAdd,
   assets: {
     list: fileList
   }
