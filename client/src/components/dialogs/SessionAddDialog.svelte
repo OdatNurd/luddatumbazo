@@ -469,6 +469,11 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+
+    /* The scroll container is also the clip box; without padding the controls
+       sit flush with its edge and the focus ring is cut off along the left and
+       right sides. */
+    padding: 6px;
   }
 
   /* The two date fields share a row as equal columns so that they line up

@@ -121,7 +121,7 @@
   bind:this={combobox}
   {placeholder}
   label="Search"
-  size="small"
+  size="s"
   class="global-search wa-visually-hidden-label"
   with-clear
   on:input={liveSearch}

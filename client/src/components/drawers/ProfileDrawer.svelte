@@ -41,7 +41,7 @@
 <div class="theme-row">
   <wa-switch
     checked={$theme === 'dark'}
-    size="small"
+    size="s"
     on:change={setTheme}
   >{$theme === 'dark' ? 'Dark mode' : 'Light mode'}</wa-switch>
 </div>

@@ -288,15 +288,18 @@
       tag.setAttribute('size', element.size ?? 'm');
       tag.setAttribute('with-remove', '');
       tag.setAttribute('data-value', option.value);
+      // The tag clips its label to a narrow width; the title gives the full
+      // name back on hover without widening the control.
+      tag.setAttribute('title', option.label);
       tag.textContent = option.label;
 
+      // Items that would be created on save are called out with the tag's own
+      // warning color. A badge was too bulky for the tag's clipped width and
+      // pushed the name out of view entirely.
       const item = metaRows.find(entry => entry.type === type)
                            ?.options.find(entry => entry.name === option.value);
       if (item?.isNew === true) {
-        const badge = document.createElement('wa-badge');
-        badge.setAttribute('variant', 'warning');
-        badge.textContent = 'New';
-        tag.appendChild(badge);
+        tag.setAttribute('variant', 'warning');
       }
 
       return tag;
@@ -452,11 +455,11 @@
       </div>
     </wa-tab-panel>
 
-    <!-- Everything about how the game plays: player counts, ages and the
-         three flavors of play time. -->
+    <!-- Everything about how the game plays. The six controls are laid out
+         as two rows of three: who can play, then how long it takes. -->
     <wa-tab-panel name="play">
       <div class="stack">
-        <div class="stats">
+        <div class="stats three">
           <wa-input label="Min Players" type="number" value={form.minPlayers}
                     on:input={e => pick(e.target, v => form.minPlayers = v, true)}>
           </wa-input>
@@ -466,6 +469,9 @@
           <wa-input label="Min Age" type="number" value={form.minPlayerAge}
                     on:input={e => pick(e.target, v => form.minPlayerAge = v, true)}>
           </wa-input>
+        </div>
+
+        <div class="stats three">
           <wa-input label="Play Time" type="number" value={form.playTime}
                     on:input={e => pick(e.target, v => form.playTime = v, true)}>
           </wa-input>
@@ -482,17 +488,18 @@
     <wa-tab-panel name="details">
       <div class="stack">
         <div class="muted">
-          Items marked <wa-badge variant="warning">New</wa-badge> do not exist
-          in the database yet and would be created when the record is saved.
+          Type to filter. Items shown in yellow do not exist in the database yet
+          and would be created when the record is saved.
         </div>
 
         {#each metaRows as row (row.type)}
-          <wa-select multiple label={row.label}
-                     placeholder={row.label}
-                     value={row.selected}
-                     use:tagger={row.type}
-                     on:change={e => syncType(row.type, e.target.value ?? [])}
-                     on:wa-input={e => syncType(row.type, e.target.value ?? [])}>
+          <wa-combobox multiple label={row.label}
+                       placeholder={row.label}
+                       value={row.selected}
+                       use:tagger={row.type}
+                       on:change={e => syncType(row.type, e.target.value ?? [])}
+                       on:wa-input={e => syncType(row.type, e.target.value ?? [])}
+                       on:wa-remove={e => { const element = e.currentTarget; setTimeout(() => syncType(row.type, element.value ?? []), 0); }}>
             {#each row.options as option (option.name)}
               <wa-option value={option.name} label={option.name}>
                 {option.name}
@@ -501,7 +508,7 @@
                 {/if}
               </wa-option>
             {/each}
-          </wa-select>
+          </wa-combobox>
         {/each}
 
         {#if metaLoading}
@@ -571,6 +578,11 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+
+    /* The scroll container is also the clip box. Without any padding the
+       controls sit flush with its edge and the focus ring, which paints a few
+       pixels outside the control, is cut off along the left and right. */
+    padding: 6px;
   }
 
   .bgg-row {
@@ -604,6 +616,18 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
+  }
+
+  /* A fixed three across, so the paired rows of player and time controls stay
+     aligned with each other instead of reflowing to whatever fits. */
+  .stats.three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 560px) {
+    .stats.three {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   .edit-actions {

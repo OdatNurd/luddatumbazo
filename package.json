@@ -12,6 +12,7 @@
     "url": "https://odatnurd.net"
   },
   "scripts": {
+    "bgg:probe": "node ./tools/probeBgg.js",
     "check": "svelte-check",
     "client:build": "rollup -c rollup.client.js",
     "client:watch": "rollup -c rollup.client.js -w",
