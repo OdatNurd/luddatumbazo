@@ -22,7 +22,8 @@
     "local:seed-db": "cd service && npm run local:seed-db",
     "service:deploy": "wrangler deploy",
     "service:run": "wrangler dev --persist-to ~/.config/.wrangler/state/",
-    "test": "aegis test/aegis.config.js"
+    "test": "aegis test/aegis.config.js",
+    "deploy": "pnpm client:build && pnpm wrangler deploy"
   },
   "imports": {
     "#db/*": "./service/src/db/*.js",
