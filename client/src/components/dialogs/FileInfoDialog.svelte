@@ -41,7 +41,7 @@
   // relative (it has no leading slash), and the result is always an absolute
   // URL on whichever origin we happen to be running on.
   const fileLink = key => new URL(
-    `${process.env.GAME_API_ROOT_URI}/${key.replace(/^\/+/, '')}`,
+    `${process.env.GAME_API_ROOT_URI ?? ''}/${key.replace(/^\/+/, '')}`,
     window.location.origin
   ).href;
 

@@ -8,8 +8,10 @@
  *
  * The value is normally empty, which makes every call relative to wherever the
  * client itself was served from; that is what the cookie based authentication
- * wants, since the API and the UI are served from the same origin. */
-const API = `${process.env.GAME_API_ROOT_URI}/api/v1`;
+ * wants, since the API and the UI are served from the same origin. An unset
+ * value is treated as empty so a build without it cannot produce an
+ * `/undefined/api/v1` path. */
+const API = `${process.env.GAME_API_ROOT_URI ?? ''}/api/v1`;
 
 /* Set the base options which can be extended by any options that the caller
  * provides when invoking the API.

@@ -3,6 +3,10 @@
 .env
 .wrangler/
 .dev.vars
+
+# Client build environment
+.client.dev.vars
+
 node_modules/
 
 # The build output goes here

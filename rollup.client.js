@@ -1,11 +1,11 @@
 /******************************************************************************/
 
 
-// Annoyingly, wrangler doesn't use .env or .env.dev, which is too bad because
-// then dotenv would Just Work (tm); instead, we need to manually pull the file
-// to ensure that the right things get set in for the UI build.
+// The UI build settings live in .client.dev.vars at the repository root,
+// alongside the template (.client.dev.vars.template). Keeping them out of
+// .dev.vars separates the client build from the worker's local secrets.
 import { config } from 'dotenv';
-config({ path: ['.dev.vars'] });
+config({ path: ['.client.dev.vars'] });
 
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -65,13 +65,14 @@ const buildList = [
       sourcemap: true
     },
 
-    // Luxon has several circular dependency warnings that the author will not
-    // fix, so eat any warnings of this type specifically from that package.
+    // Luxon and Svelte both ship circular dependencies that their maintainers
+    // are not going to untangle; keep those vendor warnings out of the build
+    // output. A circular dependency involving our own code still reports.
     onwarn(warning, handler) {
-      if (warning.code === 'CIRCULAR_DEPENDENCY') {
-        if(warning.message.includes('node_modules/luxon/')) {
-          return;
-        }
+      if (warning.code === 'CIRCULAR_DEPENDENCY' &&
+          (warning.message.includes('node_modules/luxon/') ||
+           warning.message.includes('node_modules/svelte/'))) {
+        return;
       }
       handler(warning);
     },
@@ -122,8 +123,8 @@ const buildList = [
       {
         'preventAssignment': true,
         'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development'),
-        'process.env.GAME_API_ROOT_URI': JSON.stringify(process.env.GAME_API_ROOT_URI),
-        'process.env.GITHUB_ROOT_URI': JSON.stringify(process.env.GITHUB_ROOT_URI),
+        'process.env.GAME_API_ROOT_URI': JSON.stringify(process.env.GAME_API_ROOT_URI ?? ''),
+        'process.env.GITHUB_ROOT_URI': JSON.stringify(process.env.GITHUB_ROOT_URI ?? ''),
         'process.env.APP_VERSION': JSON.stringify(version),
         'process.env.COMMIT_HASH': JSON.stringify(commitHash),
       }),

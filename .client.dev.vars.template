@@ -1,4 +1,6 @@
-# Locally, we run in the development environment/
+# Copy this file to .client.dev.vars in the repository root.
+# Locally, we run in the development environment; set BUILD_TYPE=production
+# for a deployment build.
 BUILD_TYPE=development
 
 # This sets the Root URI that the UI code tries talk to when it needs to talk

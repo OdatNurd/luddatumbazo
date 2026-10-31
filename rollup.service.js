@@ -100,6 +100,16 @@ export default {
         return;
       }
     }
+
+    // Zod ships comments that look like Rollup annotations but are positioned
+    // where Rollup cannot interpret them; it strips them and the resulting
+    // warning is noise, not a build problem.
+    if (warning.code === 'INVALID_ANNOTATION' &&
+        (warning.id?.includes('node_modules/zod/') ||
+         warning.message.includes('node_modules/zod/'))) {
+      return;
+    }
+
     handler(warning);
   },
   plugins: [

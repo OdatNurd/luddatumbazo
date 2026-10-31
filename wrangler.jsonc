@@ -106,13 +106,13 @@
     // It specifies the full URI to the API that this worker runs at and it used
     // at build time to tell the UI code where it should talk to.
     //
-    // See client/.env.template for a template you can copy to a .env file to
-    // set this up.
+    // See .client.dev.vars.template for a template you can copy to
+    // .client.dev.vars at the repository root to set this up.
     //"GAME_API_ROOT_URI": "http://localhost:8000",
 
     // The repository that holds the deployed version of the code; used at UI
     // build time to generate the github links to commits that appear as part
-    // of a release. Also a UI build value only; see client/.env.template.
+    // of a release. Also a UI build value only; see .client.dev.vars.template.
     //"GITHUB_ROOT_URI": "https://github.com/OdatNurd/luddatumbazo",
 
   //----------------------------------------------------------------------------

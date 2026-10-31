@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { appOrigin, providerOrigin } from './oidc.js';
+import { appOrigin } from './oidc.js';
 
 
 /******************************************************************************/
@@ -31,11 +31,10 @@ import { appOrigin, providerOrigin } from './oidc.js';
  * This is shown when the identity provider says that the user is valid but not
  * permitted to use the application (or when the flow fails on the provider side
  * for some other reason). The page is given the description of the problem, and
- * a link that kills the provider session so that the user can log in as
- * somebody else. */
+ * a link that restarts the login with a prompt for credentials so that the user
+ * can log in as somebody else. */
 export function deniedURL(ctx, message) {
-  const switchUser = `${providerOrigin(ctx)}/logout` +
-                     `?rd=${encodeURIComponent(`${appOrigin(ctx)}/login`)}`;
+  const switchUser = `${appOrigin(ctx)}/login?prompt=login`;
 
   const params = new URLSearchParams({
     message: message ?? 'You do not have permission to access this application.',
