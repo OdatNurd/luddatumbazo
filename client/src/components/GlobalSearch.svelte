@@ -1,5 +1,7 @@
 <script>
-  import { search } from '$stores/search';
+  import { onDestroy } from 'svelte';
+
+  import { search, searchRevision } from '$stores/search';
   import { navigate } from '$lib/router.js';
 
   // ---------------------------------------------------------------------------
@@ -77,6 +79,19 @@
   $: if (combobox !== null) {
     combobox.dataSource = dataSource;
   }
+
+  // A local mutation invalidates the shared index. The combobox also skips a
+  // request when the query has not changed since the last one, so force it to
+  // ask the data source again rather than leaving the pre-mutation options in
+  // place. A closed control may request an empty query, which only warms the
+  // rebuilt index and does not change anything visible.
+  const stopSearchRevision = searchRevision.subscribe(() => {
+    if (combobox !== null) {
+      void combobox.reload();
+    }
+  });
+
+  onDestroy(stopSearchRevision);
 
   // Some soft keyboards (Samsung Keyboard in particular) wrap ordinary Latin
   // typing in an IME composition session that stays open until the word is

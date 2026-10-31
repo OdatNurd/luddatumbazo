@@ -1,5 +1,6 @@
 <script>
   import { api } from '$api';
+  import { invalidateSearch } from '$stores/search';
 
   import SlugList from '$components/lists/SlugList.svelte';
   import IconButton from '$components/IconButton.svelte';
@@ -14,12 +15,13 @@
   // The game list, so that a successful add can refresh it in place.
   let gameList = null;
 
-  // Close the dialog and, when a game was added, reload the list so the new
-  // record is visible without a full page reload.
+  // Close the dialog and, when a game was added, reload the list and discard
+  // the search index so the new record is visible without a full page reload.
   const closeAddDialog = ({ result }) => {
     addDialogOpen = false;
 
     if (result !== null && result !== undefined) {
+      invalidateSearch();
       gameList?.refresh();
     }
   };

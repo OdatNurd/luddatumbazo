@@ -1,6 +1,8 @@
 /******************************************************************************/
 
 
+import { writable } from 'svelte/store';
+
 import { api } from '$api';
 
 
@@ -15,8 +17,9 @@ import { api } from '$api';
  * toward server side pagination.
  *
  * The datasets are small and are already fetched in full by their respective
- * grid pages, so the index simply gathers them once on first use, caches them,
- * and answers queries by filtering in memory. */ 
+ * grid pages, so the index gathers them on first use, caches them, and answers
+ * queries by filtering in memory. A successful local mutation invalidates the
+ * cache so the next search sees the new record. */
 
 
 /******************************************************************************/
@@ -46,6 +49,26 @@ const metaTypes = ['category', 'mechanic', 'designer', 'artist', 'publisher'];
  * fetches. */
 let index = null;
 let loading = null;
+
+/* Incremented whenever the cached index is discarded. An in-flight build from
+ * before the invalidation must not put its now-stale result back into the
+ * cache. */
+let generation = 0;
+
+/* A notification for consumers that hold their own query/options cache (the
+ * combobox does), so they can force a fresh request after an invalidation. */
+export const searchRevision = writable(0);
+
+
+/* Discard the cached index after a local mutation. The next search rebuilds
+ * it; the revision update also tells the search control to re-run its data
+ * source instead of reusing the options for the last query. */
+export function invalidateSearch() {
+  generation += 1;
+  index = null;
+  loading = null;
+  searchRevision.update(value => value + 1);
+}
 
 
 /******************************************************************************/
@@ -78,7 +101,23 @@ async function ensureIndex() {
     return index;
   }
 
-  loading ??= buildIndex().then(built => (index = built));
+  // A build in progress for a previous generation is allowed to settle for
+  // its callers, but it must not repopulate the cache after an invalidation.
+  const requested = generation;
+
+  loading ??= buildIndex()
+    .then(built => {
+      if (requested === generation) {
+        index = built;
+      }
+      return built;
+    })
+    .finally(() => {
+      if (requested === generation) {
+        loading = null;
+      }
+    });
+
   return await loading;
 }
 

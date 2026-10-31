@@ -1,5 +1,6 @@
 <script>
   import { api } from '$api';
+  import { invalidateSearch } from '$stores/search';
 
   import SlugList from '$components/lists/SlugList.svelte';
   import IconButton from '$components/IconButton.svelte';
@@ -21,12 +22,13 @@
   // The state of the add record dialog.
   let addDialogOpen = false;
 
-  // When the dialog completes with a new record, refresh the list so that the
-  // record shows up in it.
+  // When the dialog completes with a new record, refresh the list and discard
+  // the search index so that the record shows up everywhere.
   const added = detail => {
     addDialogOpen = false;
 
     if (detail?.result != null) {
+      invalidateSearch();
       list?.refresh();
     }
   };
