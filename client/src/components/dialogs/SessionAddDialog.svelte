@@ -498,7 +498,7 @@
   .date-note,
   .edit-note {
     font-size: var(--wa-font-size-s);
-    color: var(--wa-color-text-secondary);
+    color: var(--wa-color-text-quiet);
   }
 
   /* The chosen game's thumbnail, bottom aligned with the game picker's
@@ -519,7 +519,7 @@
     height: 64px;
     object-fit: contain;
     border: 1px solid var(--wa-color-surface-border);
-    border-radius: var(--wa-border-radius-small);
+    border-radius: var(--wa-border-radius-s);
   }
 
   .stats {

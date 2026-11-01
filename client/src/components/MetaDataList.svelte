@@ -64,7 +64,7 @@
 
   .meta-title {
     font-weight: var(--wa-font-weight-semibold);
-    color: var(--wa-color-text-header);
+    color: var(--wa-color-text-normal);
   }
 
   .meta-items {
@@ -75,7 +75,7 @@
   }
 
   .meta-items a.meta-highlight {
-    color: var(--wa-color-brand-600);
+    color: var(--wa-color-text-link);
     font-weight: var(--wa-font-weight-semibold);
   }
 </style>

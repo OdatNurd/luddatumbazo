@@ -690,7 +690,7 @@
   .thumb {
     padding: 0;
     border: 1px solid var(--wa-color-surface-border);
-    border-radius: var(--wa-border-radius-small);
+    border-radius: var(--wa-border-radius-s);
     background: none;
     cursor: pointer;
     line-height: 0;
@@ -700,7 +700,7 @@
     width: 64px;
     height: 64px;
     object-fit: contain;
-    border-radius: var(--wa-border-radius-small);
+    border-radius: var(--wa-border-radius-s);
   }
 
   .stats {

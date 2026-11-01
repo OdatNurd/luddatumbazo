@@ -58,14 +58,14 @@
     display: flex;
     align-items: center;
     padding: 8px 12px;
-    border-radius: var(--wa-border-radius-medium);
-    color: var(--wa-color-text-body);
+    border-radius: var(--wa-border-radius-m);
+    color: var(--wa-color-text-normal);
     text-decoration: none;
     transition: background var(--wa-transition-normal);
   }
 
   .nav-link:hover {
-    background: var(--wa-color-surface-background-hover);
+    background: var(--wa-color-overlay-inline);
     text-decoration: none;
   }
 

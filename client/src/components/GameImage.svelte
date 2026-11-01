@@ -35,7 +35,7 @@
     vertical-align: middle;
     object-fit: contain;
     max-width: 100%;
-    border-radius: var(--wa-border-radius-small);
+    border-radius: var(--wa-border-radius-s);
   }
 
   img.icon {

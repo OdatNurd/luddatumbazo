@@ -54,6 +54,6 @@
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    color: var(--wa-color-text-body);
+    color: var(--wa-color-text-normal);
   }
 </style>

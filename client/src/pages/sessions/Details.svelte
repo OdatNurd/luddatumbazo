@@ -90,7 +90,7 @@
       align: 'center',
       sortable: false,
       formatter: (value) => value
-        ? cells.icon('flag-fill', { color: 'var(--wa-color-brand-600)', title: 'Starting player' })
+        ? cells.icon('flag-fill', { color: 'var(--wa-color-text-link)', title: 'Starting player' })
         : ''
     },
     {
@@ -101,7 +101,7 @@
       align: 'center',
       sortable: false,
       formatter: (value) => value
-        ? cells.icon('trophy-fill', { color: 'var(--wa-color-warning-600)', title: 'Winner of the session' })
+        ? cells.icon('trophy-fill', { color: 'var(--wa-color-warning-on-quiet)', title: 'Winner of the session' })
         : ''
     },
     {

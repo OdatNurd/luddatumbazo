@@ -222,11 +222,11 @@
       <div class="game-header-top">
         <div class="game-title">
         {#if gameData.owned !== undefined}
-          <Icon name="star-fill" color="var(--wa-color-warning-600)"></Icon>
+          <Icon name="star-fill" color="var(--wa-color-warning-on-quiet)"></Icon>
           {gameData.owned.name.name} ({gameData.publishedIn})
         {:else}
           {#if gameData.wishlist !== undefined}
-            <Icon name="heart-fill" color="var(--wa-color-danger-600)"></Icon>
+            <Icon name="heart-fill" color="var(--wa-color-danger-on-quiet)"></Icon>
             {gameData.wishlist.name.name} ({gameData.publishedIn})
           {:else}
             <Icon name="star"></Icon>
@@ -446,8 +446,8 @@
     align-items: center;
     gap: 8px;
     font-family: var(--wa-font-family-heading);
-    font-size: var(--wa-font-size-x-large);
-    color: var(--wa-color-text-header);
+    font-size: var(--wa-font-size-xl);
+    color: var(--wa-color-text-normal);
   }
 
   .stat-row {
@@ -466,13 +466,13 @@
     font-size: var(--wa-font-size-s);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--wa-color-text-secondary);
+    color: var(--wa-color-text-quiet);
   }
 
   .stat-value {
-    font-size: var(--wa-font-size-large);
+    font-size: var(--wa-font-size-l);
     font-weight: var(--wa-font-weight-semibold);
-    color: var(--wa-color-text-header);
+    color: var(--wa-color-text-normal);
   }
 
   .game-image {

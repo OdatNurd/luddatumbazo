@@ -106,7 +106,7 @@ export function image(imagePath, row) {
       src: imagePath,
       alt: 'thumbnail',
       class: 'cell-image',
-      style: 'display:block;margin:0 auto;width:32px;height:32px;object-fit:contain;border-radius:var(--wa-border-radius-small);'
+      style: 'display:block;margin:0 auto;width:32px;height:32px;object-fit:contain;border-radius:var(--wa-border-radius-s);'
     });
   }
 
@@ -122,7 +122,7 @@ export function image(imagePath, row) {
       src: imagePath,
       alt: row.name ?? 'thumbnail',
       class: 'cell-image',
-      style: 'display:block;margin:0 auto;width:32px;height:32px;object-fit:contain;border-radius:var(--wa-border-radius-small);'
+      style: 'display:block;margin:0 auto;width:32px;height:32px;object-fit:contain;border-radius:var(--wa-border-radius-s);'
     });
   }
 

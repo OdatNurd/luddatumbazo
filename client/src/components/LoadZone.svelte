@@ -51,6 +51,6 @@
   }
 
   .loadzone-error {
-    color: var(--wa-color-danger-700);
+    color: var(--wa-color-danger-on-quiet);
   }
 </style>

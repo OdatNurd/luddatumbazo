@@ -73,7 +73,7 @@
 
   .eyebrow {
     margin: 0;
-    color: var(--wa-color-brand-600);
+    color: var(--wa-color-text-link);
     font-size: var(--wa-font-size-s);
     font-weight: 700;
     letter-spacing: 0.1em;
@@ -83,7 +83,7 @@
   .home-hero p {
     max-width: 68ch;
     margin: 0;
-    color: var(--wa-color-text-body);
+    color: var(--wa-color-text-normal);
     font-size: var(--wa-font-size-l, 1.125rem);
     line-height: 1.6;
   }
@@ -101,15 +101,15 @@
     justify-content: center;
     padding: 10px 16px;
     border: 1px solid var(--wa-color-surface-border);
-    border-radius: var(--wa-border-radius-medium, 10px);
+    border-radius: var(--wa-border-radius-m);
     background: var(--wa-color-surface-raised);
-    color: var(--wa-color-text-body);
+    color: var(--wa-color-text-normal);
     font-weight: 600;
     line-height: 1.2;
   }
 
   .button:hover {
-    border-color: var(--wa-color-brand-600);
+    border-color: var(--wa-color-brand-border-loud);
     text-decoration: none;
   }
 
@@ -132,7 +132,7 @@
     gap: 24px;
     padding: clamp(18px, 3vw, 28px);
     border: 1px solid var(--wa-color-surface-border);
-    border-radius: var(--wa-border-radius-large, 16px);
+    border-radius: var(--wa-border-radius-l);
     background: var(--wa-color-surface-raised);
   }
 
@@ -152,7 +152,7 @@
 
   .bgg-copy .source-credit {
     margin: 0;
-    color: var(--wa-color-text-secondary);
+    color: var(--wa-color-text-quiet);
     font-size: var(--wa-font-size-s);
   }
 

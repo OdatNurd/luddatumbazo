@@ -334,14 +334,14 @@
     display: flex;
     gap: 6px;
     font-size: var(--wa-font-size-s);
-    color: var(--wa-color-text-secondary);
+    color: var(--wa-color-text-quiet);
   }
 
   /* The slotted footer inherits wa-page's roomy 3xl padding by default; the
      footer is just one line of text, so it gets a slim bar's padding instead
      (roughly a quarter of the stock height). */
   footer {
-    color: var(--wa-color-text-secondary);
+    color: var(--wa-color-text-quiet);
     font-size: var(--wa-font-size-s);
     padding: 6px var(--wa-space-3xl);
     align-items: center;

@@ -29,7 +29,7 @@ body {
 
 .notice-header h1 {
   font-family: var(--wa-font-family-heading);
-  color: var(--wa-color-text-header);
+  color: var(--wa-color-text-normal);
   font-size: 1.25rem;
   margin: 0;
 }
@@ -40,7 +40,7 @@ body {
   padding: 6px 24px;
   font-family: var(--wa-font-family-body);
   font-size: var(--wa-font-size-s);
-  color: var(--wa-color-text-secondary);
+  color: var(--wa-color-text-quiet);
 }
 
 /* The centered card that holds the actual message. */
@@ -65,18 +65,18 @@ body {
 
 .notice-card h2 {
   font-family: var(--wa-font-family-heading);
-  color: var(--wa-color-text-header);
+  color: var(--wa-color-text-normal);
   margin: 0 0 12px;
 }
 
 /* The access denied page marks its heading in the danger colour. */
 .notice-card.danger h2 {
-  color: var(--wa-color-danger-600);
+  color: var(--wa-color-danger-on-quiet);
 }
 
 .notice-card p {
   font-family: var(--wa-font-family-body);
-  color: var(--wa-color-text-secondary);
+  color: var(--wa-color-text-quiet);
   margin: 0 0 24px;
   overflow-wrap: anywhere;
 }
@@ -100,20 +100,20 @@ body {
 }
 
 .notice-actions a.primary {
-  background: var(--wa-color-brand-600);
-  color: #fff;
+  background: var(--wa-color-brand-fill-loud);
+  color: var(--wa-color-brand-on-loud);
 }
 
 .notice-actions a.primary:hover {
-  background: var(--wa-color-brand-700);
+  background: color-mix(in oklab, var(--wa-color-brand-fill-loud), var(--wa-color-mix-hover));
 }
 
 .notice-actions a.secondary {
   background: var(--wa-color-surface-lowered);
-  color: var(--wa-color-text-body);
+  color: var(--wa-color-text-normal);
   border: 1px solid var(--wa-color-surface-border);
 }
 
 .notice-actions a.secondary:hover {
-  background: var(--wa-color-surface-sunken);
+  background: color-mix(in oklab, var(--wa-color-surface-lowered), var(--wa-color-mix-hover));
 }

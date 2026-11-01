@@ -12,17 +12,17 @@ body {
   margin: 0;
   font-family: var(--wa-font-family-body);
   background: var(--wa-color-surface-default);
-  color: var(--wa-color-text-body);
+  color: var(--wa-color-text-normal);
 }
 
 h1, h2, h3, h4 {
   font-family: var(--wa-font-family-heading);
-  color: var(--wa-color-text-header);
+  color: var(--wa-color-text-normal);
   margin: 0 0 8px 0;
 }
 
 a {
-  color: var(--wa-color-brand-600);
+  color: var(--wa-color-text-link);
   text-decoration: none;
 }
 
@@ -268,14 +268,14 @@ wa-drawer::part(dialog) {
 }
 
 .muted {
-  color: var(--wa-color-text-secondary);
+  color: var(--wa-color-text-quiet);
 }
 
 .page-subtitle {
   font-family: var(--wa-font-family-body);
   font-size: var(--wa-font-size-s);
-  color: var(--wa-color-text-secondary);
-  font-weight: var(--wa-font-weight-regular);
+  color: var(--wa-color-text-quiet);
+  font-weight: var(--wa-font-weight-normal);
   display: flex;
   flex-direction: row;
   gap: 16px;

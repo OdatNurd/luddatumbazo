@@ -70,7 +70,7 @@
       align: 'center',
       sortable: false,
       formatter: (value) => {
-        const glyph = cells.icon(server.gameTypeIcon(value), { color: 'var(--wa-color-brand-600)' });
+        const glyph = cells.icon(server.gameTypeIcon(value), { color: 'var(--wa-color-text-link)' });
         glyph.setAttribute('title', server.gameTypeName(value));
         return glyph;
       }
@@ -83,7 +83,7 @@
       align: 'center',
       sortable: false,
       formatter: (value) => value
-        ? (() => { const glyph = cells.icon('mortarboard-fill', { color: 'var(--wa-color-warning-600)' }); glyph.setAttribute('title', 'Learning game'); return glyph; })()
+        ? (() => { const glyph = cells.icon('mortarboard-fill', { color: 'var(--wa-color-warning-on-quiet)' }); glyph.setAttribute('title', 'Learning game'); return glyph; })()
         : ''
     },
     {
