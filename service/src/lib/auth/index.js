@@ -111,6 +111,7 @@ export {
   clientAuth,
   appOrigin,
   providerOrigin,
+  switchUserURL,
   generatePKCE,
   authRedirectURL,
   exchangeCode,

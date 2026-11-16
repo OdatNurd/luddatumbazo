@@ -1,6 +1,6 @@
 import { Collection, $check, $ } from "@axel669/aegis";
 
-import { clientAuth } from '#lib/auth/oidc';
+import { clientAuth, authRedirectURL, switchUserURL } from '#lib/auth/oidc';
 
 
 /******************************************************************************/
@@ -29,6 +29,50 @@ export default Collection`OIDC Client Authentication`({
     await $check`should form urlencode the credentials before base64 encoding them`
       .value(clientAuth({ clientId: 'id with:special', clientSecret: 's:ecret/1' }))
       .eq($, `Basic ${btoa('id%20with%3Aspecial:s%3Aecret%2F1')}`);
+  },
+
+  "authRedirectURL": async () => {
+    const ctx = {
+      env: {
+        OIDC_AUTH_URL: 'https://auth.example.com/api/oidc/authorization',
+        OIDC_TOKEN_URL: 'https://auth.example.com/api/oidc/token',
+        OIDC_USERINFO_URL: 'https://auth.example.com/api/oidc/userinfo',
+        OIDC_CLIENT_ID: 'luddatumbazo',
+        OIDC_SCOPES: 'openid profile email groups'
+      },
+      req: {
+        url: 'https://app.example.com/login',
+        header: () => undefined
+      }
+    };
+
+    const normal = new URL(authRedirectURL(ctx, 'challenge', 'state'));
+
+    await $check`should not request the provider login prompt`
+      .value(normal.searchParams.has('prompt'))
+      .eq($, false);
+
+    await $check`should not require reauthentication`
+      .value(normal.searchParams.has('max_age'))
+      .eq($, false);
+  },
+
+  "switchUserURL": async () => {
+    const ctx = {
+      env: {
+        OIDC_AUTH_URL: 'https://auth.example.com/api/oidc/authorization'
+      }
+    };
+    const authURL = 'https://auth.example.com/api/oidc/authorization?state=abc';
+    const logout = new URL(switchUserURL(ctx, authURL));
+
+    await $check`should send the browser to the provider logout endpoint`
+      .value(logout.origin + logout.pathname)
+      .eq($, 'https://auth.example.com/logout');
+
+    await $check`should return to the authorization URL after logout`
+      .value(logout.searchParams.get('rd'))
+      .eq($, authURL);
   },
 });
 

@@ -151,6 +151,23 @@ export function providerOrigin(ctx) {
 /******************************************************************************/
 
 
+/* Build the provider URL that clears the current SSO session and then starts
+ * the authorization request again.
+ *
+ * Authelia only permits a logout redirect to a target in a configured session
+ * cookie domain; the application is on a different domain, so redirecting
+ * straight back to the app is rejected and lands on the provider's portal
+ * instead. The authorization URL is on the provider's own origin, so it is a
+ * safe logout target; it also carries the PKCE state and, after the session is
+ * gone, prompts for a fresh account. */
+export function switchUserURL(ctx, authURL) {
+  return `${providerOrigin(ctx)}/logout?rd=${encodeURIComponent(authURL)}`;
+}
+
+
+/******************************************************************************/
+
+
 /* Generates a Proof Key for Code Exchange (PKCE) challenge pair.
  *
  * This secures the OIDC authorization flow by ensuring the client exchanging
@@ -187,10 +204,14 @@ export async function generatePKCE() {
 /* Build the full provider authorization URL that the browser is redirected to
  * in order to start a login.
  *
- * The provided PKCE challenge and CSRF state are embedded into it; if the
- * caller wants to force the provider to ask for credentials again (e.g. after
- * a failed login for a user without access), prompt may be set to 'login'. */
-export function authRedirectURL(ctx, challenge, state, prompt) {
+ * The provided PKCE challenge and CSRF state are embedded into it. This is a
+ * normal authorization request; the application deliberately does not forward
+ * prompt=login or max_age=0. Authelia treats those as a consent/reauthentication
+ * request, which asks for the current identity again and can fail after a
+ * provider-side logout. Switching users instead clears the provider session
+ * before starting this request (see switchUserURL), so the provider has no
+ * session to reuse and will show its normal first-factor login. */
+export function authRedirectURL(ctx, challenge, state) {
   const config = oidcConfig(ctx);
 
   const authUrl = new URL(config.authUrl);
@@ -201,10 +222,6 @@ export function authRedirectURL(ctx, challenge, state, prompt) {
   authUrl.searchParams.set('code_challenge', challenge);
   authUrl.searchParams.set('code_challenge_method', 'S256');
   authUrl.searchParams.set('state', state);
-
-  if (prompt === 'login') {
-    authUrl.searchParams.set('prompt', 'login');
-  }
 
   return authUrl.toString();
 }
