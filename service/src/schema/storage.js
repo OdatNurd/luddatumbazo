@@ -15,11 +15,12 @@ const StorageNameSchema = z.string().trim().min(1).max(80);
 /******************************************************************************/
 
 
-/* Looking up the contents of a storage location requires the household and the
- * numeric location identifier. */
+/* Looking up the contents of a storage location requires the household and a
+ * location identifier. The location value is either a numeric ID or the stored
+ * slug used in links. */
 export const StorageContentsIDSchema = z.object({
   householdIdOrSlug: z.string().transform(numberOrString),
-  storageId: z.string().transform(numberOrString)
+  storageId: z.string()
 });
 
 

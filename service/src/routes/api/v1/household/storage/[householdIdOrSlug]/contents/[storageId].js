@@ -30,10 +30,6 @@ export const $get = routeHandler(
       return access.response;
     }
 
-    if (typeof storageId !== 'number') {
-      return fail(ctx, `unable to locate storage location ${storageId}`, 404);
-    }
-
     const location = await dbStorageDetails(ctx, access.household.id, storageId);
     if (location === null) {
       return fail(ctx, `unable to locate storage location ${storageId}`, 404);

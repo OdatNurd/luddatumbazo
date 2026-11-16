@@ -344,9 +344,11 @@ Table StorageLocation {
   householdId INTEGER [not null, ref: > Household.id]
   parentId INTEGER [ref: > StorageLocation.id]
   name TEXT [not null, note: 'case-insensitive; unique among siblings']
+  slug TEXT [not null, note: 'stable slug created when the location is created']
 
   indexes {
     (householdId, parentId, name) [name: 'idx_storage_location_sibling_name']
+    (householdId, slug) [name: 'idx_storage_location_slug', unique]
     householdId [name: 'idx_storage_location_household']
     parentId [name: 'idx_storage_location_parent']
   }

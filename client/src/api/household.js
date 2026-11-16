@@ -134,10 +134,11 @@ async function getStorageLocations(household) {
 
 
 /* Fetch the games stored in a location, either directly or in its whole
- * subtree. */
-async function getStorageContents(household, storageId, includeChildren) {
+ * subtree. The location can be identified by either its numeric ID or its
+ * stored slug. */
+async function getStorageContents(household, storageIdOrSlug, includeChildren) {
   return raw.get(
-    `/household/storage/${slug(household)}/contents/${storageId}`,
+    `/household/storage/${slug(household)}/contents/${encodeURIComponent(storageIdOrSlug)}`,
     { includeChildren: includeChildren ? 1 : 0 }
   );
 }

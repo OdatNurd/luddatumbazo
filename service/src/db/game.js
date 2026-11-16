@@ -332,12 +332,12 @@ export async function dbGameHouseholdSpecifics(ctx, fetchOwnership, gameId, hous
         'name_': 'name',
       },
       sql: `
-        WITH RECURSIVE storage_paths(id, path) AS (
-          SELECT id, name
+        WITH RECURSIVE storage_paths(id, path, slug) AS (
+          SELECT id, name, slug
             FROM StorageLocation
            WHERE householdId = ?2 AND parentId IS NULL
           UNION ALL
-          SELECT child.id, storage_paths.path || ' / ' || child.name
+          SELECT child.id, storage_paths.path || ' / ' || child.name, child.slug
             FROM StorageLocation AS child
             JOIN storage_paths ON child.parentId = storage_paths.id
            WHERE child.householdId = ?2
@@ -346,7 +346,7 @@ export async function dbGameHouseholdSpecifics(ctx, fetchOwnership, gameId, hous
                C.id as pub_id, C.bggId as pub_bggId,
                C.slug as pub_slug, C.name as pub_name, C.metaType as pub_metaType,
                A.storageLocationId as storage_id, A.isOnShelf as isOnShelf,
-               S.path as storage_path
+               S.path as storage_path, S.slug as storage_slug
           FROM GameOwners as A,
                GameName as B,
                GameMetadata as C

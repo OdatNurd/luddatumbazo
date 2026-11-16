@@ -16,9 +16,9 @@
 
   // ---------------------------------------------------------------------------
 
-  // The route identifies a location by its numeric ID; unlike wishlists,
-  // storage locations do not have stable slugs.
-  const storageId = Number(routeInfo.params?.storageId);
+  // The route accepts either a numeric ID or the stored slug returned by the
+  // storage list; keep the raw value so links made with either keep working.
+  const storageKey = routeInfo.params?.storageId;
 
   // The page defaults to showing a location and everything below it. Turning
   // this off leaves just the games assigned directly to this cubby/shelf.
@@ -43,10 +43,12 @@
     try {
       const data = await api.household.storage.list($user.household);
       locations = data.locations ?? [];
-      location = locations.find(entry => entry.id === storageId) ?? null;
+      location = locations.find(entry => entry.slug === storageKey)
+        ?? locations.find(entry => String(entry.id) === storageKey)
+        ?? null;
 
       if (location === null) {
-        locationError = `Unable to locate storage location ${storageId}.`;
+        locationError = `Unable to locate storage location ${storageKey}.`;
       }
     }
     catch (failure) {
@@ -59,13 +61,14 @@
 
   onMount(loadLocation);
 
-  $: hasChildren = locations.some(entry => entry.parentId === storageId);
+  $: hasChildren = location !== null &&
+    locations.some(entry => entry.parentId === location.id);
 
   const loader = async () => api.household.storage.contents(
-    $user.household, storageId, includeChildren
+    $user.household, storageKey, includeChildren
   );
 
-  $: loaderKey = `${storageId}:${includeChildren ? 'subtree' : 'direct'}`;
+  $: loaderKey = `${storageKey}:${includeChildren ? 'subtree' : 'direct'}`;
 
   const setIncludeChildren = event => includeChildren = event.target.checked;
 

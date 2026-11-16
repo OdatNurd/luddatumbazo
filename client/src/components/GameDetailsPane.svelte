@@ -304,7 +304,7 @@
           <div class="storage-copy">
             <span class="storage-label">Storage</span>
             {#if gameData.owned.storage !== null && gameData.owned.storage !== undefined}
-              <a class="storage-path" href={`#/storage/${gameData.owned.storage.id}`}
+              <a class="storage-path" href={`#/storage/${gameData.owned.storage.slug ?? gameData.owned.storage.id}`}
                  title="View the games stored in this location">{gameData.owned.storage.path}</a>
               <wa-badge variant={gameData.owned.isOnShelf ? 'success' : 'warning'}>
                 {gameData.owned.isOnShelf ? 'On shelf' : 'Off shelf'}

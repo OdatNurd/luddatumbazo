@@ -154,9 +154,11 @@ CREATE TABLE StorageLocation (
     householdId INTEGER NOT NULL REFERENCES Household(id) ON DELETE CASCADE,
     parentId INTEGER REFERENCES StorageLocation(id) ON DELETE RESTRICT,
 
-    name TEXT NOT NULL COLLATE NOCASE
+    name TEXT NOT NULL COLLATE NOCASE,
+    slug TEXT NOT NULL
 );
 CREATE UNIQUE INDEX idx_storage_location_sibling_name ON StorageLocation(householdId, COALESCE(parentId, 0), name);
+CREATE UNIQUE INDEX idx_storage_location_slug ON StorageLocation(householdId, slug);
 CREATE INDEX idx_storage_location_household ON StorageLocation(householdId);
 CREATE INDEX idx_storage_location_parent ON StorageLocation(parentId);
 

@@ -1,6 +1,8 @@
 /******************************************************************************/
 
 
+import slugify from 'slug';
+
 import { getDBResult } from '#db/common';
 import { imgMapAssetListURLs } from '#lib/image';
 
@@ -10,9 +12,13 @@ import { imgMapAssetListURLs } from '#lib/image';
 
 /* Build a display tree from the flat storage rows returned by the database.
  *
- * Each row is annotated with its path, depth and total game count (including
- * games assigned anywhere below it). The API returns a flat list so the client
- * can render a tree without needing a recursive component. */
+ * Each row is annotated with its path, depth, total game count (including games
+ * assigned anywhere below it) and its stored slug. The API returns a flat list
+ * so the client can render a tree without needing a recursive component.
+ *
+ * The slug is written once when the location is created and never changes on
+ * rename, so an existing link continues to identify the same location even if
+ * its display name changes. */
 function buildStorageTree(rows) {
   const byId = new Map(rows.map(row => [
     row.id,
@@ -36,7 +42,7 @@ function buildStorageTree(rows) {
   }
 
   const sortNodes = nodes => {
-    nodes.sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' }));
+    nodes.sort((left, right) => left.id - right.id);
     nodes.forEach(node => sortNodes(node.children));
   };
 
@@ -77,6 +83,7 @@ function buildStorageTree(rows) {
       householdId: row.householdId,
       parentId: row.parentId,
       name: row.name,
+      slug: row.slug,
       gameCount: row.gameCount,
       totalGameCount: totalFor(row),
       depth,
@@ -100,7 +107,7 @@ function buildStorageTree(rows) {
  * but currently marked off shelf. */
 export async function dbStorageList(ctx, householdId) {
   const locationsLookup = await ctx.env.DB.prepare(`
-    SELECT S.id, S.householdId, S.parentId, S.name,
+    SELECT S.id, S.householdId, S.parentId, S.name, S.slug,
            COUNT(G.id) AS gameCount
       FROM StorageLocation AS S
       LEFT JOIN GameOwners AS G
@@ -108,7 +115,7 @@ export async function dbStorageList(ctx, householdId) {
        AND G.householdId = S.householdId
      WHERE S.householdId = ?1
      GROUP BY S.id
-     ORDER BY S.name COLLATE NOCASE
+     ORDER BY S.id
   `).bind(householdId).all();
 
   const summaryLookup = await ctx.env.DB.prepare(`
@@ -200,16 +207,76 @@ export async function dbStorageContents(ctx, householdId, storageId, includeChil
 /******************************************************************************/
 
 
-/* Return a single storage location, scoped to its household. */
-export async function dbStorageDetails(ctx, householdId, storageId) {
-  const lookup = await ctx.env.DB.prepare(`
-    SELECT id, householdId, parentId, name
-      FROM StorageLocation
-     WHERE id = ?1
-       AND householdId = ?2
-  `).bind(storageId, householdId).all();
+/* Return a single storage location, scoped to its household. The location can
+ * be addressed by numeric ID or by its stored slug. */
+export async function dbStorageDetails(ctx, householdId, storageIdOrSlug) {
+  const numeric = (typeof storageIdOrSlug === 'number')
+    ? storageIdOrSlug
+    : (/^\d+$/.test(String(storageIdOrSlug)) ? Number(storageIdOrSlug) : null);
 
-  return getDBResult('dbStorageDetails', 'find_location', lookup)[0] ?? null;
+  if (numeric !== null) {
+    const lookup = await ctx.env.DB.prepare(`
+      SELECT id, householdId, parentId, name, slug
+        FROM StorageLocation
+       WHERE id = ?1
+         AND householdId = ?2
+    `).bind(numeric, householdId).all();
+
+    return getDBResult('dbStorageDetails', 'find_location', lookup)[0] ?? null;
+  }
+
+  const lookup = await ctx.env.DB.prepare(`
+    SELECT id, householdId, parentId, name, slug
+      FROM StorageLocation
+     WHERE householdId = ?1
+       AND slug = ?2
+  `).bind(householdId, String(storageIdOrSlug)).all();
+
+  return getDBResult('dbStorageDetails', 'find_location_by_slug', lookup)[0] ?? null;
+}
+
+
+/******************************************************************************/
+
+
+/* Build the immutable slug for a new location. The slug is based on the parent's
+ * stored slug plus this location's name, which keeps sibling paths distinct. A
+ * purely numeric result is prefixed because a numeric route value is interpreted
+ * as a location ID rather than a slug. */
+function storageSlugBase(parent, name) {
+  const leaf = slugify(name) || 'storage';
+  const base = (parent === null) ? leaf : `${parent.slug}-${leaf}`;
+
+  return (/^\d+$/.test(base) ? `storage-${base}` : base);
+}
+
+
+/******************************************************************************/
+
+
+/* Find a slug that is not already used by another location in the household.
+ * Sibling names are unique, but different names can normalize to the same slug,
+ * so append a counter when necessary. */
+async function uniqueStorageSlug(ctx, householdId, base) {
+  let candidate = base;
+  let counter = 1;
+
+  while (true) {
+    const lookup = await ctx.env.DB.prepare(`
+      SELECT id
+        FROM StorageLocation
+       WHERE householdId = ?1
+         AND slug = ?2
+       LIMIT 1
+    `).bind(householdId, candidate).all();
+
+    if (getDBResult('uniqueStorageSlug', 'find_slug', lookup).length === 0) {
+      return candidate;
+    }
+
+    counter += 1;
+    candidate = `${base}-${counter}`;
+  }
 }
 
 
@@ -237,12 +304,27 @@ export async function dbStorageSiblingExists(ctx, householdId, parentId, name, e
 
 
 /* Create a location in a household's storage tree. The caller is responsible
- * for checking that the parent belongs to the same household. */
+ * for checking that the parent belongs to the same household.
+ *
+ * The slug is generated here and stored as part of the row. It is not touched by
+ * later renames; the original link for a location therefore stays valid. */
 export async function dbStorageCreate(ctx, householdId, name, parentId) {
+  const parent = (parentId === null || parentId === undefined)
+    ? null
+    : await dbStorageDetails(ctx, householdId, parentId);
+
+  if (parentId !== null && parentId !== undefined && parent === null) {
+    throw new Error(`unable to locate parent storage location ${parentId}`);
+  }
+
+  const slug = await uniqueStorageSlug(
+    ctx, householdId, storageSlugBase(parent, name)
+  );
+
   const result = await ctx.env.DB.prepare(`
-    INSERT INTO StorageLocation (householdId, parentId, name)
-    VALUES (?1, ?2, ?3)
-  `).bind(householdId, parentId ?? null, name).all();
+    INSERT INTO StorageLocation (householdId, parentId, name, slug)
+    VALUES (?1, ?2, ?3, ?4)
+  `).bind(householdId, parentId ?? null, name, slug).all();
 
   getDBResult('dbStorageCreate', 'insert_location', result);
 

@@ -6,6 +6,7 @@
 
   import Confirm from '$components/Confirm.svelte';
   import Icon from '$components/Icon.svelte';
+  import IconButton from '$components/IconButton.svelte';
 
   // ---------------------------------------------------------------------------
   // State
@@ -19,6 +20,8 @@
   let editor = { open: false, mode: 'create', id: null, name: '', parentId: null };
   let saving = false;
   let warning = null;
+  let editorDialog = null;
+  let focusTimer = null;
 
   let confirmModal = null;
 
@@ -50,14 +53,25 @@
   // Editor
   // ---------------------------------------------------------------------------
 
+  // Focus the name field after the dialog has rendered and completed its own
+  // initial focus pass. This runs for both adding and renaming.
+  const focusName = () => {
+    clearTimeout(focusTimer);
+    focusTimer = setTimeout(() => editorDialog?.querySelector('wa-input')?.focus(), 100);
+  };
+
   const openCreate = (parentId = null) => {
     editor = { open: true, mode: 'create', id: null, name: '', parentId };
     warning = null;
+    actionError = null;
+    focusName();
   };
 
   const openRename = node => {
     editor = { open: true, mode: 'rename', id: node.id, name: node.name, parentId: node.parentId };
     warning = null;
+    actionError = null;
+    focusName();
   };
 
   const closeEditor = () => {
@@ -80,33 +94,80 @@
     }
   };
 
+  const parseNames = value => value
+    .split(',')
+    .map(name => name.trim())
+    .filter(name => name !== '');
+
   const save = async () => {
     if (saving === true) {
       return;
     }
 
-    const name = editor.name.trim();
-    if (name === '') {
-      warning = 'Enter a name for this storage location.';
+    const names = editor.mode === 'create'
+      ? parseNames(editor.name)
+      : [editor.name.trim()].filter(name => name !== '');
+
+    if (names.length === 0) {
+      warning = editor.mode === 'create'
+        ? 'Enter at least one name for the storage location.'
+        : 'Enter a name for this storage location.';
       return;
+    }
+
+    if (editor.mode === 'create') {
+      const tooLong = names.find(name => name.length > 80);
+      if (tooLong !== undefined) {
+        warning = `Storage location names must be 80 characters or fewer (${tooLong}).`;
+        return;
+      }
+
+      // Catch duplicate siblings before creating anything so a comma-separated
+      // batch does not leave behind a partial result.
+      const siblings = data.locations
+        .filter(location => location.parentId === editor.parentId)
+        .map(location => location.name.toLocaleLowerCase());
+      const duplicate = names.find((name, index) => {
+        const key = name.toLocaleLowerCase();
+        return siblings.includes(key) ||
+          names.slice(0, index).some(other => other.toLocaleLowerCase() === key);
+      });
+
+      if (duplicate !== undefined) {
+        warning = `A storage location named '${duplicate}' already exists here.`;
+        return;
+      }
     }
 
     saving = true;
     warning = null;
+    let created = 0;
 
     try {
       if (editor.mode === 'create') {
-        await api.household.storage.create($user.household, name, editor.parentId);
+        // Create serially so IDs, and therefore the display order, follow the
+        // order the names were typed.
+        for (const name of names) {
+          await api.household.storage.create($user.household, name, editor.parentId);
+          created += 1;
+        }
       }
       else {
-        await api.household.storage.update($user.household, editor.id, name);
+        await api.household.storage.update($user.household, editor.id, names[0]);
       }
 
       editor = { ...editor, open: false };
       await load();
     }
     catch (failure) {
-      warning = failure.message ?? 'unable to save the storage location';
+      if (created > 0) {
+        editor = { ...editor, open: false };
+        actionError = `${created} location${created === 1 ? '' : 's'} created before the error: ${failure.message ?? 'unable to save the storage location'}`;
+        await load();
+      }
+      else {
+        warning = failure.message ?? 'unable to save the storage location';
+      }
     }
     finally {
       saving = false;
@@ -156,11 +217,9 @@
       </p>
     </div>
 
-    <!-- wa-button wraps a real <button>; the a11y warnings are false positives. -->
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-    <wa-button appearance="filled" variant="brand" on:click={() => openCreate(null)}>
-      <Icon name="plus" padRight="4px" /> Add location
-    </wa-button>
+    <IconButton variant="brand" appearance="filled" title="Add a storage location"
+                caption="" icon="plus"
+                onclick={() => openCreate(null)} />
   </div>
 
   {#if actionError !== null}
@@ -216,7 +275,7 @@
                  style={`padding-inline-start: calc(var(--wa-space-m) + ${node.depth} * 24px);`}>
               <div class="node-label">
                 <span class="node-icon"><Icon name="box-seam" /></span>
-                <a class="node-name" href={`#/storage/${node.id}`}
+                <a class="node-name" href={`#/storage/${node.slug ?? node.id}`}
                    title={`View games stored in ${node.path}`}>{node.name}</a>
                 <span class="muted">{node.totalGameCount} {plural(node.totalGameCount)}</span>
               </div>
@@ -251,9 +310,10 @@
   <Confirm bind:this={confirmModal} />
 
   {#if editor.open}
-  <wa-dialog open
+  <wa-dialog bind:this={editorDialog} open
              label={editor.mode === 'create' ? 'Add Storage Location' : 'Rename Storage Location'}
-             style="min-width: min(480px, 92vw)" on:wa-hide={dismissed}>
+             style="min-width: min(480px, 92vw)"
+             on:wa-hide={dismissed}>
     <h3 slot="header">{editor.mode === 'create' ? 'Add Storage Location' : 'Rename Storage Location'}</h3>
 
     {#if warning !== null}
@@ -261,9 +321,17 @@
     {/if}
 
     <div class="stack">
-      <wa-input label="Name" maxlength="80" value={editor.name}
+      <wa-input label="Name"
+                maxlength={editor.mode === 'rename' ? 80 : undefined}
+                value={editor.name}
                 on:input={e => editor = { ...editor, name: e.target.value }}>
       </wa-input>
+
+      {#if editor.mode === 'create'}
+        <div class="muted hint">
+          Separate multiple names with commas; they are created in order.
+        </div>
+      {/if}
 
       {#if editor.mode === 'create' && editor.parentId !== null}
         <div class="muted parent-context">
@@ -392,8 +460,8 @@
     overflow-wrap: anywhere;
   }
 
-  .node-name:hover,
-  .node-name:focus-visible {
+  a.node-name:hover,
+  a.node-name:focus-visible {
     text-decoration: underline;
   }
 
@@ -411,6 +479,10 @@
 
   .empty p {
     margin: 0 0 4px;
+  }
+
+  .hint {
+    font-size: var(--wa-font-size-s);
   }
 
   .editor-actions {

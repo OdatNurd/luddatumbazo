@@ -29,6 +29,7 @@ export const config = {
     "test/schema/guest.test.js",
     "test/schema/household.test.js",
     "test/schema/session.test.js",
+    "test/schema/storage.test.js",
     "test/schema/user.test.js",
     "test/schema/wishlist.test.js",
   ],
