@@ -3,6 +3,7 @@
   import DataGrid from '$components/DataGrid.svelte';
 
   import * as cells from '$lib/cells.js';
+  import { foldText } from '$lib/text.js';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -84,6 +85,10 @@
       label: 'Name',
       filterable: true,
       filterType: 'text',
+      filterFn: (value, filterValue) => {
+        const needle = foldText(filterValue);
+        return needle === '' || foldText(value).includes(needle);
+      },
       flex: 1,
       formatter: (value, row) => cells.link(slugLink(row.slug), value)
     },

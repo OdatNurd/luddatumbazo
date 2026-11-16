@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
 
   import { currentQuery, replaceQuery } from '$lib/router.js';
+  import { foldText } from '$lib/text.js';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -154,10 +155,17 @@
   // that is not one of its own options.
   $: pageSizes = [...new Set([...basePageSizes, pageSize])].sort((a, b) => a - b);
 
+  // The grid's stock global search is a plain substring match. Fold both sides
+  // so a query written without diacritics still finds names that carry them.
+  const searchValue = (value, term) => value !== null && value !== undefined &&
+    foldText(value).includes(foldText(term));
+
   // pageSizeOptions is a property with no attribute form, so it is handed to
-  // the grid directly whenever it or the grid element changes.
+  // the grid directly whenever it or the grid element changes. The search
+  // predicate is a property for the same reason.
   $: if (grid !== null) {
     grid.pageSizeOptions = pageSizes;
+    grid.searchFn = searchValue;
   }
 
   // selectedKeys is a Web Awesome property, not an attribute. Keep the custom

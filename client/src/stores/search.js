@@ -4,6 +4,7 @@
 import { writable } from 'svelte/store';
 
 import { api } from '$api';
+import { foldText } from '$lib/text.js';
 
 
 /******************************************************************************/
@@ -125,7 +126,7 @@ async function ensureIndex() {
 /******************************************************************************/
 
 
-/* Rank how well an entry name matches a lower case query.
+/* Rank how well an entry name matches a folded query.
  *
  * 0: the name starts with the query
  * 1: some word inside the name starts with the query
@@ -134,7 +135,7 @@ async function ensureIndex() {
  *
  * Matches are sorted by rank so the most convincing hits come first. */
 function rankOf(query, name) {
-  const target = name.toLowerCase();
+  const target = foldText(name);
 
   if (target.startsWith(query)) {
     return 0;
@@ -167,7 +168,7 @@ export async function search(query, signal = undefined) {
     return [];
   }
 
-  const needle = query.trim().toLowerCase();
+  const needle = foldText(query.trim());
   if (needle === '') {
     return [];
   }

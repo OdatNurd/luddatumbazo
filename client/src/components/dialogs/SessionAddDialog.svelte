@@ -2,6 +2,7 @@
   import { DateTime, Interval } from 'luxon';
 
   import { api } from '$api';
+  import { foldText } from '$lib/text.js';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -114,10 +115,10 @@
   // displays exactly what we return, so the game list is filtered as the user
   // types instead of scrolling through every game in the system.
   const dataSource = async ({ query }) => {
-    const needle = (query ?? '').trim().toLowerCase();
+    const needle = foldText((query ?? '').trim());
 
     return games
-      .filter(game => needle === '' || (game.name ?? '').toLowerCase().includes(needle))
+      .filter(game => needle === '' || foldText(game.name).includes(needle))
       .slice(0, 50)
       .map(game => {
         const element = document.createElement('wa-option');
