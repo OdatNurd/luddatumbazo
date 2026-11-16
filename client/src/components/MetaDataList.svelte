@@ -75,7 +75,7 @@
   }
 
   .meta-items a.meta-highlight {
-    color: var(--wa-color-text-link);
+    color: var(--wa-color-warning-on-quiet);
     font-weight: var(--wa-font-weight-semibold);
   }
 </style>

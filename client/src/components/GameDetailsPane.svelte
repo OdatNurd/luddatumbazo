@@ -235,18 +235,28 @@
     <div slot="header" class="game-header">
       <div class="game-header-top">
         <div class="game-title">
-        {#if gameData.owned !== undefined}
-          <Icon name="star-fill" color="var(--wa-color-warning-on-quiet)"></Icon>
-          {gameData.owned.name.name} ({gameData.publishedIn})
-        {:else}
-          {#if gameData.wishlist !== undefined}
-            <Icon name="heart-fill" color="var(--wa-color-danger-on-quiet)"></Icon>
-            {gameData.wishlist.name.name} ({gameData.publishedIn})
-          {:else}
-            <Icon name="star"></Icon>
-            {gameData.primaryName} ({gameData.publishedIn})
+          <div class="game-title-main">
+            {#if gameData.owned !== undefined}
+              <Icon name="star-fill" color="var(--wa-color-warning-on-quiet)"></Icon>
+              {gameData.owned.name.name} ({gameData.publishedIn})
+            {:else}
+              {#if gameData.wishlist !== undefined}
+                <Icon name="heart-fill" color="var(--wa-color-danger-on-quiet)"></Icon>
+                {gameData.wishlist.name.name} ({gameData.publishedIn})
+              {:else}
+                <Icon name="star"></Icon>
+                {gameData.primaryName} ({gameData.publishedIn})
+              {/if}
+            {/if}
+          </div>
+
+          {#if gameData.owned !== undefined}
+            <div class="game-publisher">
+              Your copy published by
+              <a href={`#/publisher/${gameData.owned.publisher.slug}`}
+                 title="View this publisher">{gameData.owned.publisher.name}</a>
+            </div>
           {/if}
-        {/if}
         </div>
 
         {#if $user.household}
@@ -487,11 +497,29 @@
 
   .game-title {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
     font-family: var(--wa-font-family-heading);
     font-size: var(--wa-font-size-xl);
     color: var(--wa-color-text-normal);
+  }
+
+  .game-title-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .game-publisher {
+    font-family: var(--wa-font-family-body);
+    font-size: var(--wa-font-size-s);
+    color: var(--wa-color-text-quiet);
+  }
+
+  .game-publisher a {
+    color: var(--wa-color-warning-on-quiet);
+    font-weight: var(--wa-font-weight-semibold);
   }
 
   .stat-row {

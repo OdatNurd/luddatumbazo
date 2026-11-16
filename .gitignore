@@ -21,3 +21,6 @@ commitReference.js
 
 # Database dumps (tools/dumpLocalDB.js output)
 dump/
+
+# In-process notes and scratch files
+todo/
