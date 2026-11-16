@@ -42,6 +42,14 @@
   // duplicating the whole grid definition.
   export let extraColumns = [];
 
+  // Optional row selection. Pages that act on a set of games (reshelving, or
+  // taking games off shelf) opt in; every other list stays unchanged.
+  export let selectable = false;
+  export let rowKey = 'id';
+  export let selectedKeys = [];
+  export let selectableRows = null;
+  export let emptyMessage = undefined;
+
   // ---------------------------------------------------------------------------
 
   // Using the props that we were given, generate out the kinds of links that
@@ -112,7 +120,8 @@
 <LoadZone source={loadData(loaderKey, tick)} let:result>
   <!-- This list is always presented as the whole page body, so the grid fills
        whatever vertical space the shell leaves for it (see app.css). -->
-  <DataGrid data={result} {columns} {gridKey} fill>
+  <DataGrid data={result} {columns} {gridKey} {selectable} {rowKey}
+            {selectableRows} {emptyMessage} bind:selectedKeys fill>
     <slot name="actions" slot="actions" />
   </DataGrid>
 

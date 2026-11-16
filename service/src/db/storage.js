@@ -207,6 +207,49 @@ export async function dbStorageContents(ctx, householdId, storageId, includeChil
 /******************************************************************************/
 
 
+/* Return every game assigned to a storage location that is currently marked
+ * off shelf. The full storage path is included so the reshelving list can say
+ * where each game belongs; games with no location are a separate state and are
+ * deliberately excluded. The list is ordered by location, then game name, to
+ * match the physical walk through the shelves. */
+export async function dbStorageOffShelf(ctx, householdId) {
+  const lookup = await ctx.env.DB.prepare(`
+    WITH RECURSIVE storage_paths(id, path) AS (
+      SELECT id, name
+        FROM StorageLocation
+       WHERE householdId = ?1 AND parentId IS NULL
+      UNION ALL
+      SELECT child.id, storage_paths.path || ' / ' || child.name
+        FROM StorageLocation AS child
+        JOIN storage_paths ON child.parentId = storage_paths.id
+       WHERE child.householdId = ?1
+    )
+    SELECT A.id, A.bggId, A.slug, B.name, A.imagePath,
+           C.storageLocationId, C.isOnShelf,
+           S.path AS storagePath
+      FROM GameOwners AS C
+      JOIN Game AS A ON A.id = C.gameId
+      JOIN GameName AS B ON B.id = C.gameName
+      JOIN storage_paths AS S ON S.id = C.storageLocationId
+     WHERE C.householdId = ?1
+       AND C.storageLocationId IS NOT NULL
+       AND C.isOnShelf = 0
+     ORDER BY S.path COLLATE NOCASE, B.name COLLATE NOCASE
+  `).bind(householdId).all();
+
+  const result = getDBResult('dbStorageOffShelf', 'find_games', lookup);
+  const games = result.map(entry => ({
+    ...entry,
+    isOnShelf: entry.isOnShelf === 1
+  }));
+
+  return imgMapAssetListURLs(ctx, games, 'imagePath', 'thumbnail');
+}
+
+
+/******************************************************************************/
+
+
 /* Return a single storage location, scoped to its household. The location can
  * be addressed by numeric ID or by its stored slug. */
 export async function dbStorageDetails(ctx, householdId, storageIdOrSlug) {
@@ -413,6 +456,28 @@ export async function dbStorageAssign(ctx, householdId, gameId, storageLocationI
   getDBResult('dbStorageAssign', 'assign_storage', result);
 
   return result.meta.changes > 0;
+}
+
+
+/******************************************************************************/
+
+
+/* Change the shelf state of several owned games in one statement. Only games
+ * that belong to the household and already have a storage location are
+ * affected, so the virtual Unstored bucket can never be marked on shelf. */
+export async function dbStorageSetShelf(ctx, householdId, gameIds, isOnShelf) {
+  const result = await ctx.env.DB.prepare(`
+    UPDATE GameOwners
+       SET isOnShelf = ?1
+     WHERE householdId = ?2
+       AND storageLocationId IS NOT NULL
+       AND isOnShelf <> ?1
+       AND gameId IN (SELECT value FROM json_each(?3))
+  `).bind(isOnShelf ? 1 : 0, householdId, JSON.stringify(gameIds)).all();
+
+  getDBResult('dbStorageSetShelf', 'update_shelf', result);
+
+  return result.meta.changes;
 }
 
 

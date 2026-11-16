@@ -5,6 +5,7 @@ import { validateZod } from '#legacyvalidator';
 import {
   StorageContentsIDSchema,
   StorageCreateSchema,
+  StorageShelfSchema,
   StorageUpdateSchema
 } from "#schema/storage";
 
@@ -71,6 +72,47 @@ export default Collection`Storage Schema Validation`({
 
     await $check`should fail without an ID`
       .value(schemaTest('json', StorageUpdateSchema, { name: 'Kallax 2' }, validateZod))
+      .isResponseWithStatus($, 400);
+  },
+
+
+  /****************************************************************************/
+
+
+  "StorageShelfSchema": async () => {
+    await $check`should accept game ids and a shelf state`
+      .value(schemaTest('json', StorageShelfSchema, {
+        gameIds: [12, 18, 12],
+        isOnShelf: true
+      }, validateZod))
+      .isObject()
+      .isArray($.gameIds)
+      .eq($.gameIds.length, 2)
+      .eq($.gameIds[0], 12)
+      .eq($.gameIds[1], 18)
+      .eq($.isOnShelf, true);
+
+    await $check`should coerce row keys reported as strings`
+      .value(schemaTest('json', StorageShelfSchema, {
+        gameIds: ['12', '18'],
+        isOnShelf: false
+      }, validateZod))
+      .isObject()
+      .isArray($.gameIds)
+      .eq($.gameIds[0], 12)
+      .eq($.gameIds[1], 18);
+
+    await $check`should reject an empty selection`
+      .value(schemaTest('json', StorageShelfSchema, {
+        gameIds: [],
+        isOnShelf: false
+      }, validateZod))
+      .isResponseWithStatus($, 400);
+
+    await $check`should reject a missing shelf state`
+      .value(schemaTest('json', StorageShelfSchema, {
+        gameIds: [12]
+      }, validateZod))
       .isResponseWithStatus($, 400);
   },
 });

@@ -147,6 +147,28 @@ async function getStorageContents(household, storageIdOrSlug, includeChildren) {
 /******************************************************************************/
 
 
+/* Fetch every game that has a storage location but is currently off shelf. */
+async function getOffShelfGames(household) {
+  return raw.get(`/household/storage/${slug(household)}/off-shelf`);
+}
+
+
+/******************************************************************************/
+
+
+/* Change the shelf state of several owned games at once. Games without a
+ * storage location are ignored by the server. */
+async function setGamesShelf(household, gameIds, isOnShelf) {
+  return raw.put(`/household/storage/${slug(household)}/shelf`, {
+    gameIds,
+    isOnShelf
+  });
+}
+
+
+/******************************************************************************/
+
+
 /* Create a storage location, optionally under a parent location. */
 async function createStorageLocation(household, name, parentId) {
   return raw.put(`/household/storage/${slug(household)}/create`, { name, parentId });
@@ -237,6 +259,8 @@ export const household = {
   storage: {
     list: getStorageLocations,
     contents: getStorageContents,
+    offShelf: getOffShelfGames,
+    shelf: setGamesShelf,
     create: createStorageLocation,
     update: updateStorageLocation,
     remove: removeStorageLocation,

@@ -20,6 +20,7 @@
   import WishlistedGameList from '$pages/games/Wishlist.svelte';
   import Storage from '$pages/Storage.svelte';
   import StorageContents from '$pages/StorageContents.svelte';
+  import OffShelf from '$pages/OffShelf.svelte';
 
   import SessionList from '$pages/sessions/List.svelte';
   import SessionDetails from '$pages/sessions/Details.svelte';
@@ -39,6 +40,7 @@
     { path: '/games/wishlisted',  component: WishlistedGameList, props: {} },
     { path: '/games/wishlisted/:wishlist', component: WishlistedGameList, props: {} },
     { path: '/storage',           component: Storage,            props: {} },
+    { path: '/storage/off-shelf', component: OffShelf,           props: {} },
     { path: '/storage/:storageId', component: StorageContents,   props: {} },
 
     { path: '/sessions',          component: SessionList,    props: {} },

@@ -80,3 +80,16 @@ export const StorageAssignSchema = z.object({
 
 
 /******************************************************************************/
+
+
+/* Bulk shelf changes operate on owned games that already have a storage
+ * location. Reshelving and taking games off shelf share the same contract; a
+ * location-less game is never affected. Duplicate identifiers are discarded. */
+export const StorageShelfSchema = z.object({
+  gameIds: z.array(z.coerce.number().int().positive()).min(1).max(500)
+    .transform(ids => [...new Set(ids)]),
+  isOnShelf: z.boolean()
+});
+
+
+/******************************************************************************/

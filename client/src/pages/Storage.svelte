@@ -326,11 +326,12 @@
         <strong>{data.unstoredCount}</strong>
         <span class="muted">games</span>
       </div>
-      <div class="summary-card">
+      <a class="summary-card summary-link" href="#/storage/off-shelf"
+         title="View the games that are off shelf">
         <span class="summary-label">Off shelf</span>
         <strong>{data.offShelfCount}</strong>
         <span class="muted">games</span>
-      </div>
+      </a>
       <div class="summary-card">
         <span class="summary-label">Locations</span>
         <strong>{data.locations.length}</strong>
@@ -502,6 +503,16 @@
 
   .summary-card strong {
     font-size: var(--wa-font-size-xl);
+  }
+
+  .summary-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .summary-link:hover,
+  .summary-link:focus-visible {
+    border-color: var(--wa-color-brand-border-loud);
   }
 
   .storage-panel {

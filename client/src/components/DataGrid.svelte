@@ -36,6 +36,21 @@
   // without the page growing a scrollbar that matches nothing visible.
   export let fill = false;
 
+  // Row selection is opt-in; existing grids keep their exact appearance. The
+  // field named by rowKey must uniquely identify a row, and selectedKeys is
+  // the grid's source of truth for what is currently checked.
+  export let selectable = false;
+  export let rowKey = 'id';
+  export let selectedKeys = [];
+
+  // An optional predicate that locks individual rows (for example, a game
+  // that is already off shelf cannot be taken off shelf again).
+  export let selectableRows = null;
+
+  // Shown in place of the grid's generic empty state when a page has a more
+  // useful thing to say.
+  export let emptyMessage = undefined;
+
   // ---------------------------------------------------------------------------
 
   // The grid element; the toolbar's search box feeds the grid's own filtering
@@ -145,6 +160,25 @@
     grid.pageSizeOptions = pageSizes;
   }
 
+  // selectedKeys is a Web Awesome property, not an attribute. Keep the custom
+  // element in step whenever the parent replaces or clears the selection.
+  const sameSelection = (left, right) => left.length === right.length &&
+    left.every((key, index) => key === right[index]);
+
+  const selectionChanged = () => {
+    selectedKeys = [...(grid?.selectedKeys ?? [])];
+  };
+
+  $: if (grid !== null) {
+    const current = grid.selectedKeys ?? [];
+
+    if (sameSelection(current, selectedKeys) === false) {
+      grid.selectedKeys = [...selectedKeys];
+    }
+
+    grid.selectableRows = selectableRows;
+  }
+
   // When the user picks a page size on a grid that opted in, remember the
   // choice for the next visit.
   const pageChanged = event => {
@@ -233,9 +267,16 @@
     {striped}
     paginate
     page-size={pageSize}
+    selectable={selectable ? 'multiple' : 'none'}
+    row-key={rowKey}
     on:wa-page-change={pageChanged}
     on:wa-sort-change={syncURL}
-  ></wa-data-grid>
+    on:wa-row-select={selectionChanged}
+  >
+    {#if emptyMessage !== undefined && emptyMessage !== ''}
+      <div slot="empty" class="grid-empty">{emptyMessage}</div>
+    {/if}
+  </wa-data-grid>
 </div>
 
 
@@ -276,5 +317,11 @@
     gap: var(--wa-space-s);
     margin-inline-start: auto;
     flex-wrap: wrap;
+  }
+
+  .grid-empty {
+    padding: var(--wa-space-l);
+    color: var(--wa-color-text-quiet);
+    text-align: center;
   }
 </style>

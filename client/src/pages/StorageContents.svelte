@@ -29,6 +29,14 @@
   let loadingLocation = true;
   let locationError = null;
 
+  // The opt-in selection mode used when pulling games off the shelf. Ordinary
+  // browsing keeps the grid exactly as it was; only this mode adds checkboxes.
+  let selecting = false;
+  let selectedKeys = [];
+  let saving = false;
+  let actionError = null;
+  let list = null;
+
   // Load the full tree so the header can show the path, both counts and
   // whether the toggle has anything to do. The grid itself loads independently.
   const loadLocation = async () => {
@@ -70,7 +78,44 @@
 
   $: loaderKey = `${storageKey}:${includeChildren ? 'subtree' : 'direct'}`;
 
-  const setIncludeChildren = event => includeChildren = event.target.checked;
+  const setIncludeChildren = event => {
+    includeChildren = event.target.checked;
+    selectedKeys = [];
+  };
+
+  const startSelecting = () => {
+    selectedKeys = [];
+    actionError = null;
+    selecting = true;
+  };
+
+  const cancelSelecting = () => {
+    selectedKeys = [];
+    actionError = null;
+    selecting = false;
+  };
+
+  const markOffShelf = async () => {
+    if (selectedKeys.length === 0 || saving === true) {
+      return;
+    }
+
+    saving = true;
+    actionError = null;
+
+    try {
+      await api.household.storage.shelf($user.household, selectedKeys, false);
+      selectedKeys = [];
+      selecting = false;
+      list?.refresh();
+    }
+    catch (failure) {
+      actionError = failure.message ?? 'unable to mark those games off shelf';
+    }
+    finally {
+      saving = false;
+    }
+  };
 
   // A location path is already shown in the page heading, so the Storage
   // column is only useful when the view spans several sub-locations.
@@ -131,8 +176,32 @@
     {/if}
   </div>
 
+  {#if actionError !== null}
+    <wa-callout variant="warning">{actionError}</wa-callout>
+  {/if}
+
   <SlugList bggType="boardgame" baseLink="#/game/:slug" {loader} {loaderKey}
-            extraColumns={extraColumns} gridKey="storage-contents" />
+            extraColumns={extraColumns} gridKey="storage-contents"
+            bind:this={list} bind:selectedKeys
+            selectable={selecting} selectableRows={row => row.isOnShelf === true}>
+    <svelte:fragment slot="actions">
+      {#if selecting}
+        <span class="selection-count">{selectedKeys.length} selected</span>
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+        <wa-button appearance="plain" size="s" disabled={saving}
+                   on:click={cancelSelecting}>Cancel</wa-button>
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+        <wa-button variant="brand" appearance="filled" size="s"
+                   disabled={selectedKeys.length === 0 || saving} loading={saving}
+                   on:click={markOffShelf}>Mark off shelf</wa-button>
+      {:else}
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+        <wa-button appearance="outlined" size="s" on:click={startSelecting}>
+          Take off shelf
+        </wa-button>
+      {/if}
+    </svelte:fragment>
+  </SlugList>
 {/if}
 
 
@@ -178,5 +247,11 @@
     display: flex;
     justify-content: center;
     padding: 32px;
+  }
+
+  .selection-count {
+    color: var(--wa-color-text-quiet);
+    font-size: var(--wa-font-size-s);
+    white-space: nowrap;
   }
 </style>
