@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { SvelteSet } from 'svelte/reactivity';
 
   import { api } from '$api';
   import { user } from '$stores/user';
@@ -25,6 +26,10 @@
 
   let confirmModal = null;
 
+  // Collapsed parents are remembered per household. The tree defaults to fully
+  // expanded; only the nodes the user explicitly closes are stored here.
+  let collapsed = new SvelteSet();
+
   // ---------------------------------------------------------------------------
 
   const load = async () => {
@@ -47,7 +52,87 @@
     }
   };
 
-  onMount(load);
+  const collapseKey = () => `luddatumbazo:storage-collapsed:${$user.household?.slug ?? 'none'}`;
+
+  const saveCollapsed = () => {
+    try {
+      localStorage.setItem(collapseKey(), JSON.stringify([...collapsed]));
+    }
+    catch {
+      // Storage can be unavailable in private browsing or when the quota is
+      // exhausted; the tree simply will not remember its state in that case.
+    }
+  };
+
+  const loadCollapsed = () => {
+    try {
+      const stored = localStorage.getItem(collapseKey());
+      const values = stored === null ? [] : JSON.parse(stored);
+      collapsed = new SvelteSet(
+        Array.isArray(values) ? values.filter(value => Number.isInteger(value)) : []
+      );
+    }
+    catch {
+      collapsed = new SvelteSet();
+    }
+  };
+
+  onMount(() => {
+    loadCollapsed();
+    load();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Tree visibility
+  // ---------------------------------------------------------------------------
+
+  $: locationsById = new Map(data.locations.map(location => [location.id, location]));
+  $: nodesWithChildren = new SvelteSet(
+    data.locations
+      .map(location => location.parentId)
+      .filter(parentId => parentId !== null && parentId !== undefined)
+  );
+
+  // A location is visible unless any ancestor is collapsed. This hides the
+  // whole subtree, not just the direct children of a collapsed node.
+  $: visibleLocations = data.locations.filter(location => {
+    let parentId = location.parentId;
+
+    while (parentId !== null && parentId !== undefined) {
+      if (collapsed.has(parentId)) {
+        return false;
+      }
+
+      parentId = locationsById.get(parentId)?.parentId ?? null;
+    }
+
+    return true;
+  });
+
+  const toggleCollapsed = node => {
+    const next = new SvelteSet(collapsed);
+
+    if (next.has(node.id)) {
+      next.delete(node.id);
+    }
+    else {
+      next.add(node.id);
+    }
+
+    collapsed = next;
+    saveCollapsed();
+  };
+
+  const expand = id => {
+    if (collapsed.has(id) === false) {
+      return;
+    }
+
+    const next = new SvelteSet(collapsed);
+    next.delete(id);
+    collapsed = next;
+    saveCollapsed();
+  };
 
   // ---------------------------------------------------------------------------
   // Editor
@@ -61,6 +146,10 @@
   };
 
   const openCreate = (parentId = null) => {
+    if (parentId !== null) {
+      expand(parentId);
+    }
+
     editor = { open: true, mode: 'create', id: null, name: '', parentId };
     warning = null;
     actionError = null;
@@ -257,9 +346,10 @@
 
       <div class="unstored-row" role="treeitem" aria-level="1" aria-selected="false">
         <div class="node-label">
+          <span class="node-toggle-placeholder" aria-hidden="true"></span>
           <span class="node-icon"><Icon name="box-seam" /></span>
           <span class="node-name">Unstored</span>
-          <span class="muted">{data.unstoredCount} {plural(data.unstoredCount)}</span>
+          <span class="node-count">({data.unstoredCount} {plural(data.unstoredCount)})</span>
         </div>
       </div>
 
@@ -270,14 +360,24 @@
         </div>
       {:else}
         <div class="tree" role="tree" aria-label="Storage locations">
-          {#each data.locations as node (node.id)}
+          {#each visibleLocations as node (node.id)}
             <div class="node" role="treeitem" aria-level={node.depth + 1} aria-selected="false"
                  style={`padding-inline-start: calc(var(--wa-space-m) + ${node.depth} * 24px);`}>
               <div class="node-label">
+                {#if nodesWithChildren.has(node.id)}
+                  <button type="button" class="node-toggle"
+                          aria-label={`${collapsed.has(node.id) ? 'Expand' : 'Collapse'} ${node.name}`}
+                          aria-expanded={!collapsed.has(node.id)}
+                          on:click={() => toggleCollapsed(node)}>
+                    <Icon name={collapsed.has(node.id) ? 'chevron-right' : 'chevron-down'} />
+                  </button>
+                {:else}
+                  <span class="node-toggle-placeholder" aria-hidden="true"></span>
+                {/if}
                 <span class="node-icon"><Icon name="box-seam" /></span>
                 <a class="node-name" href={`#/storage/${node.slug ?? node.id}`}
                    title={`View games stored in ${node.path}`}>{node.name}</a>
-                <span class="muted">{node.totalGameCount} {plural(node.totalGameCount)}</span>
+                <span class="node-count">({node.totalGameCount} {plural(node.totalGameCount)})</span>
               </div>
 
               <div class="node-actions">
@@ -449,8 +549,45 @@
     flex-wrap: wrap;
   }
 
+  .node-toggle,
+  .node-toggle-placeholder {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .node-toggle {
+    padding: 0;
+    border: 0;
+    border-radius: var(--wa-border-radius-s);
+    background: transparent;
+    color: var(--wa-color-text-quiet);
+    cursor: pointer;
+  }
+
+  .node-toggle:hover {
+    color: var(--wa-color-text-normal);
+    background: var(--wa-color-surface-lowered);
+  }
+
+  .node-toggle:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 1px;
+  }
+
   .node-icon {
     color: var(--wa-color-text-quiet);
+  }
+
+  .node-count {
+    margin-inline-start: 4px;
+    color: var(--wa-color-text-quiet);
+    font-size: var(--wa-font-size-s);
+    font-weight: var(--wa-font-weight-normal);
+    white-space: nowrap;
   }
 
   .node-name {
