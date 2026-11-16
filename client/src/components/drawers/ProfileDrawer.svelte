@@ -28,6 +28,7 @@
     { label: "---" },
     { label: "Collection", value: "#/games/owned",      icon: "star-fill",        requiresHousehold: true },
     { label: "Wishlists",  value: "#/games/wishlisted", icon: "heart-fill",       requiresHousehold: true },
+    { label: "Storage",    value: "#/storage",          icon: "box-seam",        requiresHousehold: true },
     { label: "---" },
     { label: "Sessions",   value: "#/sessions",         icon: "calendar-event",   requiresHousehold: false },
     { label: "---" },

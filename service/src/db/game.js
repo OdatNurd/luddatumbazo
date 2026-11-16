@@ -228,15 +228,35 @@ export async function dbGameList(ctx) {
 export async function dbGameOwnedList(ctx, householdId) {
   // Try to find all games owned by this household.
   const gameList = await ctx.env.DB.prepare(`
-    SELECT A.id, A.bggId, A.slug, B.name, A.imagePath
-      FROM Game as A, GameName as B, GameOwners as C
-     WHERE A.id = B.gameId AND A.id = C.gameId AND
-           B.id = C.gameName AND C.householdId = ?1
+    WITH RECURSIVE storage_paths(id, path) AS (
+      SELECT id, name
+        FROM StorageLocation
+       WHERE householdId = ?1 AND parentId IS NULL
+      UNION ALL
+      SELECT child.id, storage_paths.path || ' / ' || child.name
+        FROM StorageLocation AS child
+        JOIN storage_paths ON child.parentId = storage_paths.id
+       WHERE child.householdId = ?1
+    )
+    SELECT A.id, A.bggId, A.slug, B.name, A.imagePath,
+           C.id AS ownerId,
+           C.storageLocationId, C.isOnShelf,
+           S.path AS storagePath
+      FROM Game AS A
+      JOIN GameName AS B ON A.id = B.gameId
+      JOIN GameOwners AS C ON A.id = C.gameId AND B.id = C.gameName
+      LEFT JOIN storage_paths AS S ON S.id = C.storageLocationId
+     WHERE C.householdId = ?1
      ORDER BY B.name COLLATE NOCASE
   `).bind(householdId).all();
 
   const result = getDBResult('dbGameOwnedList', 'find_games', gameList);
-  return imgMapAssetListURLs(ctx, result, 'imagePath', 'thumbnail');
+  const games = result.map(entry => ({
+    ...entry,
+    isOnShelf: entry.isOnShelf !== 0
+  }));
+
+  return imgMapAssetListURLs(ctx, games, 'imagePath', 'thumbnail');
 }
 
 
@@ -308,15 +328,29 @@ export async function dbGameHouseholdSpecifics(ctx, fetchOwnership, gameId, hous
     {
       prefixes: {
         'pub_': 'publisher',
+        'storage_': 'storage',
         'name_': 'name',
       },
       sql: `
+        WITH RECURSIVE storage_paths(id, path) AS (
+          SELECT id, name
+            FROM StorageLocation
+           WHERE householdId = ?2 AND parentId IS NULL
+          UNION ALL
+          SELECT child.id, storage_paths.path || ' / ' || child.name
+            FROM StorageLocation AS child
+            JOIN storage_paths ON child.parentId = storage_paths.id
+           WHERE child.householdId = ?2
+        )
         SELECT B.id as name_id, B.name as name_name, B.isPrimary as name_isPrimary,
                C.id as pub_id, C.bggId as pub_bggId,
-               C.slug as pub_slug, C.name as pub_name, C.metaType as pub_metaType
+               C.slug as pub_slug, C.name as pub_name, C.metaType as pub_metaType,
+               A.storageLocationId as storage_id, A.isOnShelf as isOnShelf,
+               S.path as storage_path
           FROM GameOwners as A,
                GameName as B,
                GameMetadata as C
+          LEFT JOIN storage_paths as S ON S.id = A.storageLocationId
          WHERE A.gameId = ?1
            AND A.householdId = ?2
            AND A.gameId = B.gameId
@@ -366,6 +400,12 @@ export async function dbGameHouseholdSpecifics(ctx, fetchOwnership, gameId, hous
   let data = result[0];
   for (let [prefix, subKey] of Object.entries(lookup.prefixes)) {
     data = splitSubKeys(data, prefix, subKey);
+  }
+
+  // The storage sub-object is built even when the game is Unstored; normalize
+  // that empty shell back to null so the API has one unambiguous shape.
+  if (data.storage?.id === null || data.storage?.id === undefined) {
+    data.storage = null;
   }
 
   return data;

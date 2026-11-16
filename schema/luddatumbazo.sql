@@ -141,6 +141,24 @@ CREATE TABLE UserHousehold (
 );
 CREATE UNIQUE INDEX idx_user_household_combo ON UserHousehold(userId, householdId);
 CREATE INDEX idx_user_household ON UserHousehold(householdId);
+CREATE UNIQUE INDEX idx_user_household_primary ON UserHousehold(userId) WHERE isPrimary = 1;
+
+
+--------------------------------------------------------------------------------
+
+
+DROP TABLE IF EXISTS StorageLocation;
+CREATE TABLE StorageLocation (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    householdId INTEGER NOT NULL REFERENCES Household(id) ON DELETE CASCADE,
+    parentId INTEGER REFERENCES StorageLocation(id) ON DELETE RESTRICT,
+
+    name TEXT NOT NULL COLLATE NOCASE
+);
+CREATE UNIQUE INDEX idx_storage_location_sibling_name ON StorageLocation(householdId, COALESCE(parentId, 0), name);
+CREATE INDEX idx_storage_location_household ON StorageLocation(householdId);
+CREATE INDEX idx_storage_location_parent ON StorageLocation(parentId);
 
 
 --------------------------------------------------------------------------------
@@ -154,11 +172,87 @@ CREATE TABLE GameOwners (
     gameId INTEGER NOT NULL REFERENCES Game(id),
 
     gameName INTEGER NOT NULL REFERENCES GameName(id),
-    gamePublisher INTEGER NOT NULL REFERENCES GameMetadata(id)
+    gamePublisher INTEGER NOT NULL REFERENCES GameMetadata(id),
+
+    storageLocationId INTEGER REFERENCES StorageLocation(id) ON DELETE RESTRICT,
+    isOnShelf INTEGER NOT NULL DEFAULT 0 CHECK (isOnShelf IN (0, 1))
 );
 
 CREATE INDEX idx_game_owner_games ON GameOwners(gameId);
 CREATE INDEX idx_game_owner_list ON GameOwners(householdId, gameId, gameName);
+CREATE INDEX idx_game_owner_storage ON GameOwners(householdId, storageLocationId, isOnShelf);
+
+
+-- A storage parent must be in the same household as its child.
+CREATE TRIGGER trg_storage_parent_household_insert
+BEFORE INSERT ON StorageLocation
+WHEN NEW.parentId IS NOT NULL
+ AND NOT EXISTS (
+   SELECT 1
+     FROM StorageLocation
+    WHERE id = NEW.parentId
+      AND householdId = NEW.householdId
+ )
+BEGIN
+  SELECT RAISE(ABORT, 'parent storage location must belong to the same household');
+END;
+
+CREATE TRIGGER trg_storage_parent_household_update
+BEFORE UPDATE OF parentId, householdId ON StorageLocation
+WHEN NEW.parentId IS NOT NULL
+ AND NOT EXISTS (
+   SELECT 1
+     FROM StorageLocation
+    WHERE id = NEW.parentId
+      AND householdId = NEW.householdId
+ )
+BEGIN
+  SELECT RAISE(ABORT, 'parent storage location must belong to the same household');
+END;
+
+
+-- An owned game may only point at a location in its own household.
+CREATE TRIGGER trg_game_owner_storage_household_insert
+BEFORE INSERT ON GameOwners
+WHEN NEW.storageLocationId IS NOT NULL
+ AND NOT EXISTS (
+   SELECT 1
+     FROM StorageLocation
+    WHERE id = NEW.storageLocationId
+      AND householdId = NEW.householdId
+ )
+BEGIN
+  SELECT RAISE(ABORT, 'storage location must belong to the same household');
+END;
+
+CREATE TRIGGER trg_game_owner_storage_household_update
+BEFORE UPDATE OF storageLocationId, householdId ON GameOwners
+WHEN NEW.storageLocationId IS NOT NULL
+ AND NOT EXISTS (
+   SELECT 1
+     FROM StorageLocation
+    WHERE id = NEW.storageLocationId
+      AND householdId = NEW.householdId
+ )
+BEGIN
+  SELECT RAISE(ABORT, 'storage location must belong to the same household');
+END;
+
+
+-- Unstored means no location; it cannot simultaneously be on shelf.
+CREATE TRIGGER trg_game_owner_storage_status_insert
+BEFORE INSERT ON GameOwners
+WHEN NEW.storageLocationId IS NULL AND NEW.isOnShelf = 1
+BEGIN
+  SELECT RAISE(ABORT, 'a game without a storage location cannot be on shelf');
+END;
+
+CREATE TRIGGER trg_game_owner_storage_status_update
+BEFORE UPDATE OF storageLocationId, isOnShelf ON GameOwners
+WHEN NEW.storageLocationId IS NULL AND NEW.isOnShelf = 1
+BEGIN
+  SELECT RAISE(ABORT, 'a game without a storage location cannot be on shelf');
+END;
 
 
 --------------------------------------------------------------------------------

@@ -324,7 +324,7 @@ Table Household {
 Table UserHousehold {
   id INTEGER [unique, increment, pk]
 
-  userId INTEGER [not null, ref: < User.userId]
+  userId INTEGER [not null, ref: < User.id]
   householdId INTEGER [not null, ref: < Household.id]
   isPrimary BOOLEAN [default: false, note: 'The primary household for this user']
 
@@ -338,6 +338,24 @@ Table UserHousehold {
 
 // -----------------------------------------------------------------------------
 
+Table StorageLocation {
+  id INTEGER [unique, increment, pk]
+
+  householdId INTEGER [not null, ref: > Household.id]
+  parentId INTEGER [ref: > StorageLocation.id]
+  name TEXT [not null, note: 'case-insensitive; unique among siblings']
+
+  indexes {
+    (householdId, parentId, name) [name: 'idx_storage_location_sibling_name']
+    householdId [name: 'idx_storage_location_household']
+    parentId [name: 'idx_storage_location_parent']
+  }
+
+  Note: 'Household-owned storage tree; null parent is a top-level location'
+}
+
+// -----------------------------------------------------------------------------
+
 Table GameOwners {
   id INTEGER [unique, increment, pk]
   householdId INTEGER [not NULL, ref: < Household.id]
@@ -346,7 +364,10 @@ Table GameOwners {
   gameName INTEGER [not NULL, ref: < GameName.id]
   gamePublisher INTEGER [not NULL, ref: < GameMetadata.id]
 
-  Note: 'Game ownership is tracked by household'
+  storageLocationId INTEGER [ref: > StorageLocation.id, note: 'NULL means Unstored']
+  isOnShelf BOOLEAN [not null, default: false, note: 'Only valid when storageLocationId is set']
+
+  Note: 'Game ownership is tracked by household; storage is per owned copy'
 }
 
 // -----------------------------------------------------------------------------

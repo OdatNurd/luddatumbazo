@@ -58,6 +58,14 @@ export function icon(name, { color = undefined, size = undefined, title = undefi
 }
 
 
+/* A compact status badge for grid cells. The data grid renders light DOM nodes
+ * inside its shadow tree, so the badge is created here rather than in a Svelte
+ * template. */
+export function badge(label, variant = 'neutral') {
+  return element('wa-badge', { variant }, [text(label)]);
+}
+
+
 /* An internal (hash) or external link, optionally with a trailing external link
  * glyph. */
 export function link(href, label, { external = false, icon: iconName = undefined } = {}) {

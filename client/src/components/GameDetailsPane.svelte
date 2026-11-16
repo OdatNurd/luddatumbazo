@@ -7,6 +7,7 @@
 
   import RecordAddDialog from '$components/dialogs/RecordAddDialog.svelte';
   import GameEditDialog from '$components/dialogs/GameEditDialog.svelte';
+  import StorageAssignDialog from '$components/dialogs/StorageAssignDialog.svelte';
   import SessionAddDialog from '$components/dialogs/SessionAddDialog.svelte';
   import Confirm from '$components/Confirm.svelte';
 
@@ -74,6 +75,9 @@
   // The properties of the add-to-collection/wishlist dialog while it should be
   // presented, or null when it is closed.
   let addDialog = null;
+
+  // The storage assignment dialog state.
+  let storageDialogOpen = false;
 
   // The state of the game add/edit dialog; edit mode is driven by the record
   // that the page has already loaded.
@@ -170,6 +174,16 @@
       }
 
       // Trigger refresh.
+      gameData = gameData;
+    }
+  }
+
+  // Apply the updated ownership record returned by the storage dialog.
+  const storageDialogResult = detail => {
+    storageDialogOpen = false;
+
+    if (detail?.result !== null && detail?.result !== undefined) {
+      gameData.owned = detail.result;
       gameData = gameData;
     }
   }
@@ -282,6 +296,30 @@
         <div class="row">
           <span>Added to Wishlist <WishlistLink wishlist={gameData.wishlist.wishlist} /></span>
           <span>by <strong>{gameData.wishlist.wishlister.name}</strong></span>
+        </div>
+      {/if}
+
+      {#if gameData.owned !== undefined}
+        <div class="storage-summary">
+          <div class="storage-copy">
+            <span class="storage-label">Storage</span>
+            {#if gameData.owned.storage !== null && gameData.owned.storage !== undefined}
+              <a class="storage-path" href={`#/storage/${gameData.owned.storage.id}`}
+                 title="View the games stored in this location">{gameData.owned.storage.path}</a>
+              <wa-badge variant={gameData.owned.isOnShelf ? 'success' : 'warning'}>
+                {gameData.owned.isOnShelf ? 'On shelf' : 'Off shelf'}
+              </wa-badge>
+            {:else}
+              <wa-badge>Unstored</wa-badge>
+            {/if}
+          </div>
+
+          <!-- wa-button wraps a real <button>; the a11y warnings are false positives. -->
+          <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+          <wa-button appearance="outlined" size="s"
+                     on:click={() => storageDialogOpen = true}>
+            {gameData.owned.storage ? 'Change storage' : 'Assign storage'}
+          </wa-button>
         </div>
       {/if}
 
@@ -407,6 +445,12 @@
   <GameEditDialog open={editDialogOpen} game={gameData}
                   onclose={() => editDialogOpen = false} />
 
+  {#if storageDialogOpen}
+    <StorageAssignDialog open={true} game={gameData.slug}
+                         current={gameData.owned}
+                         onclose={storageDialogResult} />
+  {/if}
+
   <SessionAddDialog open={logSessionOpen} preset={logSessionPreset}
                     onclose={() => logSessionOpen = false} />
 
@@ -473,6 +517,45 @@
     font-size: var(--wa-font-size-l);
     font-weight: var(--wa-font-weight-semibold);
     color: var(--wa-color-text-normal);
+  }
+
+  .storage-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    border: 1px solid var(--wa-color-surface-border);
+    border-radius: var(--wa-border-radius-m);
+    background: var(--wa-color-surface-lowered);
+  }
+
+  .storage-copy {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .storage-label {
+    font-size: var(--wa-font-size-s);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--wa-color-text-quiet);
+  }
+
+  .storage-path {
+    color: var(--wa-color-text-normal);
+    font-weight: var(--wa-font-weight-semibold);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  .storage-path:hover,
+  .storage-path:focus-visible {
+    text-decoration: underline;
   }
 
   .game-image {

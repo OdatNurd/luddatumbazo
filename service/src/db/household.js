@@ -28,6 +28,25 @@ export async function dbHouseholdUsers(ctx, householdId) {
 /******************************************************************************/
 
 
+/* Return true when the given user is a member of the given household. This is
+ * the authorization check that the household-specific routes need; knowing a
+ * household exists is not enough to act on it. */
+export async function dbHouseholdMembership(ctx, householdId, userId) {
+  const result = await ctx.env.DB.prepare(`
+    SELECT 1 AS member
+      FROM UserHousehold
+     WHERE householdId = ?1
+       AND userId = ?2
+     LIMIT 1
+  `).bind(householdId, userId).all();
+
+  return getDBResult('dbHouseholdMembership', 'find_membership', result).length !== 0;
+}
+
+
+/******************************************************************************/
+
+
 /* Create a new household in the database, and all of the other required data
  * elements in other tables (such as a root wishlist) using the arguments that
  * were provided.

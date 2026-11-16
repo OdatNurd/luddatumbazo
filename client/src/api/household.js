@@ -109,6 +109,70 @@ async function getCollectionContents(household) {
 /******************************************************************************/
 
 
+/* Assign an owned game to a storage location, or clear its location. A null
+ * location is the virtual Unstored bucket; isOnShelf must then be false. */
+async function setGameStorage(household, game, storageLocationId, isOnShelf) {
+  return raw.put(`/household/collection/${slug(household)}/storage`, {
+    game,
+    storageLocationId,
+    isOnShelf
+  });
+}
+
+
+/******************************************************************************/
+
+
+/* Fetch the storage tree for a household and the virtual Unstored/off-shelf
+ * counts that sit above it. */
+async function getStorageLocations(household) {
+  return raw.get(`/household/storage/${slug(household)}/list`);
+}
+
+
+/******************************************************************************/
+
+
+/* Fetch the games stored in a location, either directly or in its whole
+ * subtree. */
+async function getStorageContents(household, storageId, includeChildren) {
+  return raw.get(
+    `/household/storage/${slug(household)}/contents/${storageId}`,
+    { includeChildren: includeChildren ? 1 : 0 }
+  );
+}
+
+
+/******************************************************************************/
+
+
+/* Create a storage location, optionally under a parent location. */
+async function createStorageLocation(household, name, parentId) {
+  return raw.put(`/household/storage/${slug(household)}/create`, { name, parentId });
+}
+
+
+/******************************************************************************/
+
+
+/* Rename a storage location without changing its parent. */
+async function updateStorageLocation(household, storageId, name) {
+  return raw.put(`/household/storage/${slug(household)}/update`, { storageId, name });
+}
+
+
+/******************************************************************************/
+
+
+/* Delete an empty storage location. */
+async function removeStorageLocation(household, storageId) {
+  return raw.delete(`/household/storage/${slug(household)}/delete`, { storageId });
+}
+
+
+/******************************************************************************/
+
+
 /* Fetch the complete list of games wish for by the household of the current
  * user.
  *
@@ -166,6 +230,15 @@ export const household = {
     contents: getCollectionContents,
     add: addToCollection,
     remove: removeFromCollection,
+    storage: setGameStorage,
+  },
+
+  storage: {
+    list: getStorageLocations,
+    contents: getStorageContents,
+    create: createStorageLocation,
+    update: updateStorageLocation,
+    remove: removeStorageLocation,
   },
 
   wishlist: {

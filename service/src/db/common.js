@@ -16,6 +16,15 @@ const getBoolNamedKeys = inputObj => Object.keys(inputObj).filter(k => k.match(/
  * The passed in object is returned back after being modified. */
 export const mapIntFieldsToBool = inputObj => {
   for (const key of getBoolNamedKeys(inputObj)) {
+    // This helper is called more than once on some objects as nested response
+    // shapes are assembled.
+    //
+    // A value that is already a boolean must survive that repeated pass; in
+    // particular, `false !== 0` is true in JavaScript.
+    if (typeof inputObj[key] === 'boolean') {
+      continue;
+    }
+
     inputObj[key] = inputObj[key] !== 0;
   }
   return inputObj;

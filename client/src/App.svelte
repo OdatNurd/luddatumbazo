@@ -18,6 +18,8 @@
 
   import OwnedGameList from '$pages/games/OwnedList.svelte';
   import WishlistedGameList from '$pages/games/Wishlist.svelte';
+  import Storage from '$pages/Storage.svelte';
+  import StorageContents from '$pages/StorageContents.svelte';
 
   import SessionList from '$pages/sessions/List.svelte';
   import SessionDetails from '$pages/sessions/Details.svelte';
@@ -36,6 +38,8 @@
     { path: '/games/owned',       component: OwnedGameList,      props: {} },
     { path: '/games/wishlisted',  component: WishlistedGameList, props: {} },
     { path: '/games/wishlisted/:wishlist', component: WishlistedGameList, props: {} },
+    { path: '/storage',           component: Storage,            props: {} },
+    { path: '/storage/:storageId', component: StorageContents,   props: {} },
 
     { path: '/sessions',          component: SessionList,    props: {} },
     { path: '/session/:id',       component: SessionDetails, props: {} },

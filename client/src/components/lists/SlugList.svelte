@@ -37,6 +37,11 @@
   // list is remembered across visits; only the top level pages provide one.
   export let gridKey = undefined;
 
+  // Additional columns appended after the standard game list columns. The
+  // owned collection uses this to show storage and shelf state without
+  // duplicating the whole grid definition.
+  export let extraColumns = [];
+
   // ---------------------------------------------------------------------------
 
   // Using the props that we were given, generate out the kinds of links that
@@ -47,7 +52,7 @@
 
   // The columns of the grid; name links to the entry and, when the entry has a
   // BGG id, the external column links to BoardGameGeek.
-  const columns = [
+  const baseColumns = [
     {
       field: 'id',
       label: 'ID',
@@ -85,6 +90,8 @@
         : cells.link(`https://boardgamegeek.com/${bggType}/${value}/`, 'BGG', { external: true, icon: 'box-arrow-up-right' })
     }
   ];
+
+  $: columns = [...baseColumns, ...extraColumns];
 
   // Fetch the list of data that we need from the back end API, and return
   // the result back after filtering it. The tick argument exists only to make

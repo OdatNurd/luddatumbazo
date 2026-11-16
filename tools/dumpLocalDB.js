@@ -62,6 +62,7 @@ function miniFlareDBPath() {
   "GameExpansion",
   "GameName",
   "Household",
+  "StorageLocation",
   "GameOwners",
   "User",
   "UserHousehold",
