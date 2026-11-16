@@ -1,6 +1,12 @@
 {
+    "id": "/",
     "name": "Luddatumbazo",
     "short_name": "Luddatumbazo",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#12151c",
+    "theme_color": "#12151c",
     "icons": [
         {
             "src": "/android-chrome-192x192.png",
@@ -12,8 +18,5 @@
             "sizes": "512x512",
             "type": "image/png"
         }
-    ],
-    "theme_color": "#ffffff",
-    "background_color": "#ffffff",
-    "display": "standalone"
+    ]
 }

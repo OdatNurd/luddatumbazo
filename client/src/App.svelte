@@ -10,6 +10,7 @@
   import NavDrawer from '$components/drawers/NavDrawer.svelte';
   import ProfileDrawer from '$components/drawers/ProfileDrawer.svelte';
   import GitCommitLink from '$components/links/GitCommitLink.svelte';
+  import VersionUpdate from '$components/VersionUpdate.svelte';
   import GlobalSearch from '$components/GlobalSearch.svelte';
 
   import Home from '$pages/Home.svelte';
@@ -186,7 +187,8 @@
     <NavDrawer close={() => page?.hideNavigation()} />
   </nav>
 
-  <span slot="navigation-footer">
+  <span slot="navigation-footer" class="navigation-footer">
+    <VersionUpdate />
     <GitCommitLink {commit} {version} />
   </span>
 
@@ -343,6 +345,15 @@
     gap: 6px;
     font-size: var(--wa-font-size-s);
     color: var(--wa-color-text-quiet);
+  }
+
+  /* The navigation footer carries the build stamp and, when a deployment is
+     detected, the update button. Stack them so the button never squeezes the
+     version text. */
+  .navigation-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   /* The slotted footer inherits wa-page's roomy 3xl padding by default; the

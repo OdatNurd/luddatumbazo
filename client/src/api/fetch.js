@@ -144,6 +144,30 @@ async function api_call(method, endpoint, body, options) {
 /******************************************************************************/
 
 
+/* Fetch the build metadata that the worker is currently running.
+ *
+ * This deliberately does not use api_call(): the version endpoint lives behind
+ * the normal API auth gate, and a background check that gets a 401 must return
+ * null rather than booting the browser to the login page. */
+export async function fetchVersion() {
+  const response = await fetch(`${API}/version`, {
+    ...baseOptions,
+    cache: 'no-store',
+    headers: { 'Accept': 'application/json' },
+  });
+
+  if (response.status === 401 || response.ok === false) {
+    return null;
+  }
+
+  const result = await response.json();
+  return result.data ?? null;
+}
+
+
+/******************************************************************************/
+
+
 /* Exported API action; this is a thin wrapper around the upper api call
  * mechanism that provides the appropriate method arguments, to make the call
  * point more expressive. */

@@ -7,8 +7,6 @@
 import { config } from 'dotenv';
 config({ path: ['.client.dev.vars'] });
 
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 import commonjs from '@rollup/plugin-commonjs';
 import del from 'rollup-plugin-delete';
@@ -22,8 +20,7 @@ import asuid from "@axel669/asuid/node";
 import copy from '@axel669/rollup-copy-static';
 import html from '@axel669/rollup-html-input';
 
-import { execSync } from 'child_process';
-import fs from 'fs';
+import { commitReference } from './commitReference.js';
 
 import { syncStyles } from './tools/syncWebAwesomeAssets.js';
 
@@ -32,12 +29,9 @@ import { syncStyles } from './tools/syncWebAwesomeAssets.js';
 /******************************************************************************/
 
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const commitHash = execSync('git rev-parse --short HEAD').toString().trim();
-const packageJson = fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8');
-const version = JSON.parse(packageJson).version;
+const commitHash = commitReference.commit;
+const version = commitReference.version;
+const buildId = commitReference.buildId;
 
 /* Determine if this build is production or not; by default we assume that all
  * builds are not production unless they are explictly set that way. */
@@ -127,6 +121,7 @@ const buildList = [
         'process.env.GITHUB_ROOT_URI': JSON.stringify(process.env.GITHUB_ROOT_URI ?? ''),
         'process.env.APP_VERSION': JSON.stringify(version),
         'process.env.COMMIT_HASH': JSON.stringify(commitHash),
+        'process.env.BUILD_ID': JSON.stringify(buildId),
       }),
 
       // Ensure that modules resolve and that the bundler knows that the output

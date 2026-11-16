@@ -1,7 +1,7 @@
 /******************************************************************************/
 
 
-import { raw } from './fetch.js';
+import { raw, fetchVersion } from './fetch.js';
 import { household } from './household.js';
 import { game } from './game.js';
 import { user } from './user.js';
@@ -26,6 +26,11 @@ export const api = {
   guest,
   bgg,
 }
+
+
+/* The update checker calls this separately from the composed API because it
+ * must not inherit the API wrapper's 401 redirect behaviour. */
+export { fetchVersion };
 
 
 /******************************************************************************/
