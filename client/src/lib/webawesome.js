@@ -16,6 +16,8 @@ import '@awesome.me/webawesome-pro/dist/components/dialog/dialog.js';
 import '@awesome.me/webawesome-pro/dist/components/drawer/drawer.js';
 import '@awesome.me/webawesome-pro/dist/components/select/select.js';
 import '@awesome.me/webawesome-pro/dist/components/option/option.js';
+import '@awesome.me/webawesome-pro/dist/components/tree/tree.js';
+import '@awesome.me/webawesome-pro/dist/components/tree-item/tree-item.js';
 import '@awesome.me/webawesome-pro/dist/components/combobox/combobox.js';
 import '@awesome.me/webawesome-pro/dist/components/divider/divider.js';
 import '@awesome.me/webawesome-pro/dist/components/switch/switch.js';

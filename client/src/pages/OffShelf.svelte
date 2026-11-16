@@ -4,8 +4,8 @@
 
   import * as cells from '$lib/cells.js';
   import SlugList from '$components/lists/SlugList.svelte';
+  import StorageBreadcrumb from '$components/StorageBreadcrumb.svelte';
   import Confirm from '$components/Confirm.svelte';
-  import Icon from '$components/Icon.svelte';
 
   // The games that are waiting to go back to a shelf, and the selection the
   // user has made from that list.
@@ -39,6 +39,7 @@
   const clearSelection = () => selectedKeys = [];
 
   const plural = value => value === 1 ? 'game' : 'games';
+  const trail = [{ label: 'Off shelf' }];
 
   const reshelve = async () => {
     if (selectedKeys.length === 0 || reshelving === true) {
@@ -81,10 +82,7 @@
 {:else}
   <div class="page-head">
     <div class="heading">
-      <a class="back-link" href="#/storage">
-        <Icon name="arrow-left" /> Storage
-      </a>
-      <h3>Off shelf</h3>
+      <StorageBreadcrumb {trail} />
       <p class="muted">
         Games with a storage location that are currently off shelf.
         {#if count !== null}
@@ -141,27 +139,8 @@
     min-width: 0;
   }
 
-  .back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--wa-color-text-quiet);
-    font-size: var(--wa-font-size-s);
-    text-decoration: none;
-  }
-
-  .back-link:hover,
-  .back-link:focus-visible {
-    color: var(--wa-color-text-normal);
-    text-decoration: underline;
-  }
-
-  h3 {
-    margin: 2px 0 2px;
-  }
-
   .page-head p {
-    margin: 0;
+    margin: 4px 0 0;
   }
 
   .selection-count {

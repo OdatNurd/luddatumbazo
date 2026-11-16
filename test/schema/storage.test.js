@@ -3,6 +3,7 @@ import { schemaTest } from "@odatnurd/cf-requests/aegis";
 import { validateZod } from '#legacyvalidator';
 
 import {
+  StorageBulkLocationSchema,
   StorageContentsIDSchema,
   StorageCreateSchema,
   StorageShelfSchema,
@@ -72,6 +73,46 @@ export default Collection`Storage Schema Validation`({
 
     await $check`should fail without an ID`
       .value(schemaTest('json', StorageUpdateSchema, { name: 'Kallax 2' }, validateZod))
+      .isResponseWithStatus($, 400);
+  },
+
+
+  /****************************************************************************/
+
+
+  "StorageBulkLocationSchema": async () => {
+    await $check`should accept games and a target location`
+      .value(schemaTest('json', StorageBulkLocationSchema, {
+        gameIds: [12, 18, 12],
+        storageLocationId: 4
+      }, validateZod))
+      .isObject()
+      .isArray($.gameIds)
+      .eq($.gameIds.length, 2)
+      .eq($.gameIds[0], 12)
+      .eq($.gameIds[1], 18)
+      .eq($.storageLocationId, 4);
+
+    await $check`should coerce string identifiers and a string location`
+      .value(schemaTest('json', StorageBulkLocationSchema, {
+        gameIds: ['12', '18'],
+        storageLocationId: '4'
+      }, validateZod))
+      .isObject()
+      .eq($.gameIds[0], 12)
+      .eq($.storageLocationId, 4);
+
+    await $check`should reject an empty selection`
+      .value(schemaTest('json', StorageBulkLocationSchema, {
+        gameIds: [],
+        storageLocationId: 4
+      }, validateZod))
+      .isResponseWithStatus($, 400);
+
+    await $check`should reject a missing target location`
+      .value(schemaTest('json', StorageBulkLocationSchema, {
+        gameIds: [12]
+      }, validateZod))
       .isResponseWithStatus($, 400);
   },
 

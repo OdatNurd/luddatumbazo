@@ -286,6 +286,18 @@
 
   const plural = count => count === 1 ? 'game' : 'games';
 
+  // Enter in the name field takes the dialog's primary action. The dialog has
+  // no native form, so without this the Add/Rename button would be the only
+  // way to submit.
+  const editorKeydown = event => {
+    if (event.key !== 'Enter' || event.isComposing === true) {
+      return;
+    }
+
+    event.preventDefault();
+    save();
+  };
+
   // The path of the location currently open in the editor. Creation is always
   // either top level or initiated from a specific node, so the parent is shown
   // as context rather than as a second dropdown.
@@ -321,16 +333,17 @@
     <div class="loading"><wa-spinner></wa-spinner></div>
   {:else}
     <div class="summary">
-      <div class="summary-card">
+      <a class="summary-card summary-link" href="#/storage/unstored"
+         title="View the games that do not have a location">
         <span class="summary-label">Unstored</span>
         <strong>{data.unstoredCount}</strong>
-        <span class="muted">games</span>
-      </div>
+        <span class="muted">{plural(data.unstoredCount)}</span>
+      </a>
       <a class="summary-card summary-link" href="#/storage/off-shelf"
          title="View the games that are off shelf">
         <span class="summary-label">Off shelf</span>
         <strong>{data.offShelfCount}</strong>
-        <span class="muted">games</span>
+        <span class="muted">{plural(data.offShelfCount)}</span>
       </a>
       <div class="summary-card">
         <span class="summary-label">Locations</span>
@@ -345,14 +358,15 @@
         <span class="muted">Select a game from the collection to assign it.</span>
       </div>
 
-      <div class="unstored-row" role="treeitem" aria-level="1" aria-selected="false">
+      <a class="unstored-row" href="#/storage/unstored"
+         title="View and assign the unstored games">
         <div class="node-label">
           <span class="node-toggle-placeholder" aria-hidden="true"></span>
           <span class="node-icon"><Icon name="box-seam" /></span>
           <span class="node-name">Unstored</span>
           <span class="node-count">({data.unstoredCount} {plural(data.unstoredCount)})</span>
         </div>
-      </div>
+      </a>
 
       {#if data.locations.length === 0}
         <div class="empty">
@@ -422,10 +436,14 @@
     {/if}
 
     <div class="stack">
+      <!-- wa-input wraps a real input; the custom element's keydown is the one
+           Svelte cannot see into. -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <wa-input label="Name"
                 maxlength={editor.mode === 'rename' ? 80 : undefined}
                 value={editor.name}
-                on:input={e => editor = { ...editor, name: e.target.value }}>
+                on:input={e => editor = { ...editor, name: e.target.value }}
+                on:keydown={editorKeydown}>
       </wa-input>
 
       {#if editor.mode === 'create'}
@@ -546,6 +564,13 @@
 
   .unstored-row {
     background: var(--wa-color-surface-lowered);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .unstored-row:hover,
+  .unstored-row:focus-visible {
+    background: var(--wa-color-surface-default);
   }
 
   .node:hover {

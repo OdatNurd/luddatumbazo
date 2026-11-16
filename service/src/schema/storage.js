@@ -93,3 +93,16 @@ export const StorageShelfSchema = z.object({
 
 
 /******************************************************************************/
+
+
+/* Bulk location changes move one or more owned games to an existing storage
+ * location. Duplicate identifiers are discarded; a null target is deliberately
+ * not allowed here because clearing locations is a separate operation. */
+export const StorageBulkLocationSchema = z.object({
+  gameIds: z.array(z.coerce.number().int().positive()).min(1).max(500)
+    .transform(ids => [...new Set(ids)]),
+  storageLocationId: z.coerce.number().int().positive()
+});
+
+
+/******************************************************************************/

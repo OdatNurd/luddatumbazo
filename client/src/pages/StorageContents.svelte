@@ -6,7 +6,8 @@
 
   import * as cells from '$lib/cells.js';
   import SlugList from '$components/lists/SlugList.svelte';
-  import Icon from '$components/Icon.svelte';
+  import StorageBreadcrumb from '$components/StorageBreadcrumb.svelte';
+  import BulkStorageAssignDialog from '$components/dialogs/BulkStorageAssignDialog.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -35,17 +36,21 @@
   let selectedKeys = [];
   let saving = false;
   let actionError = null;
+  let bulkOpen = false;
   let list = null;
 
   // Load the full tree so the header can show the path, both counts and
   // whether the toggle has anything to do. The grid itself loads independently.
-  const loadLocation = async () => {
+  const loadLocation = async ({ quiet = false } = {}) => {
     if (!$user.household) {
       loadingLocation = false;
       return;
     }
 
-    loadingLocation = true;
+    if (quiet === false) {
+      loadingLocation = true;
+    }
+
     locationError = null;
 
     try {
@@ -63,7 +68,9 @@
       locationError = failure.message ?? 'unable to load the storage location';
     }
     finally {
-      loadingLocation = false;
+      if (quiet === false) {
+        loadingLocation = false;
+      }
     }
   };
 
@@ -71,6 +78,33 @@
 
   $: hasChildren = location !== null &&
     locations.some(entry => entry.parentId === location.id);
+
+  // Build the breadcrumb from parent links rather than by splitting the
+  // display path, since a location name is allowed to contain a slash.
+  $: trail = (() => {
+    if (location === null) {
+      return [];
+    }
+
+    const chain = [];
+    const seen = [];
+    let node = location;
+
+    while (node !== null && node !== undefined && seen.includes(node.id) === false) {
+      seen.push(node.id);
+      chain.unshift(node);
+      node = (node.parentId === null || node.parentId === undefined)
+        ? null
+        : locations.find(entry => entry.id === node.parentId);
+    }
+
+    return chain.map((entry, index) => ({
+      label: entry.name,
+      href: (index < chain.length - 1)
+        ? `#/storage/${entry.slug ?? entry.id}`
+        : undefined
+    }));
+  })();
 
   const loader = async () => api.household.storage.contents(
     $user.household, storageKey, includeChildren
@@ -95,6 +129,25 @@
     selecting = false;
   };
 
+  const openMove = () => {
+    if (selectedKeys.length === 0 || saving === true) {
+      return;
+    }
+
+    bulkOpen = true;
+  };
+
+  const moveResult = detail => {
+    bulkOpen = false;
+
+    if (detail?.result !== null && detail?.result !== undefined) {
+      selectedKeys = [];
+      selecting = false;
+      list?.refresh();
+      loadLocation({ quiet: true });
+    }
+  };
+
   const markOffShelf = async () => {
     if (selectedKeys.length === 0 || saving === true) {
       return;
@@ -117,15 +170,26 @@
     }
   };
 
-  // A location path is already shown in the page heading, so the Storage
-  // column is only useful when the view spans several sub-locations.
+  // The storage column is only useful when the view spans several
+  // sub-locations. The API returns the path below the selected location, so
+  // each row shows just the part that distinguishes it from the page heading.
+  // Clicking the path opens that location and narrows the focus further.
   const storageColumn = {
     field: 'storagePath',
-    label: 'Storage',
+    label: 'Location',
     flex: 1.4,
     filterable: true,
     filterType: 'text',
-    formatter: value => value || '—'
+    formatter: (value, row) => {
+      if (!value) {
+        return 'Directly here';
+      }
+
+      return cells.link(
+        `#/storage/${row.storageSlug ?? row.storageLocationId}`,
+        value
+      );
+    }
   };
 
   const shelfColumn = {
@@ -137,7 +201,7 @@
       : cells.badge('Off shelf', 'warning')
   };
 
-  $: extraColumns = includeChildren
+  $: extraColumns = (includeChildren && hasChildren)
     ? [storageColumn, shelfColumn]
     : [shelfColumn];
 
@@ -157,10 +221,7 @@
 {:else}
   <div class="page-head">
     <div class="heading">
-      <a class="back-link" href="#/storage">
-        <Icon name="arrow-left" /> Storage
-      </a>
-      <h3>{location.path}</h3>
+      <StorageBreadcrumb {trail} />
       <p class="muted">
         {location.gameCount} {plural(location.gameCount)} stored directly here
         {#if hasChildren}
@@ -191,17 +252,26 @@
         <wa-button appearance="plain" size="s" disabled={saving}
                    on:click={cancelSelecting}>Cancel</wa-button>
         <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-        <wa-button variant="brand" appearance="filled" size="s"
+        <wa-button appearance="outlined" size="s"
+                   disabled={selectedKeys.length === 0 || saving}
+                   on:click={openMove}>Move to location</wa-button>
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+        <wa-button variant="warning" appearance="outlined" size="s"
                    disabled={selectedKeys.length === 0 || saving} loading={saving}
                    on:click={markOffShelf}>Mark off shelf</wa-button>
       {:else}
         <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
         <wa-button appearance="outlined" size="s" on:click={startSelecting}>
-          Take off shelf
+          Select games
         </wa-button>
       {/if}
     </svelte:fragment>
   </SlugList>
+
+  {#if bulkOpen}
+    <BulkStorageAssignDialog gameIds={[...selectedKeys]} mode="move"
+                             consumer="storage-move" onclose={moveResult} />
+  {/if}
 {/if}
 
 
@@ -219,28 +289,8 @@
     min-width: 0;
   }
 
-  .back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--wa-color-text-quiet);
-    font-size: var(--wa-font-size-s);
-    text-decoration: none;
-  }
-
-  .back-link:hover,
-  .back-link:focus-visible {
-    color: var(--wa-color-text-normal);
-    text-decoration: underline;
-  }
-
-  h3 {
-    margin: 2px 0 2px;
-    overflow-wrap: anywhere;
-  }
-
   .page-head p {
-    margin: 0;
+    margin: 4px 0 0;
   }
 
   .loading {

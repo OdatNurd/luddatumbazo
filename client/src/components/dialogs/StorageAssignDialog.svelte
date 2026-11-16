@@ -2,6 +2,8 @@
   import { api } from '$api';
   import { user } from '$stores/user';
 
+  import StorageLocationPicker from '$components/StorageLocationPicker.svelte';
+
   // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
@@ -26,8 +28,8 @@
   let saving = false;
   let warning = null;
 
-  // The select stores strings; '' is the virtual Unstored option.
-  let selected = '';
+  // The selected location; null is the virtual Unstored option.
+  let selected = null;
   let onShelf = false;
 
   // Ensure a close is reported only once even if the dialog emits hide while
@@ -49,8 +51,8 @@
     locations = [];
 
     selected = (current?.storage?.id === undefined || current?.storage?.id === null)
-      ? ''
-      : String(current.storage.id);
+      ? null
+      : Number(current.storage.id);
     onShelf = current?.isOnShelf === true;
 
     if (!$user.household) {
@@ -83,11 +85,11 @@
     wasOpen = false;
   }
 
-  const pickLocation = event => {
-    const hadLocation = selected !== '';
-    selected = event.target.value;
+  const locationChanged = event => {
+    const hadLocation = selected !== null;
+    selected = event.detail?.value ?? null;
 
-    if (selected === '') {
+    if (selected === null) {
       onShelf = false;
     }
     else if (hadLocation === false) {
@@ -125,7 +127,7 @@
       return;
     }
 
-    if (!selected && onShelf === true) {
+    if (selected === null && onShelf === true) {
       warning = 'An unstored game cannot be marked as on shelf.';
       return;
     }
@@ -134,9 +136,9 @@
     warning = null;
 
     try {
-      const storageLocationId = (selected === '') ? null : Number(selected);
+      const storageLocationId = selected;
       const result = await api.household.collection.storage(
-        $user.household, game, storageLocationId, selected === '' ? false : onShelf
+        $user.household, game, storageLocationId, selected === null ? false : onShelf
       );
 
       finish({ result });
@@ -151,7 +153,7 @@
 </script>
 
 
-<wa-dialog {open} label="Storage" style="min-width: min(480px, 90vw)"
+<wa-dialog {open} label="Storage" style="min-width: min(560px, 94vw)"
            on:wa-hide={dismissed}>
   <h3 slot="header">Storage</h3>
 
@@ -163,21 +165,17 @@
     <div class="loading"><wa-spinner></wa-spinner></div>
   {:else}
     <div class="stack">
-      <wa-select label="Location" value={selected}
-                 on:change={pickLocation} on:wa-input={pickLocation}>
-        <wa-option value="">Unstored</wa-option>
-        {#each locations as location (location.id)}
-          <wa-option value={String(location.id)}>{location.path}</wa-option>
-        {/each}
-      </wa-select>
+      <StorageLocationPicker {locations} value={selected}
+                             consumer="game-storage" allowUnstored
+                             on:change={locationChanged} />
 
       {#if locations.length === 0}
         <div class="muted">
-          No storage locations yet. <a href="#/storage" on:click={() => abort()}>Create one first</a>.
+          <a href="#/storage" on:click={() => abort()}>Create a storage location first</a>.
         </div>
       {/if}
 
-      <wa-switch checked={onShelf} disabled={selected === ''}
+      <wa-switch checked={onShelf} disabled={selected === null}
                  on:change={setOnShelf}>
         {onShelf ? 'On shelf' : 'Off shelf'}
       </wa-switch>

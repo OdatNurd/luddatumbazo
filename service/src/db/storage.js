@@ -157,30 +157,36 @@ export async function dbStorageList(ctx, householdId) {
 export async function dbStorageContents(ctx, householdId, storageId, includeChildren) {
   const lookup = (includeChildren === true)
     ? await ctx.env.DB.prepare(`
-        WITH RECURSIVE storage_tree(id, path) AS (
-          SELECT id, name
+        WITH RECURSIVE storage_tree(id, path, relativePath, slug) AS (
+          SELECT id, name, NULL, slug
             FROM StorageLocation
            WHERE id = ?2 AND householdId = ?1
           UNION ALL
-          SELECT child.id, storage_tree.path || ' / ' || child.name
+          SELECT child.id,
+                 storage_tree.path || ' / ' || child.name,
+                 CASE
+                   WHEN storage_tree.relativePath IS NULL THEN child.name
+                   ELSE storage_tree.relativePath || ' / ' || child.name
+                 END,
+                 child.slug
             FROM StorageLocation AS child
             JOIN storage_tree ON child.parentId = storage_tree.id
            WHERE child.householdId = ?1
         )
         SELECT A.id, A.bggId, A.slug, B.name, A.imagePath,
                C.storageLocationId, C.isOnShelf,
-               S.path AS storagePath
+               S.relativePath AS storagePath, S.slug AS storageSlug
           FROM GameOwners AS C
           JOIN Game AS A ON A.id = C.gameId
           JOIN GameName AS B ON B.id = C.gameName
           JOIN storage_tree AS S ON S.id = C.storageLocationId
          WHERE C.householdId = ?1
-         ORDER BY B.name COLLATE NOCASE
+         ORDER BY S.path COLLATE NOCASE, B.name COLLATE NOCASE
       `).bind(householdId, storageId).all()
     : await ctx.env.DB.prepare(`
         SELECT A.id, A.bggId, A.slug, B.name, A.imagePath,
                C.storageLocationId, C.isOnShelf,
-               S.name AS storagePath
+               S.name AS storagePath, S.slug AS storageSlug
           FROM GameOwners AS C
           JOIN Game AS A ON A.id = C.gameId
           JOIN GameName AS B ON B.id = C.gameName
@@ -238,6 +244,33 @@ export async function dbStorageOffShelf(ctx, householdId) {
   `).bind(householdId).all();
 
   const result = getDBResult('dbStorageOffShelf', 'find_games', lookup);
+  const games = result.map(entry => ({
+    ...entry,
+    isOnShelf: entry.isOnShelf === 1
+  }));
+
+  return imgMapAssetListURLs(ctx, games, 'imagePath', 'thumbnail');
+}
+
+
+/******************************************************************************/
+
+
+/* Return every owned game that does not have a storage location yet. These are
+ * the games the bulk assignment page offers to put somewhere. */
+export async function dbStorageUnstored(ctx, householdId) {
+  const lookup = await ctx.env.DB.prepare(`
+    SELECT A.id, A.bggId, A.slug, B.name, A.imagePath,
+           C.storageLocationId, C.isOnShelf
+      FROM GameOwners AS C
+      JOIN Game AS A ON A.id = C.gameId
+      JOIN GameName AS B ON B.id = C.gameName
+     WHERE C.householdId = ?1
+       AND C.storageLocationId IS NULL
+     ORDER BY B.name COLLATE NOCASE
+  `).bind(householdId).all();
+
+  const result = getDBResult('dbStorageUnstored', 'find_games', lookup);
   const games = result.map(entry => ({
     ...entry,
     isOnShelf: entry.isOnShelf === 1
@@ -456,6 +489,30 @@ export async function dbStorageAssign(ctx, householdId, gameId, storageLocationI
   getDBResult('dbStorageAssign', 'assign_storage', result);
 
   return result.meta.changes > 0;
+}
+
+
+/******************************************************************************/
+
+
+/* Move several owned games to one location in a single statement. Games that
+ * were previously unstored become on shelf; games that already had a location
+ * keep their existing shelf state. */
+export async function dbStorageAssignMany(ctx, householdId, gameIds, storageLocationId) {
+  const result = await ctx.env.DB.prepare(`
+    UPDATE GameOwners
+       SET storageLocationId = ?1,
+           isOnShelf = CASE
+                         WHEN storageLocationId IS NULL THEN 1
+                         ELSE isOnShelf
+                       END
+     WHERE householdId = ?2
+       AND gameId IN (SELECT value FROM json_each(?3))
+  `).bind(storageLocationId, householdId, JSON.stringify(gameIds)).all();
+
+  getDBResult('dbStorageAssignMany', 'move_games', result);
+
+  return result.meta.changes;
 }
 
 
