@@ -16,10 +16,7 @@ output/
 # the front and back ends
 commitReference.js
 
-# Backup databases
-/data/
-
-# Database dumps (tools/dumpLocalDB.js output)
+# Database exports
 dump/
 
 # In-process notes and scratch files
