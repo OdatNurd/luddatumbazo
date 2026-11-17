@@ -25,8 +25,9 @@ export const $get = routeHandler(
 
   async (ctx) => {
     // The query can contain a flag to tell us that we should reverse the sort,
-    // and an option list of game id's and slugs to look up sessions for.
-    const { reverse, games } = ctx.req.valid('query');
+    // an option list of game id's and slugs to look up sessions for, and an
+    // optional open/closed filter.
+    const { reverse, games, status } = ctx.req.valid('query');
 
     // Use the list in a lookup to map it to objects that we can use to get to
     // definitive gameId values to pass in.
@@ -49,7 +50,11 @@ export const $get = routeHandler(
     }
 
     // Fetch and return the list, optionally filtering and reversing it.
-    const result = await dbSessionList(ctx, lookup.map(e => e.id), reverse);
+    const result = await dbSessionList(ctx, {
+      gameIds: lookup.map(e => e.id),
+      reverse,
+      status
+    });
 
     return success(ctx, `found ${result.length} session(s)`, result);
   }

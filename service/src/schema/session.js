@@ -27,6 +27,9 @@ export const SessionListParamSchema = z.object({
   // The presence of this key with any value is true, anything else is false
   reverse: z.any().optional().transform((value, zCtx) => value !== undefined),
 
+  // Limit the list to open or closed reports. An omitted value means both.
+  status: z.enum(['open', 'closed']).optional(),
+
   // Optionally either a comma separated string of numbers and slugs, or an
   // array of same (by using the same parameter multiple times as one ought).
   //

@@ -23,10 +23,11 @@ async function gameTypeList() {
  * bottom.
  *
  * The list of games is optional; if provided, it can be an array of either
- * game slugs, game identifiers, or both.
+ * game slugs, game identifiers, or both. The optional status value limits the
+ * result to open or closed reports; omitting it returns both.
  *
- * THe result is a list of short session objects. */
-async function sessionList(reverse, games) {
+ * The result is a list of short session objects. */
+async function sessionList(reverse, games, status) {
   const options = { };
 
   // If requested, include the option to reverse the list.
@@ -45,7 +46,22 @@ async function sessionList(reverse, games) {
     options.games = games.join(',');
   }
 
+  // An omitted status is the complete list; only send the filter when the
+  // caller actually requested one.
+  if (status === 'open' || status === 'closed') {
+    options.status = status;
+  }
+
   return raw.get('/session/list', options);
+}
+
+
+/******************************************************************************/
+
+
+/* Gather the summary counts used by the profile menu and open-session view. */
+async function sessionStatus() {
+  return raw.get('/session/status');
 }
 
 
@@ -85,6 +101,7 @@ async function sessionUpdate(sessionId, update) {
  * single object based on the operations. */
 export const session = {
   gameTypes: gameTypeList,
+  status: sessionStatus,
   list: sessionList,
   details: sessionDetails,
   add: sessionAdd,

@@ -57,6 +57,20 @@ export default Collection`Session Schema Validation`({
       .eq($.games[0], 123)
       .eq($.games[1], 'a-slug')
       .eq($.games[2], 456);
+
+    await $check`should accept the open status filter`
+      .value(schemaTest('query', SessionListParamSchema, { status: 'open' }, validateZod))
+      .isObject()
+      .eq($.status, 'open');
+
+    await $check`should accept the closed status filter`
+      .value(schemaTest('query', SessionListParamSchema, { status: 'closed' }, validateZod))
+      .isObject()
+      .eq($.status, 'closed');
+
+    await $check`should fail for an unknown status filter`
+      .value(schemaTest('query', SessionListParamSchema, { status: 'running' }, validateZod))
+      .isResponseWithStatus($, 400);
   },
 
 

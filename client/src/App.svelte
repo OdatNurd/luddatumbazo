@@ -3,6 +3,7 @@
 
   import { user } from '$stores/user';
   import { server } from '$stores/server';
+  import { sessionStatus } from '$stores/sessionStatus';
   import { wishlists } from '$stores/wishlists';
 
   import LoadZone from '$components/LoadZone.svelte';
@@ -90,6 +91,10 @@
     // stack adopts or discards any trail a previous session left behind based
     // on whether it was this same person (see $lib/router.js).
     initStack($user.id);
+
+    // The status is advisory and records its own failure; do not make the app
+    // wait for it or turn a status outage into a startup error.
+    sessionStatus.init();
 
     // Using the loaded data for the user, if they have a household also load
     // the list of wishlists.

@@ -529,22 +529,71 @@ export async function dbSessionUpdate(ctx, sessionId, updateData, actorId) {
 /******************************************************************************/
 
 
+/* Get the counts used by the profile menu and open-session view.
+ *
+ * A household session is a distinct report in which at least one player is a
+ * user who belongs to any household the current user belongs to. The reporter
+ * is intentionally not part of that rule: a user who filed a report without
+ * playing in it did not take part in the session. Guest rows cannot join
+ * UserHousehold, so guest-only sessions are not household sessions. */
+export async function dbSessionStatus(ctx, userId) {
+  const lookup = await ctx.env.DB.prepare(`
+    WITH household_sessions AS (
+      SELECT DISTINCT report.id, report.sessionEnd
+        FROM SessionReport AS report
+        JOIN SessionReportPlayer AS player
+          ON player.sessionId = report.id
+        JOIN UserHousehold AS membership
+          ON membership.userId = player.userId
+       WHERE membership.householdId IN (
+               SELECT householdId
+                 FROM UserHousehold
+                WHERE userId = ?1
+             )
+    )
+    SELECT
+      (SELECT COUNT(*) FROM SessionReport) AS total,
+      (SELECT COUNT(*) FROM SessionReport WHERE sessionEnd IS NULL) AS open,
+      (SELECT COUNT(*) FROM household_sessions) AS householdSessions,
+      (SELECT COUNT(*) FROM household_sessions WHERE sessionEnd IS NULL) AS householdOpen
+  `).bind(userId).all();
+  const result = getDBResult('dbSessionStatus', 'count_sessions', lookup);
+  const counts = result[0] ?? {};
+
+  return {
+    total: Number(counts.total ?? 0),
+    open: Number(counts.open ?? 0),
+    householdSessions: Number(counts.householdSessions ?? 0),
+    householdOpen: Number(counts.householdOpen ?? 0)
+  };
+}
+
+
+/******************************************************************************/
+
+
 /* Get a shortened list of all of the session reports that are currently known
  * to the system, optionally filtering the list to only session reports that
  * record games where the games in the optional gameIdList are the main game or
  * expansions used in a session.
  *
- * The objects returned by this only contain the base information from the main
- * session table, and do not include the players, expansions, or results of the
- * game itself.
+ * The objects returned by this contain the base information from the main
+ * session table plus a compact player summary; they do not include expansions
+ * or results.
  *
  * Each session will contain information on the game to which it applies. */
-export async function dbSessionList(ctx, gameIdList, reverse) {
-  // Ensure that we got a gameId list input.
-  gameIdList ??= [];
+export async function dbSessionList(ctx, options = {}, legacyReverse = false) {
+  // Keep the old positional signature working for any caller that has not yet
+  // moved to the options object.
+  if (Array.isArray(options) === true) {
+    options = { gameIds: options, reverse: legacyReverse };
+  }
 
-  // If we got no flag for reversing, assume no reverse is desired.
-  reverse ??= false;
+  const {
+    gameIds: gameIdList = [],
+    reverse = false,
+    status = undefined
+  } = options;
 
   // Construct the possible sub-query we want to add if any gameId's were
   // provided as filter criteria.
@@ -561,11 +610,18 @@ export async function dbSessionList(ctx, gameIdList, reverse) {
        )
   `;
 
+  // Only add a status clause when the caller actually asked for one; an
+  // omitted status keeps the complete list behavior. A non-null end is the
+  // same definition of closed used by the details response.
+  const statusQuery = (status === 'open')
+    ? 'AND A.sessionEnd IS NULL'
+    : (status === 'closed')
+      ? 'AND A.sessionEnd IS NOT NULL'
+      : '';
+
   // Find all of the session reports that exist, OR all of the sessions that
   // mention the games in the provided filter list as either the main game or
   // one of the expansions.
-  //
-  // The filter only happens when a list of specific gameId's is provided.
   const lookup = await ctx.env.DB.prepare(`
     SELECT A.id,
            C.title,
@@ -577,21 +633,52 @@ export async function dbSessionList(ctx, gameIdList, reverse) {
            D.imagePath,
            A.sessionBegin,
            A.sessionEnd,
+           A.sessionEnd IS NULL AS isOpen,
            A.isLearning
       FROM SessionReport as A, GameName as B, SessionReportDetails as C, Game as D
      WHERE (A.gameId = B.gameId AND B.id = A.gameName)
        AND (D.id = A.gameId)
        AND (A.id = C.sessionId)
        ${(gameIdList.length === 0) ? '' : subQuery}
+       ${statusQuery}
      ${(reverse === false) ? '' : 'ORDER BY A.sessionBegin DESC'}
   `).all();
   const result = getDBResult('dbSessionList', 'find_session', lookup);
 
+  // Gather the players for all of the returned sessions in one query. The
+  // list is used by the open-session cards and is intentionally compact; the
+  // full player records (scores, flags and stable row IDs) stay on details.
+  const playerRows = new Map();
+  if (result.length > 0) {
+    const playerLookup = await ctx.env.DB.prepare(`
+      SELECT A.sessionId,
+             A.userId,
+             A.guestId,
+             COALESCE(U.displayName, G.displayName) AS name
+        FROM SessionReportPlayer AS A
+        LEFT JOIN User AS U ON U.id = A.userId
+        LEFT JOIN GuestUser AS G ON G.id = A.guestId
+       WHERE A.sessionId IN (SELECT value FROM json_each(?1))
+       ORDER BY A.sessionId, A.isReporter DESC, A.id
+    `).bind(JSON.stringify(result.map(session => session.id))).all();
+
+    for (const player of getDBResult('dbSessionList', 'find_players', playerLookup)) {
+      const entries = playerRows.get(player.sessionId) ?? [];
+      entries.push({
+        key: (player.userId !== null) ? `u:${player.userId}` : `g:${player.guestId}`,
+        name: player.name,
+        isUser: player.userId !== null
+      });
+      playerRows.set(player.sessionId, entries);
+    }
+  }
+
   // In each resulting object, convert all of the boolean fields to proper
-  // booleans for the return, and make sure that the image URL is properly
-  // mapped so that the page can view the image.
+  // booleans for the return, make sure that the image URL is properly mapped
+  // so that the page can view the image, and attach the compact player list.
   return result.map(session => {
     session.imagePath = imgGetAssetURL(ctx, session.imagePath, 'thumbnail');
+    session.players = playerRows.get(session.id) ?? [];
     return mapIntFieldsToBool(session);
   });
 }

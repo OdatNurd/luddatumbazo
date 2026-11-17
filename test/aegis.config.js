@@ -22,6 +22,7 @@ initializeRequestChecks();
 export const config = {
   files: [
     "test/auth/oidc.test.js",
+    "test/db/session.test.js",
     "test/schema/asset.test.js",
     "test/schema/bgg.test.js",
     "test/schema/collection.test.js",
@@ -34,7 +35,13 @@ export const config = {
     "test/schema/wishlist.test.js",
   ],
   hooks: {
-    setup: async (ctx) => aegisSetup(ctx),
+    setup: async (ctx) => aegisSetup(ctx, {
+      d1_databases: [{
+        binding: 'DB',
+        database_name: 'luddatumbazo-test',
+        database_id: 'luddatumbazo-test-id'
+      }]
+    }),
     teardown: async (ctx) => aegisTeardown(ctx),
   },
 

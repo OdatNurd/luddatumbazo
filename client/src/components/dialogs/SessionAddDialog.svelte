@@ -4,6 +4,7 @@
 
   import { api } from '$api';
   import { people } from '$stores/people';
+  import { sessionStatus } from '$stores/sessionStatus';
   import { foldText } from '$lib/text.js';
 
   import MarkdownContent from '$components/MarkdownContent.svelte';
@@ -606,6 +607,11 @@
         }
       }
 
+      // The profile shortcut and open-session counts are advisory, but a save
+      // is exactly the point at which they change. The status store records
+      // its own failure and resolves, so this cannot mask a successful save.
+      await sessionStatus.refresh();
+
       settle({ result });
     }
     catch (error) {
@@ -805,12 +811,14 @@
                   on:change={e => type(e.target, v => form.title = v)}></wa-input>
 
         <div class="content-editor">
+          <span class="content-label">Content</span>
+
           <wa-tab-group bind:this={contentTabs} on:wa-tab-show={contentShown}>
             <wa-tab slot="nav" panel="edit">Edit</wa-tab>
             <wa-tab slot="nav" panel="preview">Preview</wa-tab>
 
             <wa-tab-panel name="edit">
-              <wa-textarea label="Content" rows="10" value={form.content}
+              <wa-textarea class="wa-visually-hidden-label" label="Content" rows="8" value={form.content}
                            on:input={e => type(e.target, v => form.content = v)}
                            on:change={e => type(e.target, v => form.content = v)}></wa-textarea>
             </wa-tab-panel>
@@ -832,7 +840,7 @@
           </wa-button>
 
           <wa-popover for="content-help" class="help-popover"
-                      placement="bottom-end" distance="6"
+                      placement="left-start" distance="6"
                       on:wa-show={helpShown} on:wa-hide={helpHidden}>
             <div class="markdown-help">
               <div class="help-heading">
@@ -954,6 +962,32 @@
     padding: 6px;
   }
 
+  /* Both tab strips are secondary affordances here: the fields are the task,
+     and the dialog has a fixed height. Use smaller type and tighter padding so
+     the chrome leaves more room for the active panel. */
+  .session-dialog wa-tab {
+    font-size: var(--wa-font-size-s);
+  }
+
+  .session-dialog wa-tab::part(base) {
+    padding: 0.4rem 0.85rem;
+  }
+
+  .session-dialog .content-editor wa-tab {
+    font-size: var(--wa-font-size-xs);
+  }
+
+  .session-dialog .content-editor wa-tab::part(base) {
+    padding: 0.25rem 0.65rem;
+  }
+
+  /* Web Awesome gives panels 32px of vertical padding. That is generous for a
+     normal page but pushes the editor out of this height-constrained dialog,
+     so start the content close to the tab strip instead. */
+  .session-dialog > wa-tab-group > wa-tab-panel {
+    --padding: var(--wa-space-s) 0 var(--wa-space-s);
+  }
+
   /* The two date fields share a row as equal columns so that they line up
      regardless of their hints. */
   .date-row {
@@ -1000,20 +1034,69 @@
     border-radius: var(--wa-border-radius-s);
   }
 
-  /* The write-up editor keeps its tab strip and help button on one row, with
-     the Edit/Preview panels below. */
-  .content-editor {
+  /* The Details panel fills the space the dialog gives it, and the editor
+     inside it grows into whatever remains after the title field. This keeps
+     the textarea usefully tall without forcing the whole tab body to scroll. */
+  :global(.session-dialog > wa-tab-group > wa-tab-panel[name="details"][active]) {
+    box-sizing: border-box;
+    height: 100%;
     display: flex;
-    align-items: flex-start;
-    gap: 8px;
+    flex-direction: column;
+  }
+
+  :global(.session-dialog > wa-tab-group > wa-tab-panel[name="details"][active]::part(base)) {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.session-dialog > wa-tab-group > wa-tab-panel[name="details"][active] > .stack) {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  /* The write-up: the field label sits above the Edit/Preview tabs, so it
+     stays put when the panels swap and the content keeps its context. The
+     tabs and help button share the second row. */
+  .content-editor {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-rows: max-content minmax(0, 1fr);
+    column-gap: 8px;
+    row-gap: 4px;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .content-label {
+    grid-column: 1 / -1;
+    color: var(--wa-form-control-label-color);
+    font-weight: var(--wa-form-control-label-font-weight);
+    line-height: var(--wa-form-control-label-line-height);
   }
 
   .content-editor > wa-tab-group {
-    flex: 1 1 auto;
+    grid-column: 1;
+    grid-row: 2;
     min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .content-editor > wa-tab-group::part(base) {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .content-editor > wa-tab-group::part(body) {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
     padding: 0;
   }
 
@@ -1021,17 +1104,72 @@
     --padding: var(--wa-space-s) 0 0;
   }
 
-  .content-editor > wa-button {
-    flex: 0 0 auto;
+  :global(.content-editor wa-tab-panel[name="edit"][active]) {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
+  /* Both panels share the row with the help button, so the preview has to
+     grow like the editor; left to its content it would size to its text and
+     come out narrower than the field. */
+  :global(.content-editor wa-tab-panel[name="preview"][active]) {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.content-editor wa-tab-panel[name="preview"][active]::part(base)) {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.content-editor wa-tab-panel[name="edit"][active]::part(base)) {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.content-editor wa-tab-panel[name="edit"][active] wa-textarea) {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  :global(.content-editor wa-tab-panel[name="edit"][active] wa-textarea::part(base)) {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  :global(.content-editor wa-tab-panel[name="edit"][active] wa-textarea::part(textarea)) {
+    box-sizing: border-box;
+    height: 100%;
+  }
+
+  .content-editor > wa-button {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+  }
+
+  /* The preview is the report as the session page presents it, so it gets no
+     inset panel of its own: no padding, border or background. Its text then
+     starts and ends at the same edges as the editor above it, and it scrolls
+     in place rather than making the dialog scroll. */
   .content-preview {
     box-sizing: border-box;
-    min-height: 240px;
-    padding: 12px 14px;
-    border: 1px solid var(--wa-color-surface-border);
-    border-radius: var(--wa-border-radius-m);
-    background: var(--wa-color-surface-default);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
   }
 
   /* The cheat sheet is wider than the default popover and scrolls when the
