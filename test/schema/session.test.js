@@ -69,7 +69,6 @@ export default Collection`Session Schema Validation`({
       playType: 'cardboard',
       sessionBegin: new Date().toISOString(),
       isLearning: false,
-      reportingUser: 1,
       players: {
         users: [{ userId: 1 }],
         guests: []
@@ -115,6 +114,20 @@ export default Collection`Session Schema Validation`({
 
     await $check`should fail if sessionEnd is not a valid datetime`
       .value(schemaTest('json', UpdateSessionReportSchema, { sessionEnd: 'not-a-date' }, validateZod))
+      .isResponseWithStatus($, 400);
+
+    await $check`should accept player results by stable player id`
+      .value(schemaTest('json', UpdateSessionReportSchema, {
+        players: [{ playerId: 12, score: 42, isWinner: true, isStartingPlayer: false }]
+      }, validateZod))
+      .isObject()
+      .eq($.players[0].playerId, 12)
+      .eq($.players[0].score, 42);
+
+    await $check`should fail if a player result has no player id`
+      .value(schemaTest('json', UpdateSessionReportSchema, {
+        players: [{ score: 42 }]
+      }, validateZod))
       .isResponseWithStatus($, 400);
   },
 });

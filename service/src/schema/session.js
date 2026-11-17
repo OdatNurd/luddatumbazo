@@ -81,9 +81,6 @@ export const NewSessionReportSchema = z.object({
   // play, which skews results.
   isLearning: z.boolean(),
 
-  // The UserId of the user that is creating the session report.
-  reportingUser: z.number(),
-
   // The title of the session report, and the textual descriptive content.
   title: z.string().default(''),
   content: z.string().default(''),
@@ -151,6 +148,18 @@ export const UpdateSessionReportSchema = z.object({
   // The title of the session report, and the textual descriptive content.
   title: z.string().optional(),
   content: z.string().optional(),
+
+  // Results can be updated by stable player row id while the report is open
+  // (and by the reporter after it closes). The roster itself is immutable, so
+  // an update may only touch players already on this report.
+  players: z.array(
+    z.object({
+      playerId: z.number().int(),
+      isStartingPlayer: z.boolean().optional(),
+      score: z.number().optional(),
+      isWinner: z.boolean().optional(),
+    })
+  ).optional(),
 });
 
 

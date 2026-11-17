@@ -239,12 +239,20 @@ Table SessionReport {
   gameID INTEGER [not null, ref: > Game.id]
   gameName INTEGER [not null, ref: > GameName.id]
   playType session_play_type
-  loggingPlayerId INTEGER [not null, ref: > User.userId]
+
+  // The authenticated user who filed the report. This is nullable only for
+  // legacy rows from before the session reporting migration; new reports
+  // always set it. It is the source of truth for who may edit a closed report.
+  loggingPlayerId INTEGER [ref: > User.userId]
 
   sessionBegin TIME [default: 'now()']
   sessionEnd TIME [default: null]
 
   isLearning INTEGER [default: false]
+
+  indexes {
+    loggingPlayerId [name: 'idx_session_logging_player']
+  }
 
   Note: 'An entry for a specific session report'
 }
@@ -270,11 +278,13 @@ Table SessionReportPlayer {
   userId INTEGER [ref: > User.userId, note: 'is null when the record tracks a guest']
   guestId INTEGER [ref: > GuestUser.id, note: 'is null when the record tracks a user']
 
+  // Display/back-compat flag: true only when this player is also the session's
+  // loggingPlayerId. It is not the source of truth for ownership.
   isReporter INTEGER [default: false]
   isStartingPlayer INTEGER [default: false]
 
   score INTEGER [default: 0]
-  winner BOOLEAN [default: false]
+  isWinner BOOLEAN [default: false]
 
   Note: 'Tracks a specific player or user in a specific session report entry'
 }

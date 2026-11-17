@@ -13,6 +13,7 @@ import '@awesome.me/webawesome-pro/dist/components/avatar/avatar.js';
 import '@awesome.me/webawesome-pro/dist/components/badge/badge.js';
 import '@awesome.me/webawesome-pro/dist/components/card/card.js';
 import '@awesome.me/webawesome-pro/dist/components/dialog/dialog.js';
+import '@awesome.me/webawesome-pro/dist/components/popover/popover.js';
 import '@awesome.me/webawesome-pro/dist/components/drawer/drawer.js';
 import '@awesome.me/webawesome-pro/dist/components/select/select.js';
 import '@awesome.me/webawesome-pro/dist/components/option/option.js';

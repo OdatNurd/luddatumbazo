@@ -51,6 +51,12 @@ const baseOptions = (() => {
  * transmission or in the request as a whole will be handled by raising an error
  * for the outer code to handle as part of an error block in a load zone. */
 async function api_call(method, endpoint, body, options) {
+  // The exported API helpers spell methods in lower case. Browsers normalize
+  // the common ones, but not every method (PATCH in particular reaches the
+  // worker as lower case, which workerd rejects as unrecognized), so put the
+  // method in the form an HTTP request expects before building the call.
+  method = method.toUpperCase();
+
   console.log(method, endpoint, body ?? '', options ?? '');
 
   // If we got a body, trim away any fields that are undefined since they mess
@@ -68,14 +74,14 @@ async function api_call(method, endpoint, body, options) {
   // If there is a body, then set a content type header and convert the body
   // data into JSON.
   const headers = {};
-  if (body !== undefined && method !== 'get') {
+  if (body !== undefined && method !== 'GET') {
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify(body);
   }
 
   // If the method is GET and there is a body, this should be set as URL search
   // parameters instead.
-  if (method.toUpperCase() === 'GET' && body !== undefined) {
+  if (method === 'GET' && body !== undefined) {
     // Convert the body into a query string and then drop the body, or it will
     // end up being transmitted, which gets fetch() real mad.
     const params = new URLSearchParams(body);

@@ -24,9 +24,11 @@ export const $put = routeHandler(
   validateZod('json', NewSessionReportSchema),
 
   async (ctx) => {
-    // Pull in the body of the request, which will contain the data for setting up
-    // the session report.
+    // Pull in the body of the request, which will contain the data for setting
+    // up the session report. The reporter is always the authenticated user; it
+    // is never taken from the request body.
     const sessionData = ctx.req.valid('json');
+    sessionData.loggingPlayerId = ctx.get('userId');
 
     // Add the session and return the result.
     const result = await dbSessionInsert(ctx, sessionData);

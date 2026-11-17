@@ -89,6 +89,10 @@
   let logSessionOpen = false;
   let logSessionPreset = null;
 
+  // Remounts this game's session list after a report is logged so the new row
+  // appears without leaving the game page.
+  let sessionVersion = 0;
+
   const logSession = () => {
     logSessionPreset = {
       gameId: gameData.id,
@@ -99,6 +103,14 @@
     };
 
     logSessionOpen = true;
+  };
+
+  const logSessionClosed = detail => {
+    logSessionOpen = false;
+
+    if (detail?.result !== null && detail?.result !== undefined) {
+      sessionVersion += 1;
+    }
   };
 
   // Fetch the game details; if the current user has a primary household, then
@@ -415,7 +427,9 @@
                           onclick={logSession} />
             </div>
 
-            <SessionList loader={loadSessionData} pageSize={5} showGames={false} />
+            {#key sessionVersion}
+              <SessionList loader={loadSessionData} pageSize={5} showGames={false} />
+            {/key}
           </div>
         </wa-tab-panel>
       </wa-tab-group>
@@ -461,8 +475,10 @@
                          onclose={storageDialogResult} />
   {/if}
 
-  <SessionAddDialog open={logSessionOpen} preset={logSessionPreset}
-                    onclose={() => logSessionOpen = false} />
+  {#if logSessionOpen}
+    <SessionAddDialog open={true} preset={logSessionPreset}
+                      onclose={logSessionClosed} />
+  {/if}
 
   <svelte:fragment slot="error" let:error>
     {error}

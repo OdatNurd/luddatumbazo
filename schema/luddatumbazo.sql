@@ -406,6 +406,11 @@ CREATE TABLE SessionReport (
 
     playType TEXT CHECK(playType in ("cardboard", "boardgamearena", "steam", "gog", "android")),
 
+    -- The authenticated user who filed this report. Nullable only for legacy
+    -- rows from before the one-time session reporting migration; new reports
+    -- always set it.
+    loggingPlayerId INTEGER REFERENCES User(id),
+
     sessionBegin TIME NOT NULL,
     sessionEnd TIME DEFAULT(NULL),
 
@@ -413,6 +418,7 @@ CREATE TABLE SessionReport (
 );
 CREATE INDEX idx_session_game ON SessionReport(gameId);
 CREATE INDEX idx_session_game_names ON SessionReport(gameId, gameName);
+CREATE INDEX idx_session_logging_player ON SessionReport(loggingPlayerId);
 
 
 --------------------------------------------------------------------------------

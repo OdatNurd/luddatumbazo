@@ -22,8 +22,9 @@ export const $get = routeHandler(
     const { sessionId } = ctx.req.valid('param');
 
     // Look up the session; if we don't find one, then report that it does not
-    // exist.
-    const result = await dbSessionDetails(ctx, sessionId);
+    // exist. The current user is passed in so the result can say whether they
+    // may edit this report.
+    const result = await dbSessionDetails(ctx, sessionId, ctx.get('userId'));
     if (result === null) {
       return fail(ctx, `no such session ${sessionId}`, 404)
     }

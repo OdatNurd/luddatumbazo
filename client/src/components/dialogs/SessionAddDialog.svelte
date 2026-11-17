@@ -1,8 +1,13 @@
 <script>
+  import { tick } from 'svelte';
   import { DateTime, Interval } from 'luxon';
 
   import { api } from '$api';
+  import { people } from '$stores/people';
   import { foldText } from '$lib/text.js';
+
+  import MarkdownContent from '$components/MarkdownContent.svelte';
+  import Icon from '$components/Icon.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -22,10 +27,6 @@
 
   // ---------------------------------------------------------------------------
 
-  // This dialog is a work in progress: it lays out the shape of a session
-  // report (see NewSessionReportSchema on the service) but saving is not wired
-  // up yet, so the record cannot be created or changed from here.
-
   // Fired when the dialog closes; the detail is { result } where result is the
   // new or updated report on success or null on cancellation.
   export let onclose = undefined;
@@ -43,11 +44,13 @@
   // record to edit.
   $: editing = (session !== null && session !== undefined);
 
-  // A pristine form; the shape mirrors NewSessionReportSchema so that the
-  // eventual save is a straight object build. Players are held as the three
-  // pickers' selections plus the key of whoever started the game; the save
-  // collapses that into the users/guests player lists the schema wants.
-
+  // A pristine form. Players are split into the three picker selections;
+  // results are held separately by player key so that rows can be added and
+  // removed without rebuilding a results array.
+  //
+  // For edit mode, playerIds maps each key to the stable SessionReportPlayer
+  // row id the update API wants.
+  //
   // Player keys are 'u:<userId>', 'g:<guestId>' and 'n:<name>' for users, known
   // guests and newly named guests respectively.
   const blankForm = () => ({
@@ -55,7 +58,7 @@
     gameName: '',
     image: '',
     playType: 'cardboard',
-    sessionBegin: '',
+    sessionBegin: DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm"),
     sessionEnd: '',
     isLearning: false,
     title: '',
@@ -63,26 +66,92 @@
     users: [],
     guests: [],
     newGuests: [],
-    startingKey: null
+    startingKey: null,
+    playerIds: {},
+    results: {}
   });
 
   let form = blankForm();
 
-  // The reference lists used to populate the pickers, gathered when the dialog
-  // opens. These are read only queries -- nothing here ever writes.
+  // The reference game list used to populate the combobox. The people lists
+  // come from the shared store, which loads them once for the whole page.
   let games = [];
-  let users = [];
-  let knownGuests = [];
+
+  // UI state; loading covers the initial reference-data fetch, saving covers
+  // the create/update request, and warning holds a validation or API error.
+  let loading = false;
+  let saving = false;
+  let warning = null;
 
   // The game combobox element, so that its data source and displayed text can
   // be managed around the form state.
   let gameBox = null;
 
+  // The main tab group defaults to Game Info whenever the dialog is populated.
+  // The group is mounted while the dialog is hidden, so its own first-tab
+  // activation can miss and leave every panel hidden. Clear and then set the
+  // active panel after the form has rendered so the group's watcher runs.
+  let tabGroup = null;
+  const showInfoTab = async () => {
+    await tick();
+
+    if (tabGroup !== null) {
+      tabGroup.active = '';
+      await tick();
+      tabGroup.active = 'info';
+    }
+  };
+
+  // The Details panel has its own Edit/Preview tabs. It is mounted inside the
+  // hidden outer panel too, so it needs the same explicit activation when its
+  // parent tab is shown. The preview only renders while it is visible, which
+  // avoids parsing Markdown on every keystroke in the editor.
+  let contentTabs = null;
+  let contentTab = 'edit';
+
+  const contentShown = event => {
+    contentTab = event.detail.name;
+  };
+
+  const showContentTab = async name => {
+    await tick();
+
+    if (contentTabs !== null) {
+      contentTabs.active = '';
+      await tick();
+      contentTabs.active = name;
+    }
+  };
+
+  const outerTabShown = event => {
+    // The nested tab group's events bubble up here as well; only respond to
+    // the outer group's own tabs.
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
+    if (event.detail.name === 'details') {
+      showContentTab(contentTab);
+    }
+  };
+
+  // The Markdown cheat sheet popover is anchored to its help button.
+  let helpOpen = false;
+  const helpShown = () => { helpOpen = true; };
+  const helpHidden = () => { helpOpen = false; };
+
   // Ensure we only report a close once, no matter how the dialog goes away.
   let settled = false;
 
+  $: users = $people.users;
+  $: knownGuests = $people.guests;
+
   $: if (open === true) {
     settled = false;
+    saving = false;
+    warning = null;
+    contentTab = 'edit';
+    helpOpen = false;
   }
 
   const settle = detail => {
@@ -93,13 +162,24 @@
   };
 
   // Abort the dialog, returning back that no operation took place.
-  const abort = () => settle({ result: null });
+  const abort = () => {
+    if (saving === true) {
+      return;
+    }
+
+    settle({ result: null });
+  };
 
   // Close only when the dialog itself hides (escape, overlay click); the
   // selects inside of us emit hide events of their own when their dropdowns
   // close, and those bubble up here without meaning the dialog is going away.
   const dismissed = event => {
     if (event.target === event.currentTarget) {
+      if (saving === true) {
+        event.preventDefault();
+        return;
+      }
+
       abort();
     }
   };
@@ -139,22 +219,52 @@
   // arbitrary images a session report may support in the future).
   const gamePicked = event => {
     const value = event.target.value;
+    const game = games.find(entry => entry.id === Number(value));
+
     form.gameId = (value === '' || value === null) ? null : Number(value);
-    form.image = games.find(game => game.id === form.gameId)?.imagePath ?? '';
+    form.gameName = game?.name ?? '';
+    form.image = game?.imagePath ?? '';
   };
 
   // ---------------------------------------------------------------------------
 
+  // Trim and de-duplicate the newly named guests; a person's name is what
+  // identifies them, so repeating it in the tag input should not create two
+  // rows or two guest records.
+  $: newGuestNames = [...new Set(
+    form.newGuests.map(name => (name ?? '').trim()).filter(name => name !== '')
+  )];
+
   // The single player list that the pickers currently describe: known users,
-  // known guests and newly named guests, each keyed for the starting player
-  // selection.
+  // known guests and newly named guests, each keyed for results and for the
+  // starting player selection.
   const labelOf = (list, id, fallback) =>
-    list.find(entry => String(entry.id) === String(id))?.name ?? fallback;
+    list.find(entry => String(entry.id) === String(id))?.displayName ??
+    list.find(entry => String(entry.id) === String(id))?.name ??
+    fallback;
 
   $: playerRows = [
-    ...form.users.map(id => ({ key: `u:${id}`, label: labelOf(users, id, `user ${id}`) })),
-    ...form.guests.map(id => ({ key: `g:${id}`, label: labelOf(knownGuests, id, `guest ${id}`) })),
-    ...form.newGuests.map(name => ({ key: `n:${name}`, label: name }))
+    ...form.users.map(id => {
+      const key = `u:${id}`;
+      return {
+        key,
+        label: labelOf(users, id, `user ${id}`),
+        playerId: form.playerIds[key] ?? null
+      };
+    }),
+    ...form.guests.map(id => {
+      const key = `g:${id}`;
+      return {
+        key,
+        label: labelOf(knownGuests, id, `guest ${id}`),
+        playerId: form.playerIds[key] ?? null
+      };
+    }),
+    ...newGuestNames.map(name => ({
+      key: `n:${name}`,
+      label: name,
+      playerId: null
+    }))
   ];
 
   // The starting player is one of the chosen players. This derived value is
@@ -163,6 +273,17 @@
   // cleared back into the form, because a reactive statement that writes the
   // state it depends on (playerRows depends on form) is a reactive cycle.
   $: startingKey = playerRows.some(row => row.key === form.startingKey) ? form.startingKey : null;
+
+  // The results for a player; an untouched player has an empty score and has
+  // not been marked as the winner.
+  const resultOf = key => form.results[key] ?? { score: '', isWinner: false };
+
+  const setResult = (key, changes) => {
+    form.results = {
+      ...form.results,
+      [key]: { ...resultOf(key), ...changes }
+    };
+  };
 
   // ---------------------------------------------------------------------------
 
@@ -216,6 +337,7 @@
 
     for (const player of (record.players ?? [])) {
       const isUser = Boolean(player.isUser);
+      const key = `${isUser ? 'u' : 'g'}:${player.userId}`;
 
       if (isUser === true) {
         next.users.push(String(player.userId));
@@ -224,8 +346,14 @@
         next.guests.push(String(player.userId));
       }
 
+      next.playerIds[key] = player.playerId ?? null;
+      next.results[key] = {
+        score: (player.score === null || player.score === undefined) ? '' : String(player.score),
+        isWinner: player.isWinner === true
+      };
+
       if (player.isStartingPlayer === true) {
-        next.startingKey = `${isUser ? 'u' : 'g'}:${player.userId}`;
+        next.startingKey = key;
       }
     }
 
@@ -233,27 +361,51 @@
   };
 
   // Gather the reference lists, then populate the form for the mode we are
-  // opening in.
+  // opening in. Games are fetched per open; people are cached by the store.
+  let populateToken = 0;
+
   const populate = async () => {
-    [games, users, knownGuests] = await Promise.all([
-      api.game.list(),
-      api.user.list(),
-      api.guest.list()
-    ]);
+    const token = ++populateToken;
 
-    form = (editing === true) ? fromSession(session) : blankForm();
+    loading = true;
+    warning = null;
 
-    // A preset lays its starting values over the blank form in add mode.
-    if (editing !== true && preset !== null && preset !== undefined) {
-      Object.assign(form, preset);
+    try {
+      const [gameList] = await Promise.all([
+        api.game.list(),
+        people.ensure()
+      ]);
+
+      if (token !== populateToken) {
+        return;
+      }
+
+      games = gameList;
+      form = (editing === true) ? fromSession(session) : blankForm();
+
+      // A preset lays its starting values over the blank form in add mode.
+      if (editing !== true && preset !== null && preset !== undefined) {
+        Object.assign(form, preset);
+      }
+
+      // The combobox shows the picked game's name; in add mode it starts empty
+      // (unless a preset supplied the game) and the value only lands once the
+      // user picks something.
+      if (gameBox !== null) {
+        gameBox.value = (form.gameId === null) ? '' : String(form.gameId);
+        gameBox.inputValue = form.gameName ?? '';
+      }
     }
-
-    // The combobox shows the picked game's name; in add mode it starts empty
-    // (unless a preset supplied the game) and the value only lands once the
-    // user picks something.
-    if (gameBox !== null) {
-      gameBox.value = (form.gameId === null) ? '' : String(form.gameId);
-      gameBox.inputValue = form.gameName ?? '';
+    catch (error) {
+      if (token === populateToken) {
+        warning = error.message ?? 'unable to load the session form';
+      }
+    }
+    finally {
+      if (token === populateToken) {
+        loading = false;
+        await showInfoTab();
+      }
     }
   };
 
@@ -267,6 +419,214 @@
       populate();
     }
   }
+
+  // ---------------------------------------------------------------------------
+
+  // Split a guest name into the first/last fields the guest schema wants. A
+  // single word is a first name with an empty last name; everything before the
+  // last word becomes the first name. This mirrors how a person's name is
+  // normally written in the household.
+  const splitGuestName = name => {
+    const parts = name.trim().split(/\s+/).filter(part => part !== '');
+
+    if (parts.length === 0) {
+      return { firstName: '', lastName: '' };
+    }
+
+    if (parts.length === 1) {
+      return { firstName: parts[0], lastName: '' };
+    }
+
+    return {
+      firstName: parts.slice(0, -1).join(' '),
+      lastName: parts[parts.length - 1]
+    };
+  };
+
+  // Convert a local datetime-local value to the UTC ISO string the API schema
+  // accepts. Returns null for a blank or invalid value.
+  const toISO = value => {
+    const dt = DateTime.fromISO(value);
+    return dt.isValid ? dt.toUTC().toISO() : null;
+  };
+
+  // Validate the form, collecting the begin/end values that a save needs.
+  const validate = () => {
+    if (form.gameId === null || form.gameId === undefined) {
+      return { error: 'Choose a game before saving.' };
+    }
+
+    const begin = toISO(form.sessionBegin);
+    if (begin === null) {
+      return { error: 'Enter a valid session begin time.' };
+    }
+
+    let end = null;
+    if ((form.sessionEnd ?? '').trim() !== '') {
+      end = toISO(form.sessionEnd);
+      if (end === null) {
+        return { error: 'Enter a valid session end time, or leave it blank.' };
+      }
+
+      if (DateTime.fromISO(end) < DateTime.fromISO(begin)) {
+        return { error: 'The session end must not be before it begins.' };
+      }
+    }
+
+    if (playerRows.length === 0) {
+      return { error: 'Choose at least one player.' };
+    }
+
+    for (const row of playerRows) {
+      const score = resultOf(row.key).score;
+      if (String(score ?? '').trim() !== '' && Number.isFinite(Number(score)) === false) {
+        return { error: `Enter a numeric score for ${row.label}.` };
+      }
+
+      if (editing === true && row.playerId === null) {
+        return { error: `Unable to identify the saved player row for ${row.label}.` };
+      }
+    }
+
+    return { begin, end };
+  };
+
+  // Build the player records shared by both the create and update payloads.
+  const buildPlayers = () => {
+    const starting = startingKey;
+    const resultFor = key => {
+      const result = resultOf(key);
+      return {
+        isStartingPlayer: key === starting,
+        score: String(result.score ?? '').trim() === '' ? 0 : Number(result.score),
+        isWinner: result.isWinner === true
+      };
+    };
+
+    const users = form.users.map(id => ({
+      userId: Number(id),
+      ...resultFor(`u:${id}`)
+    }));
+
+    const guests = form.guests.map(id => {
+      const key = `g:${id}`;
+      const known = knownGuests.find(entry => String(entry.id) === String(id));
+      const existing = (editing === true)
+        ? (session.players ?? []).find(player => player.isUser === false &&
+                                                    String(player.userId) === String(id))
+        : null;
+
+      const names = (known !== null && known !== undefined)
+        ? { firstName: known.firstName, lastName: known.lastName }
+        : splitGuestName(existing?.name ?? '');
+
+      return {
+        ...names,
+        ...resultFor(key)
+      };
+    });
+
+    for (const name of newGuestNames) {
+      guests.push({
+        ...splitGuestName(name),
+        ...resultFor(`n:${name}`)
+      });
+    }
+
+    return { users, guests };
+  };
+
+  // Set the end field to now without saving. The user can adjust the time (or
+  // anything else) before pressing Save; an ordinary save with a blank end
+  // leaves the session open.
+  const finishSession = () => {
+    form.sessionEnd = DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm");
+    warning = null;
+  };
+
+  // Save the report. Add mode creates a new one; edit mode PATCHes only the
+  // editable fields, including results and the starting player.
+  const save = async () => {
+    if (saving === true || loading === true) {
+      return;
+    }
+
+    const checked = validate();
+    if (checked.error !== undefined) {
+      warning = checked.error;
+      return;
+    }
+
+    saving = true;
+    warning = null;
+
+    try {
+      let result;
+
+      if (editing === true) {
+        const players = playerRows.map(row => ({
+          playerId: row.playerId,
+          ...resultOf(row.key),
+          score: String(resultOf(row.key).score ?? '').trim() === ''
+            ? 0
+            : Number(resultOf(row.key).score),
+          isStartingPlayer: row.key === startingKey
+        }));
+
+        result = await api.session.update(session.sessionId ?? session.id, {
+          sessionEnd: checked.end,
+          isLearning: form.isLearning,
+          title: form.title,
+          content: form.content,
+          players
+        });
+      }
+      else {
+        result = await api.session.add({
+          gameId: form.gameId,
+          playType: form.playType,
+          sessionBegin: checked.begin,
+          sessionEnd: checked.end,
+          isLearning: form.isLearning,
+          title: form.title,
+          content: form.content,
+          players: buildPlayers()
+        });
+      }
+
+      // Creating a report may have added guests; refresh the shared list so
+      // they can be picked immediately next time. A failed refresh must not
+      // turn a successful save into an apparent failure, so it is contained.
+      if (editing === false && newGuestNames.length > 0) {
+        try {
+          await people.refresh();
+        }
+        catch {
+          // The people store already records the error for a later retry.
+        }
+      }
+
+      settle({ result });
+    }
+    catch (error) {
+      warning = error.message ?? 'unable to save the session report';
+    }
+    finally {
+      saving = false;
+    }
+  };
+
+  // Whether this report is currently open. The details response carries isOpen;
+  // the fallback also handles a raw record whose end is null.
+  $: sessionIsOpen = editing === true &&
+    (session.isOpen === true || session.sessionEnd === null || session.sessionEnd === undefined);
+
+  // A blank title is filled by the server with "Play of <game name>". Show that
+  // default while adding so the result of leaving the field empty is clear; an
+  // existing report keeps whatever title it already has.
+  $: titlePlaceholder = editing === true
+    ? undefined
+    : (form.gameName === '' ? 'Play of …' : `Play of ${form.gameName}`);
 </script>
 
 <wa-dialog class="session-dialog" {open}
@@ -279,12 +639,17 @@
        front, where every tab can see it. -->
   {#if editing}
     <div class="edit-note">
-      Only the end time, learning flag, title and content can be changed; the
-      game, players and start time are fixed once a report is filed.
+      Only the end time, learning flag, starting player, results, title and
+      content can be changed; the game, players and start time are fixed once
+      a report is filed.
     </div>
   {/if}
 
-  <wa-tab-group>
+  {#if warning !== null}
+    <wa-callout variant="warning">{warning}</wa-callout>
+  {/if}
+
+  <wa-tab-group bind:this={tabGroup} on:wa-tab-show={outerTabShown}>
     <wa-tab slot="nav" panel="info">Game Info</wa-tab>
     <wa-tab slot="nav" panel="play">Play Info</wa-tab>
     <wa-tab slot="nav" panel="details">Details</wa-tab>
@@ -353,7 +718,8 @@
 
         <!-- The note spans the full width under both date fields. -->
         <div class="date-note">
-          A session with no end date is treated as ongoing.
+          A session with no end date is treated as ongoing. Entering an end
+          date closes it; clearing the end date reopens it.
         </div>
 
         <wa-divider></wa-divider>
@@ -393,40 +759,151 @@
         <!-- Who took the first turn; the schema's per player isStartingPlayer
              flag is what this collapses down to at save time. -->
         <wa-select label="Starting player" value={startingKey ?? ''}
-                   placeholder="Not recorded" disabled={editing}
+                   placeholder="Not recorded"
                    on:input={e => form.startingKey = (e.target.value === '') ? null : e.target.value}
                    on:change={e => form.startingKey = (e.target.value === '') ? null : e.target.value}>
           {#each playerRows as row (row.key)}
             <wa-option value={row.key}>{row.label}</wa-option>
           {/each}
         </wa-select>
+
+        {#if playerRows.length > 0}
+          <wa-divider></wa-divider>
+
+          <strong>Results</strong>
+          <div class="muted">
+            Scores and winners can be changed on every save, including after
+            the session is closed.
+          </div>
+
+          <div class="result-list">
+            {#each playerRows as row (row.key)}
+              <div class="result-row">
+                <div class="result-name">{row.label}</div>
+
+                <wa-input type="number" label="Score" class="result-score"
+                          value={resultOf(row.key).score}
+                          on:input={e => setResult(row.key, { score: e.target.value })}
+                          on:change={e => setResult(row.key, { score: e.target.value })}></wa-input>
+
+                <wa-switch checked={resultOf(row.key).isWinner}
+                           on:change={e => setResult(row.key, { isWinner: e.target.checked })}>
+                  Winner
+                </wa-switch>
+              </div>
+            {/each}
+          </div>
+        {/if}
       </div>
     </wa-tab-panel>
 
     <!-- The write up: what happened at the table. -->
     <wa-tab-panel name="details">
       <div class="stack">
-        <wa-input label="Title" value={form.title}
+        <wa-input label="Title" value={form.title} placeholder={titlePlaceholder}
                   on:input={e => type(e.target, v => form.title = v)}
                   on:change={e => type(e.target, v => form.title = v)}></wa-input>
 
-        <wa-textarea label="Content" rows="10" value={form.content}
-                     on:input={e => type(e.target, v => form.content = v)}
-                     on:change={e => type(e.target, v => form.content = v)}></wa-textarea>
+        <div class="content-editor">
+          <wa-tab-group bind:this={contentTabs} on:wa-tab-show={contentShown}>
+            <wa-tab slot="nav" panel="edit">Edit</wa-tab>
+            <wa-tab slot="nav" panel="preview">Preview</wa-tab>
+
+            <wa-tab-panel name="edit">
+              <wa-textarea label="Content" rows="10" value={form.content}
+                           on:input={e => type(e.target, v => form.content = v)}
+                           on:change={e => type(e.target, v => form.content = v)}></wa-textarea>
+            </wa-tab-panel>
+
+            <wa-tab-panel name="preview">
+              <div class="content-preview">
+                {#if contentTab === 'preview'}
+                  <MarkdownContent content={form.content}
+                                   empty="Nothing to preview yet. Add some text in the Edit tab." />
+                {/if}
+              </div>
+            </wa-tab-panel>
+          </wa-tab-group>
+
+          <wa-button id="content-help" appearance="plain" title="Markdown help"
+                     aria-label="Markdown help" aria-haspopup="dialog"
+                     aria-expanded={helpOpen}>
+            <Icon name="question-circle-fill" />
+          </wa-button>
+
+          <wa-popover for="content-help" class="help-popover"
+                      placement="bottom-end" distance="6"
+                      on:wa-show={helpShown} on:wa-hide={helpHidden}>
+            <div class="markdown-help">
+              <div class="help-heading">
+                <strong>Markdown cheat sheet</strong>
+                <span class="muted">The Preview tab shows the formatted result.</span>
+              </div>
+
+              <div class="help-section">
+                <strong>Formatting</strong>
+                <dl class="help-list">
+                  <dt><code>## Heading</code></dt><dd>Section heading</dd>
+                  <dt><code>**bold**</code></dt><dd>Bold text</dd>
+                  <dt><code>*italic*</code></dt><dd>Italic text</dd>
+                  <dt><code>- item</code></dt><dd>Bulleted list</dd>
+                  <dt><code>1. item</code></dt><dd>Numbered list</dd>
+                  <dt><code>&gt; quote</code></dt><dd>Block quote</dd>
+                  <dt><code>`code`</code></dt><dd>Inline code</dd>
+                </dl>
+              </div>
+
+              <div class="help-section">
+                <strong>Links</strong>
+
+                <div class="help-example">
+                  <code>[Ark Nova](#/game/ark-nova)</code>
+                  <span>Link to a game page</span>
+                </div>
+
+                <div class="help-example">
+                  <code>[This session](#/session/123)</code>
+                  <span>Link to a session report</span>
+                </div>
+
+                <div class="help-example">
+                  <code>[External site](https://example.com)</code>
+                  <span>Link outside the app</span>
+                </div>
+
+                <div class="muted help-note">
+                  Game links use the slug after <code>#/game/</code>; session
+                  links use the numeric session ID. External links open in a
+                  new tab.
+                </div>
+              </div>
+
+              <div class="muted help-note">
+                Leave a blank line between paragraphs. Images are not supported.
+              </div>
+            </div>
+          </wa-popover>
+        </div>
       </div>
     </wa-tab-panel>
   </wa-tab-group>
 
   <div slot="footer" class="edit-actions">
-    <wa-callout variant="warning" class="wip">
-      Work in progress -- saving is not implemented yet.
-    </wa-callout>
-
     <div class="row">
       <!-- wa-button wraps a real <button>; the a11y warnings are false positives. -->
       <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-      <wa-button appearance="outlined" variant="neutral" on:click={abort}>Cancel</wa-button>
-      <wa-button appearance="filled" variant="brand" disabled>
+      <wa-button appearance="outlined" variant="neutral" on:click={abort}
+                 disabled={saving}>Cancel</wa-button>
+
+      {#if sessionIsOpen}
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+        <wa-button appearance="outlined" variant="brand" on:click={finishSession}
+                   disabled={saving}>Finish Session</wa-button>
+      {/if}
+
+      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+      <wa-button appearance="filled" variant="brand" on:click={save}
+                 loading={saving} disabled={saving || loading}>
         {editing ? 'Save Changes' : 'Add Session Report'}
       </wa-button>
     </div>
@@ -457,16 +934,16 @@
     overflow: hidden;
   }
 
-  .session-dialog wa-tab-group,
-  .session-dialog wa-tab-group::part(base) {
+  .session-dialog > wa-tab-group,
+  .session-dialog > wa-tab-group::part(base) {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
   }
 
-  /* The one scroll bar: the tab panels' content area. */
-  .session-dialog wa-tab-group::part(body) {
+  /* The one scroll bar: the outer tab panels' content area. */
+  .session-dialog > wa-tab-group::part(body) {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -523,24 +1000,135 @@
     border-radius: var(--wa-border-radius-s);
   }
 
+  /* The write-up editor keeps its tab strip and help button on one row, with
+     the Edit/Preview panels below. */
+  .content-editor {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .content-editor > wa-tab-group {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .content-editor > wa-tab-group::part(body) {
+    padding: 0;
+  }
+
+  .content-editor wa-tab-panel {
+    --padding: var(--wa-space-s) 0 0;
+  }
+
+  .content-editor > wa-button {
+    flex: 0 0 auto;
+  }
+
+  .content-preview {
+    box-sizing: border-box;
+    min-height: 240px;
+    padding: 12px 14px;
+    border: 1px solid var(--wa-color-surface-border);
+    border-radius: var(--wa-border-radius-m);
+    background: var(--wa-color-surface-default);
+  }
+
+  /* The cheat sheet is wider than the default popover and scrolls when the
+     viewport is short. */
+  .help-popover {
+    --max-width: 30rem;
+  }
+
+  .help-popover::part(body) {
+    width: min(30rem, 82vw);
+    max-height: min(70vh, 34rem);
+    overflow-y: auto;
+  }
+
+  .markdown-help {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: var(--wa-font-size-s);
+  }
+
+  .help-heading,
+  .help-section,
+  .help-example {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .help-heading {
+    gap: 2px;
+  }
+
+  .help-list {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 4px 12px;
+    margin: 0;
+  }
+
+  .help-list dt,
+  .help-list dd {
+    margin: 0;
+  }
+
+  .help-list code,
+  .help-example code,
+  .help-note code {
+    padding: 1px 5px;
+    border-radius: var(--wa-border-radius-s);
+    background: var(--wa-color-surface-lowered);
+    font-family: var(--wa-font-family-code, monospace);
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+  }
+
+  .help-example code {
+    display: block;
+    padding: 4px 6px;
+  }
+
+  .help-note {
+    line-height: 1.45;
+  }
+
   .stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 12px;
   }
 
+  /* One result per player: name, score and winner switch. */
+  .result-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .result-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) 120px max-content;
+    align-items: end;
+    gap: 12px;
+  }
+
+  .result-name {
+    padding-bottom: 10px;
+    font-weight: var(--wa-font-weight-semibold);
+    overflow-wrap: anywhere;
+  }
+
   .edit-actions {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 16px;
     width: 100%;
     flex-wrap: wrap;
-  }
-
-  /* The WIP admonition stays out of the way of the buttons themselves. */
-  .edit-actions .wip {
-    flex: 1 1 220px;
-    font-size: var(--wa-font-size-s);
   }
 </style>

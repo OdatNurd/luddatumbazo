@@ -10,6 +10,7 @@
   import IconButton from '$components/IconButton.svelte';
   import BGGLink from '$components/links/BGGLink.svelte';
   import GameImage from '$components/GameImage.svelte';
+  import MarkdownContent from '$components/MarkdownContent.svelte';
   import SessionAddDialog from '$components/dialogs/SessionAddDialog.svelte';
 
   import * as cells from '$lib/cells.js';
@@ -35,9 +36,11 @@
   let title = routeInfo.params.id;
 
   // The loaded session report, kept so that the edit dialog can be populated
-  // from it, and the state of that dialog.
+  // from it, and the state of that dialog. The dialog may be editing the report
+  // or finishing it with the end time prefilled to now.
   let loaded = null;
   let editOpen = false;
+  let editSession = null;
 
   // Using the props that we were given, generate out the kinds of links that
   // the table needs to generate internal links to the data that it contains.
@@ -54,15 +57,18 @@
     loaded = result;
 
     // Convert the incoming session begin and end into DateTime for easier
-    // handling.
+    // handling. An open session has no end, so it has no duration either.
     const begin = DateTime.fromISO(result.sessionBegin);
-    const end   = DateTime.fromISO(result.sessionEnd);
+    const end   = result.sessionEnd === null ? null : DateTime.fromISO(result.sessionEnd);
 
-    // Calculate the duration; we want this to be in minutes unless the game
-    // look at least an hour
-    let duration = Interval.fromDateTimes(begin, end).toDuration(['minutes']);
-    if (duration.minutes > 60) {
-      duration = duration.shiftTo('hours', 'minutes');
+    let duration = null;
+    if (end !== null) {
+      // Calculate the duration; we want this to be in minutes unless the game
+      // took at least an hour.
+      duration = Interval.fromDateTimes(begin, end).toDuration(['minutes']);
+      if (duration.minutes > 60) {
+        duration = duration.shiftTo('hours', 'minutes');
+      }
     }
 
     // Store back now
@@ -71,6 +77,33 @@
     result.sessionDuration = duration;
 
     return result;
+  };
+
+  // The load zone watches this promise; replacing it reloads the report after
+  // an edit (or a finish) without rebuilding the whole page.
+  let detailsSource = loadData();
+  const reload = () => {
+    detailsSource = loadData();
+  };
+
+  // Open the dialog for an ordinary edit, or for finishing an open session with
+  // its end prefilled to now. Nothing is saved until the dialog is saved.
+  const editReport = () => {
+    editSession = loaded;
+    editOpen = true;
+  };
+
+  const finishReport = () => {
+    editSession = { ...loaded, sessionEnd: new Date().toISOString() };
+    editOpen = true;
+  };
+
+  const editClosed = detail => {
+    editOpen = false;
+
+    if (detail?.result !== null && detail?.result !== undefined) {
+      reload();
+    }
   };
 
   // The columns of the players grid; the flag and trophy glyph columns mark the
@@ -176,22 +209,39 @@
   {#if slug !== 'unknown'}
     <div class="title-row">
       <h3>{title}</h3>
-      <IconButton variant="brand" appearance="filled" title="Edit this session report"
-                  caption="" icon="pencil-fill"
-                  onclick={() => editOpen = true} />
+
+      {#if loaded?.canEdit === true}
+        <div class="row">
+          {#if loaded.isOpen === true}
+            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+            <wa-button appearance="filled" variant="brand" on:click={finishReport}>
+              Finish Session
+            </wa-button>
+          {/if}
+
+          <IconButton variant="brand" appearance="filled" title="Edit this session report"
+                      caption="" icon="pencil-fill"
+                      onclick={editReport} />
+        </div>
+      {:else if loaded !== null}
+        <span class="muted">
+          {#if loaded.isOpen === true}
+            Only session participants or its reporter can edit this open report.
+          {:else}
+            Only the reporter can edit this closed report.
+          {/if}
+        </span>
+      {/if}
     </div>
   {/if}
 </div>
 
-<LoadZone source={loadData()} let:result>
+<LoadZone source={detailsSource} let:result>
   <div class="stack">
     <div class="session-summary">
-      <GameImage imagePath={result.imagePath} name={result.name} />        
+      <GameImage imagePath={result.imagePath} name={result.name} />
         <div class="session-content">
-          <!-- The stored write-up is trusted content (household database)
-               rendered as HTML by design. -->
-          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-          {@html result.content}
+          <MarkdownContent content={result.content} />
         </div>
     </div>
 
@@ -200,14 +250,28 @@
         <wa-badge variant="warning">Learning Game!</wa-badge>
       {/if}
       <wa-badge variant="brand">{server.gameTypeName(result.playType)}</wa-badge>
-      <wa-badge variant="neutral">
-        Played {result.sessionBegin.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)}
-        @
-        {result.sessionBegin.toLocaleString(DateTime.TIME_SIMPLE)}
-        &#x276F;
-        {result.sessionEnd.toLocaleString(DateTime.TIME_SIMPLE)}
-        ({result.sessionDuration.toHuman({'unitDisplay': 'short'})})
-      </wa-badge>
+
+      {#if result.isOpen === true}
+        <wa-badge variant="warning">In progress</wa-badge>
+        <wa-badge variant="neutral">
+          Started {result.sessionBegin.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)}
+          @
+          {result.sessionBegin.toLocaleString(DateTime.TIME_SIMPLE)}
+        </wa-badge>
+      {:else}
+        <wa-badge variant="neutral">
+          Played {result.sessionBegin.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)}
+          @
+          {result.sessionBegin.toLocaleString(DateTime.TIME_SIMPLE)}
+          &#x276F;
+          {result.sessionEnd.toLocaleString(DateTime.TIME_SIMPLE)}
+          ({result.sessionDuration.toHuman({'unitDisplay': 'short'})})
+        </wa-badge>
+      {/if}
+
+      {#if result.reporterName !== null && result.reporterName !== undefined}
+        <wa-badge variant="neutral">Logged by {result.reporterName}</wa-badge>
+      {/if}
     </div>
 
     <h4>Players</h4>
@@ -224,7 +288,9 @@
   </svelte:fragment>
 </LoadZone>
 
-<SessionAddDialog open={editOpen} session={loaded} onclose={() => editOpen = false} />
+{#if editOpen}
+  <SessionAddDialog open={true} session={editSession} onclose={editClosed} />
+{/if}
 
 <style>
   h3 {
@@ -248,6 +314,7 @@
   }
 
   .session-content {
+    min-width: 0;
     padding-left: 12px;
     border-left: 1.5px solid var(--wa-color-surface-border);
   }

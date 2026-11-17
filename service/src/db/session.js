@@ -22,12 +22,14 @@ const int = val => val === true ? 1 : 0;
 
 
 /* Given a validated session data object, verify that all of the players that
- * reference users in the system are valid, including the record of the user
- * that is reporting on the session itself.
+ * reference users in the system are valid.
  *
  * This will find the distinct list of users and verify that they all exist,
  * patching the data found into the session data player user list within the
  * object itself.
+ *
+ * The reporter is stored on the session itself and does not have to be a
+ * player, so it is validated by the insert's foreign key rather than here.
  *
  * If there are any issues, an exception is raised. */
 async function validateSessionUsers(ctx, sessionData) {
@@ -49,12 +51,6 @@ async function validateSessionUsers(ctx, sessionData) {
     return accum;
   }, {});
 
-  // In order to be valid, the recordingUser has to have an id in the player ID
-  // list.
-  if (playerUserMap[sessionData.reportingUser] === undefined) {
-    throw new Error(`invalid reporting user: user ${sessionData.reportingUser} is not a player`);
-  }
-
   // Map through the list of input users, and for each one insert the name that
   // we got from the lookup; if we find any entries that don't appear in the
   // lookup list, then we know that the user does not exist, so generate an
@@ -66,7 +62,7 @@ async function validateSessionUsers(ctx, sessionData) {
     }
 
     user.isUser = true;
-    user.isReporter = (user.userId === sessionData.reportingUser);
+    user.isReporter = (user.userId === sessionData.loggingPlayerId);
     user.name = record.displayName;
     return user;
   });
@@ -190,9 +186,10 @@ function reshapeSessionInput(sessionId, sessionData) {
   // be rejoined.
   sessionData.players = [...sessionData.players.users, ...sessionData.players.guests];
 
-  // Remove the reportingPlayer field; not needed since it's inlined into the
-  // users.
-  delete sessionData.reportingUser;
+  // Add the state that the details response always carries. The creator is the
+  // reporter, so can always edit the report they just made.
+  sessionData.isOpen = sessionData.sessionEnd === null;
+  sessionData.canEdit = true;
 
   return sessionData;
 }
@@ -224,10 +221,11 @@ async function insertSessionDetails(ctx, session) {
 
     // Insert the core SessionReport record into the session table
     ctx.env.DB.prepare(`
-      INSERT INTO SessionReport (gameId, gameName, playType, sessionBegin, sessionEnd, isLearning)
-          VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-    `).bind(session.gameId, session.nameId, session.playType, session.sessionBegin,
-            session.sessionEnd, int(session.isLearning)),
+      INSERT INTO SessionReport
+        (gameId, gameName, playType, loggingPlayerId, sessionBegin, sessionEnd, isLearning)
+          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+    `).bind(session.gameId, session.nameId, session.playType, session.loggingPlayerId,
+            session.sessionBegin, session.sessionEnd, int(session.isLearning)),
 
     //-----------
 
@@ -301,63 +299,54 @@ async function insertSessionDetails(ctx, session) {
  * On any validation error, an exception is thrown. Otherwise, the return value
  * is a modified version of the sessionData passed in. */
 function prepareSessionUpdate(sessionData, updateData) {
-  // The update is allowed to touch only a few of the core values; if any of
-  // them were not provided, use the value from the session data we just looked
-  // up.
-  //
-  updateData.isLearning ??= sessionData.isLearning;
-  updateData.sessionEnd ??= sessionData.sessionEnd;
-  updateData.title ??= sessionData.title;
-  updateData.content ??= sessionData.content;
-
-  // Get a user or guest record from the provided update data, delete it and
-  // return it back. If it's not found, return null instead.
-  const getSessionUser = (userId, isUser) => {
-    // Determine which array to search, then try to find the record for that
-    // user; if we don't find it, return null.
-    const content = updateData.players[(isUser === true) ? 'users' : 'guests'];
-    const userIdx = content.findIndex(player => player.userId == userId);
-    if (userIdx === -1) {
-      return null;
-    }
-
-    // Pull out the record and then delete it from the array
-    return content.splice(userIdx, 1)[0];
+  // Only fields that were actually provided are changed. In particular, a null
+  // sessionEnd is an explicit request to reopen the session, so it must be
+  // distinguished from a missing sessionEnd.
+  if (updateData.isLearning !== undefined) {
+    sessionData.isLearning = updateData.isLearning;
+  }
+  if (updateData.sessionEnd !== undefined) {
+    sessionData.sessionEnd = updateData.sessionEnd;
+  }
+  if (updateData.title !== undefined) {
+    sessionData.title = updateData.title;
+  }
+  if (updateData.content !== undefined) {
+    sessionData.content = updateData.content;
   }
 
-  // Apply our updates; the top level fields in the update data are what we
-  // want to populate into the session object as a whole.
-  sessionData.isLearning = updateData.isLearning;
-  sessionData.sessionEnd = updateData.sessionEnd;
-  sessionData.title = updateData.title;
-  sessionData.content = updateData.content;
-
-  // If the update doesn't contain and player data, there's nothing else to
+  // If the update doesn't contain any player data, there's nothing else to
   // update so short circuit the return now.
   if (updateData.players === undefined) {
     return sessionData;
   }
 
-  // Iterate over all of the players in the session data, and try to update them
-  // from the data in the update; for each one we will delete the entry from
-  // the update as we consume it. If we can't find the user, then this is
-  // not valid.
-  for (const player of sessionData.players) {
-    const update = getSessionUser(player.userId, player.isUser);
-    if (update === null) {
-      throw new Error(`update data has no ${player.isUser ? 'user' : 'guest'} with id ${player.userId}`)
+  // Results are matched by the stable SessionReportPlayer row id, not the user
+  // or guest id. That keeps them unambiguous even if a roster ever contains a
+  // user and a guest with the same numeric id.
+  const playersById = new Map(sessionData.players.map(player => [player.playerId, player]));
+  const seen = new Set();
+
+  for (const update of updateData.players) {
+    if (seen.has(update.playerId) === true) {
+      throw new Error(`duplicate update for player ${update.playerId}`);
+    }
+    seen.add(update.playerId);
+
+    const player = playersById.get(update.playerId);
+    if (player === undefined) {
+      throw new Error(`session has no player ${update.playerId}`);
     }
 
-    // Update the player now
-    player.isStartingPlayer = update.isStartingPlayer ?? player.isStartingPlayer;
-    player.isWinner = update.isWinner ?? player.isWinner;
-    player.score = update.score ?? player.score;
-  }
-
-  // The list of users and guests in the update must now be 0, or we got more
-  // update data than there were players, which we do not support.
-  if (updateData.players.users.length !== 0 || updateData.players.guests.length !== 0) {
-    throw new Error(`session update data has too many player records to update this session`);
+    if (update.isStartingPlayer !== undefined) {
+      player.isStartingPlayer = update.isStartingPlayer;
+    }
+    if (update.score !== undefined) {
+      player.score = update.score;
+    }
+    if (update.isWinner !== undefined) {
+      player.isWinner = update.isWinner;
+    }
   }
 
   return sessionData;
@@ -481,11 +470,11 @@ export async function dbSessionInsert(ctx, sessionData) {
  * The return value of this mimics the return for a request on details for this
  * session, including returning null if the session does not exist. Note however
  * that the returned details will be the updated ones. */
-export async function dbSessionUpdate(ctx, sessionId, updateData) {
+export async function dbSessionUpdate(ctx, sessionId, updateData, actorId) {
   // Use the provided data to look up the existing session since we need to
   // have the data from it both to validate the input, and to provide the
   // eventual result.
-  const sessionData = await dbSessionDetails(ctx, sessionId);
+  const sessionData = await dbSessionDetails(ctx, sessionId, actorId);
   if (sessionData == null) {
     return null;
   }
@@ -496,30 +485,20 @@ export async function dbSessionUpdate(ctx, sessionId, updateData) {
   const newSessionData = prepareSessionUpdate(sessionData, updateData);
 
   // Iterate over all of the players in the new session data and return back an
-  // array of updates to update them.
-  const getUserUpdates = () => {
-    const updates = [];
-
+  // array of updates to update them. The player row id is stable and unique
+  // within the session, so it identifies the row without guessing whether the
+  // player is stored in the user or guest slot.
+  const getPlayerUpdates = () => {
     const playerUpdate = ctx.env.DB.prepare(`
       UPDATE SessionReportPlayer
          SET isStartingPlayer = ?3, score = ?4, isWinner = ?5
-       WHERE sessionId = ?1 AND userId = ?2
-    `);
-    const userUpdate = ctx.env.DB.prepare(`
-      UPDATE SessionReportPlayer
-         SET isStartingPlayer = ?3, score = ?4, isWinner = ?5
-       WHERE sessionId = ?1 AND guestId = ?2
+       WHERE sessionId = ?1 AND id = ?2
     `);
 
-    for (const player of newSessionData.players) {
-      const stmt = (player.isUser === true) ? playerUpdate : userUpdate;
-      updates.push(stmt.bind(
-        newSessionData.sessionId, player.userId,
-        int(player.isStartingPlayer), player.score, int(player.isWinner)
-      ));
-    }
-
-    return updates;
+    return newSessionData.players.map(player => playerUpdate.bind(
+      newSessionData.sessionId, player.playerId,
+      int(player.isStartingPlayer), player.score, int(player.isWinner)
+    ));
   }
 
   // Prepare the batch of statements that will perform the update.
@@ -536,11 +515,14 @@ export async function dbSessionUpdate(ctx, sessionId, updateData) {
        WHERE sessionId = ?1
     `).bind(newSessionData.sessionId, newSessionData.title, newSessionData.content),
 
-    ...getUserUpdates()
+    ...getPlayerUpdates()
   ]);
   getDBResult('dbSessionUpdate', 'do_update', update);
 
-  return newSessionData;
+  // Reload after the write so the response reflects the final state (including
+  // whether this user can still edit, which changes when they close an open
+  // session they do not own).
+  return dbSessionDetails(ctx, sessionId, actorId);
 }
 
 
@@ -622,7 +604,7 @@ export async function dbSessionList(ctx, gameIdList, reverse) {
  * return will be null if there is no such game, otherwise the return is an
  * object that contains the full details on the game, including all of its
  * metadata. */
-export async function dbSessionDetails(ctx, sessionId) {
+export async function dbSessionDetails(ctx, sessionId, actorId) {
   // Try to find the game with the value has that been provided; we check to see
   // if the provided ID is either a slug or an actual ID.
   const lookup = await ctx.env.DB.prepare(`
@@ -634,11 +616,14 @@ export async function dbSessionDetails(ctx, sessionId) {
            A.playType,
            D.slug,
            D.imagePath,
+           A.loggingPlayerId,
+           R.displayName as reporterName,
            A.sessionBegin,
            A.sessionEnd,
            A.isLearning,
            C.content
       FROM SessionReport as A, GameName as B, SessionReportDetails as C, Game as D
+      LEFT JOIN User as R ON R.id = A.loggingPlayerId
      WHERE A.id = ?1
        AND (A.gameId = B.gameId AND B.id = A.gameName)
        AND (C.sessionId = A.id)
@@ -669,13 +654,15 @@ export async function dbSessionDetails(ctx, sessionId) {
 
   // Check for the list of players that participated in this session.
   const playerLookup = await ctx.env.DB.prepare(`
-    SELECT 1 as isUser, A.userId, B.displayName as name, A.isReporter, A.isStartingPlayer, A.score, A.isWinner
+    SELECT 1 as isUser, A.id as playerId, A.userId, B.displayName as name,
+           A.isReporter, A.isStartingPlayer, A.score, A.isWinner
       FROM SessionReportPlayer as A, User as B
      WHERE sessionId = ?1
        AND guestId is NULL
        AND A.userId = B.id
     UNION ALL
-    SELECT 0 as isUser, b.id as userId, B.displayName as name, A.isReporter, A.isStartingPlayer, A.score, A.isWinner
+    SELECT 0 as isUser, A.id as playerId, B.id as userId, B.displayName as name,
+           A.isReporter, A.isStartingPlayer, A.score, A.isWinner
       FROM SessionReportPlayer as A, GuestUser as B
      WHERE sessionId = ?1
        AND guestId IS NOT NULL
@@ -691,6 +678,18 @@ export async function dbSessionDetails(ctx, sessionId) {
   // thumbnail for the expansion that was used.
   sessionData.expansions = imgMapAssetListURLs(ctx, expansions, 'imagePath', 'thumbnail');
   sessionData.players = players;
+
+  // Report the open state and whether the current user may edit this report.
+  // An open session can be edited by any user who is a player; a closed one
+  // only by its reporter. Guests can never authenticate, so are not eligible.
+  sessionData.isOpen = sessionData.sessionEnd === null;
+  const actor = Number(actorId);
+  sessionData.canEdit = Number.isInteger(actor) && (
+    Number(sessionData.loggingPlayerId) === actor ||
+    (sessionData.isOpen === true && players.some(player =>
+      player.isUser === true && Number(player.userId) === actor
+    ))
+  );
 
   return sessionData;
 }

@@ -6,7 +6,7 @@ import { validateZod } from '#legacyvalidator';
 
 import { SessionIDSchema, UpdateSessionReportSchema } from '#schema/session';
 
-import { dbSessionUpdate } from '#db/session';
+import { dbSessionDetails, dbSessionUpdate } from '#db/session';
 
 
 /******************************************************************************/
@@ -25,14 +25,26 @@ export const $patch = routeHandler(
   validateZod('json', UpdateSessionReportSchema),
 
   async (ctx) => {
-    const { userId } = ctx.req.valid('param');
     // Fetch the ID of the session to update and the body of the update.
     const { sessionId } = ctx.req.valid('param');
     const updateData = ctx.req.valid('json');
+    const actorId = ctx.get('userId');
+
+    // Load the current report and decide whether this user may edit it. Open
+    // sessions may be edited by their reporter and by any user player; closed
+    // sessions may be edited only by their reporter.
+    const session = await dbSessionDetails(ctx, sessionId, actorId);
+    if (session === null) {
+      return fail(ctx, `no such session ${sessionId}`, 404)
+    }
+
+    if (session.canEdit !== true) {
+      return fail(ctx, `you do not have permission to edit session ${sessionId}`, 403);
+    }
 
     // Update the session with the data; if there is no result from this, it is
-    // because the session does not exist, so we can report as such.
-    const result = await dbSessionUpdate(ctx, sessionId, updateData);
+    // because the session disappeared between the check and the update.
+    const result = await dbSessionUpdate(ctx, sessionId, updateData, actorId);
     if (result === null) {
       return fail(ctx, `no such session ${sessionId}`, 404)
     }

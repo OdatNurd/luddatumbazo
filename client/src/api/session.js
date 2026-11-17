@@ -61,12 +61,34 @@ async function sessionDetails (sessionId) {
 /******************************************************************************/
 
 
+/* Add a new session report. The reporter is taken from the authenticated
+ * request on the service side, so it is not part of the payload. */
+async function sessionAdd(report) {
+  return raw.put('/session/add', report);
+}
+
+
+/******************************************************************************/
+
+
+/* Update the editable parts of an existing session report. A null sessionEnd
+ * reopens the session; an omitted sessionEnd leaves it unchanged. */
+async function sessionUpdate(sessionId, update) {
+  return raw.patch(`/session/update/${sessionId}`, update);
+}
+
+
+/******************************************************************************/
+
+
 /* Export a composed object that collects the related API's together into a
  * single object based on the operations. */
 export const session = {
   gameTypes: gameTypeList,
   list: sessionList,
   details: sessionDetails,
+  add: sessionAdd,
+  update: sessionUpdate,
 }
 
 

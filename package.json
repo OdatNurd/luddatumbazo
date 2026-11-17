@@ -41,11 +41,13 @@
     "@axel669/sanic-xml": "^0.3.0",
     "@odatnurd/cf-requests": "^0.1.16",
     "@odatnurd/d1-query": "^0.3.2",
+    "dompurify": "^3.4.18",
     "dotenv": "^18.0.8",
     "entities": "^8.1.0",
     "hono": "^4.13.13",
     "jose": "^6.2.13",
     "luxon": "^3.7.2",
+    "marked": "^18.2.0",
     "slug": "^12.0.1",
     "svelte": "^5.57.2",
     "zod": "^4.6.7"
