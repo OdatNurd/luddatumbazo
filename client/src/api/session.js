@@ -19,15 +19,19 @@ async function gameTypeList() {
 
 /* Gather a list of session reports, either for all games or only for those
  * games specificaly provided. The list can optionally also be reversed on
- * output, putting the most recent sessions at the top instead of on the
- * bottom.
+ * output, putting the most recent sessions at the top instead of on the bottom.
  *
- * The list of games is optional; if provided, it can be an array of either
- * game slugs, game identifiers, or both. The optional status value limits the
- * result to open or closed reports; omitting it returns both.
+ * The list of games is optional; if provided, it can be an array of either game
+ * slugs, game identifiers, or both. The optional status value limits the result
+ * to open or closed reports; omitting it returns both.
+ *
+ * The optional filters object carries the sessions page view state: player
+ * keys, any/all matching, the household personalization, date bounds, play
+ * type, and the learning flag. Empty/default values are omitted so ordinary
+ * list requests keep their existing URLs.
  *
  * The result is a list of short session objects. */
-async function sessionList(reverse, games, status) {
+async function sessionList(reverse, games, status, filters = {}) {
   const options = { };
 
   // If requested, include the option to reverse the list.
@@ -50,6 +54,37 @@ async function sessionList(reverse, games, status) {
   // caller actually requested one.
   if (status === 'open' || status === 'closed') {
     options.status = status;
+  }
+
+  // Player keys are already canonical `u:<id>` / `g:<id>` values. Sending an
+  // empty selection would add a meaningless parameter, so only include it when
+  // there is something to match.
+  if (Array.isArray(filters.players) && filters.players.length > 0) {
+    options.players = filters.players.join(',');
+
+    if (filters.match === 'any') {
+      options.match = 'any';
+    }
+  }
+
+  if (filters.household === true) {
+    options.household = 'me';
+  }
+
+  if (filters.from !== undefined && filters.from !== '') {
+    options.from = filters.from;
+  }
+
+  if (filters.to !== undefined && filters.to !== '') {
+    options.to = filters.to;
+  }
+
+  if (filters.playType !== undefined && filters.playType !== '') {
+    options.playType = filters.playType;
+  }
+
+  if (filters.learning === true || filters.learning === false) {
+    options.learning = String(filters.learning);
   }
 
   return raw.get('/session/list', options);

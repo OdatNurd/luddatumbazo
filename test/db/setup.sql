@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS SessionReportPlayer;
+DROP TABLE IF EXISTS SessionReportExpansions;
 DROP TABLE IF EXISTS SessionReportDetails;
 DROP TABLE IF EXISTS SessionReport;
 DROP TABLE IF EXISTS GuestUser;
@@ -81,6 +82,14 @@ CREATE TABLE SessionReportDetails (
     sessionId INTEGER NOT NULL REFERENCES SessionReport(id),
     title TEXT DEFAULT(''),
     content TEXT DEFAULT('')
+);
+
+
+CREATE TABLE SessionReportExpansions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sessionId INTEGER NOT NULL REFERENCES SessionReport(id),
+    expansionId INTEGER NOT NULL REFERENCES Game(id),
+    expansionName INTEGER NOT NULL REFERENCES GameName(id)
 );
 
 

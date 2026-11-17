@@ -641,13 +641,10 @@
            on:wa-hide={dismissed}>
   <h3 slot="header">{editing ? 'Edit Session Report' : 'Add Session Report'}</h3>
 
-  <!-- In edit mode most of the report is fixed by the API; say so once, up
-       front, where every tab can see it. -->
+  <!-- In edit mode not every field is writable; say so once, up front. -->
   {#if editing}
     <div class="edit-note">
-      Only the end time, learning flag, starting player, results, title and
-      content can be changed; the game, players and start time are fixed once
-      a report is filed.
+      Not all fields can be edited after a report is filed.
     </div>
   {/if}
 
@@ -658,9 +655,10 @@
   <wa-tab-group bind:this={tabGroup} on:wa-tab-show={outerTabShown}>
     <wa-tab slot="nav" panel="info">Game Info</wa-tab>
     <wa-tab slot="nav" panel="play">Play Info</wa-tab>
+    <wa-tab slot="nav" panel="results">Results</wa-tab>
     <wa-tab slot="nav" panel="details">Details</wa-tab>
 
-    <!-- What was played, how, and whether it counted as a learning game. -->
+    <!-- What was played, when it happened, and whether it counted as a learning game. -->
     <wa-tab-panel name="info">
       <div class="stack">
         <!-- The game is a type ahead over the known game list, so a game can
@@ -687,21 +685,6 @@
           {/each}
         </wa-select>
 
-        <wa-switch checked={form.isLearning}
-                   on:change={e => form.isLearning = e.target.checked}>
-          Learning game
-        </wa-switch>
-
-        <div class="muted">
-          Learning games are excluded from some statistics, such as average
-          game length and aggregate scores.
-        </div>
-      </div>
-    </wa-tab-panel>
-
-    <!-- When the game happened and who was there. -->
-    <wa-tab-panel name="play">
-      <div class="stack">
         <div class="date-row">
           <wa-input label="Session Begin" type="datetime-local" value={form.sessionBegin}
                     disabled={editing}
@@ -715,21 +698,33 @@
 
         <!-- The length of the session, listed under the dates as soon as an
              end date makes it computable; the line is always reserved so that
-             the notes below do not jump around while typing. -->
+             the rest of the form does not jump around while typing. -->
         <div class="duration-line">
           {#if durationText !== null}
             <wa-tag variant="brand">Duration: {durationText}</wa-tag>
           {/if}
         </div>
 
-        <!-- The note spans the full width under both date fields. -->
         <div class="date-note">
           A session with no end date is treated as ongoing. Entering an end
           date closes it; clearing the end date reopens it.
         </div>
 
-        <wa-divider></wa-divider>
+        <wa-switch checked={form.isLearning}
+                   on:change={e => form.isLearning = e.target.checked}>
+          Learning game
+        </wa-switch>
 
+        <div class="muted">
+          Learning games are excluded from some statistics, such as average
+          game length and aggregate scores.
+        </div>
+      </div>
+    </wa-tab-panel>
+
+    <!-- Who was there. -->
+    <wa-tab-panel name="play">
+      <div class="stack">
         <strong>Players</strong>
         <div class="muted">
           At least one player is required. Guests are matched by name, so
@@ -772,16 +767,19 @@
             <wa-option value={row.key}>{row.label}</wa-option>
           {/each}
         </wa-select>
+      </div>
+    </wa-tab-panel>
+
+    <!-- Scores and winners for each player. -->
+    <wa-tab-panel name="results">
+      <div class="stack">
+        <strong>Results</strong>
+        <div class="muted">
+          Scores and winners can be changed on every save, including after
+          the session is closed.
+        </div>
 
         {#if playerRows.length > 0}
-          <wa-divider></wa-divider>
-
-          <strong>Results</strong>
-          <div class="muted">
-            Scores and winners can be changed on every save, including after
-            the session is closed.
-          </div>
-
           <div class="result-list">
             {#each playerRows as row (row.key)}
               <div class="result-row">
@@ -799,6 +797,8 @@
               </div>
             {/each}
           </div>
+        {:else}
+          <div class="muted">Choose at least one player to record results.</div>
         {/if}
       </div>
     </wa-tab-panel>

@@ -592,36 +592,148 @@ export async function dbSessionList(ctx, options = {}, legacyReverse = false) {
   const {
     gameIds: gameIdList = [],
     reverse = false,
-    status = undefined
+    status = undefined,
+    players = { keys: [], users: [], guests: [] },
+    match = 'all',
+    household = undefined,
+    from = undefined,
+    to = undefined,
+    playType = undefined,
+    learning = undefined,
+    userId = undefined
   } = options;
 
-  // Construct the possible sub-query we want to add if any gameId's were
-  // provided as filter criteria.
-  const filter = JSON.stringify(gameIdList);
-  const subQuery = `
+  // The schema returns the player filter in both canonical-key and id-array
+  // form; accepting a plain key array as well keeps this helper easy to call
+  // directly from tests and future internal callers.
+  const selectedKeys = [...new Set(Array.isArray(players) ? players : (players?.keys ?? []))];
+  const selectedUsers = [...new Set(selectedKeys
+    .filter(key => key.startsWith('u:'))
+    .map(key => Number(key.slice(2))))];
+  const selectedGuests = [...new Set(selectedKeys
+    .filter(key => key.startsWith('g:'))
+    .map(key => Number(key.slice(2))))];
+  const actorId = userId ?? null;
+
+  // The dynamic fragments below are all static SQL; every value is bound. The
+  // household expression in the SELECT comes first so its parameter is bound
+  // before the WHERE parameters.
+  const where = [];
+  const whereParams = [];
+
+  // Only add a game clause when the caller actually asked for one.
+  if (gameIdList.length > 0) {
+    const filter = JSON.stringify(gameIdList);
+
+    where.push(`
    AND A.id IN (
     SELECT DISTINCT id
       FROM SessionReport
-     WHERE gameId in (SELECT value from json_each('${filter}'))
+     WHERE gameId IN (SELECT value FROM json_each(?))
     UNION ALL
     SELECT DISTINCT sessionId
       FROM SessionReportExpansions
-     WHERE expansionId in (SELECT value from json_each('${filter}'))
+     WHERE expansionId IN (SELECT value FROM json_each(?))
        )
-  `;
+    `);
+    whereParams.push(filter, filter);
+  }
 
-  // Only add a status clause when the caller actually asked for one; an
-  // omitted status keeps the complete list behavior. A non-null end is the
-  // same definition of closed used by the details response.
-  const statusQuery = (status === 'open')
-    ? 'AND A.sessionEnd IS NULL'
-    : (status === 'closed')
-      ? 'AND A.sessionEnd IS NOT NULL'
-      : '';
+  // A non-null end is the same definition of closed used by the details
+  // response.
+  if (status === 'open') {
+    where.push('AND A.sessionEnd IS NULL');
+  }
+  else if (status === 'closed') {
+    where.push('AND A.sessionEnd IS NOT NULL');
+  }
+
+  // Player matching is an identity filter: a user row and a guest row remain
+  // distinct even when both display the same name. `all` counts distinct
+  // selected identities rather than the number of player rows.
+  if (selectedKeys.length > 0) {
+    const usersJson = JSON.stringify(selectedUsers);
+    const guestsJson = JSON.stringify(selectedGuests);
+    const playerMatch = `
+      (
+        (FP.userId IS NOT NULL AND FP.userId IN (SELECT value FROM json_each(?)))
+        OR
+        (FP.guestId IS NOT NULL AND FP.guestId IN (SELECT value FROM json_each(?)))
+      )`;
+
+    if (match === 'all') {
+      where.push(`AND (
+        SELECT COUNT(DISTINCT CASE
+                 WHEN FP.userId IS NOT NULL THEN 'u:' || FP.userId
+                 ELSE 'g:' || FP.guestId
+               END)
+          FROM SessionReportPlayer AS FP
+         WHERE FP.sessionId = A.id
+           AND ${playerMatch}
+      ) = ?`);
+      whereParams.push(usersJson, guestsJson, selectedKeys.length);
+    }
+    else {
+      where.push(`AND EXISTS (
+        SELECT 1
+          FROM SessionReportPlayer AS FP
+         WHERE FP.sessionId = A.id
+           AND ${playerMatch}
+      )`);
+      whereParams.push(usersJson, guestsJson);
+    }
+  }
+
+  // Household filtering is personalization, not authorization. It follows the
+  // same rule as the status counts: a session has a household when at least one
+  // player is a user in any household the actor belongs to.
+  if (household === 'me') {
+    where.push(`AND EXISTS (
+      SELECT 1
+        FROM SessionReportPlayer AS HP
+        JOIN UserHousehold AS HM ON HM.userId = HP.userId
+       WHERE HP.sessionId = A.id
+         AND HM.householdId IN (
+           SELECT householdId
+             FROM UserHousehold
+            WHERE userId = ?
+         )
+    )`);
+    whereParams.push(actorId);
+  }
+
+  // The API accepts instants; the client computes local start/end of day.
+  if (from !== undefined) {
+    where.push('AND datetime(A.sessionBegin) >= datetime(?)');
+    whereParams.push(from);
+  }
+  if (to !== undefined) {
+    where.push('AND datetime(A.sessionBegin) <= datetime(?)');
+    whereParams.push(to);
+  }
+  if (playType !== undefined) {
+    where.push('AND A.playType = ?');
+    whereParams.push(playType);
+  }
+  if (learning !== undefined) {
+    where.push('AND A.isLearning = ?');
+    whereParams.push(learning === true ? 1 : 0);
+  }
+
+  // `reverse` keeps its existing meaning for the date direction; the
+  // household/open grouping is deterministic either way. The id tiebreaker
+  // makes equal start times stable across requests. Game-scoped lists (the
+  // inline session list on a game page) keep their chronological order instead
+  // of being regrouped by household.
+  const dateDirection = (reverse === true) ? 'DESC' : 'ASC';
+  const order = (gameIdList.length > 0)
+    ? `A.sessionBegin ${dateDirection}, A.id ${dateDirection}`
+    : `isHousehold DESC, isOpen DESC, A.sessionBegin ${dateDirection}, A.id ${dateDirection}`;
 
   // Find all of the session reports that exist, OR all of the sessions that
-  // mention the games in the provided filter list as either the main game or
-  // one of the expansions.
+  // match the requested filters. The household expression is repeated in the
+  // order clause through the alias below rather than joined into the main
+  // query, which would multiply rows.
   const lookup = await ctx.env.DB.prepare(`
     SELECT A.id,
            C.title,
@@ -633,16 +745,26 @@ export async function dbSessionList(ctx, options = {}, legacyReverse = false) {
            D.imagePath,
            A.sessionBegin,
            A.sessionEnd,
+           EXISTS (
+             SELECT 1
+               FROM SessionReportPlayer AS HP
+               JOIN UserHousehold AS HM ON HM.userId = HP.userId
+              WHERE HP.sessionId = A.id
+                AND HM.householdId IN (
+                  SELECT householdId
+                    FROM UserHousehold
+                   WHERE userId = ?
+                )
+           ) AS isHousehold,
            A.sessionEnd IS NULL AS isOpen,
            A.isLearning
       FROM SessionReport as A, GameName as B, SessionReportDetails as C, Game as D
      WHERE (A.gameId = B.gameId AND B.id = A.gameName)
        AND (D.id = A.gameId)
        AND (A.id = C.sessionId)
-       ${(gameIdList.length === 0) ? '' : subQuery}
-       ${statusQuery}
-     ${(reverse === false) ? '' : 'ORDER BY A.sessionBegin DESC'}
-  `).all();
+       ${where.join('\n')}
+     ORDER BY ${order}
+  `).bind(actorId, ...whereParams).all();
   const result = getDBResult('dbSessionList', 'find_session', lookup);
 
   // Gather the players for all of the returned sessions in one query. The
@@ -679,6 +801,15 @@ export async function dbSessionList(ctx, options = {}, legacyReverse = false) {
   return result.map(session => {
     session.imagePath = imgGetAssetURL(ctx, session.imagePath, 'thumbnail');
     session.players = playerRows.get(session.id) ?? [];
+
+    // The compact roster is also exposed as a searchable text field so every
+    // session list (including the inline game-page one) can find people without
+    // knowing about the players array shape.
+    session.playerNames = session.players
+      .map(player => player.name)
+      .filter(name => name !== null && name !== undefined && name !== '')
+      .join(', ');
+
     return mapIntFieldsToBool(session);
   });
 }

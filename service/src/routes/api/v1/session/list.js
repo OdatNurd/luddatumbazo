@@ -24,16 +24,20 @@ export const $get = routeHandler(
   validateZod('query', SessionListParamSchema),
 
   async (ctx) => {
-    // The query can contain a flag to tell us that we should reverse the sort,
-    // an option list of game id's and slugs to look up sessions for, and an
-    // optional open/closed filter.
-    const { reverse, games, status } = ctx.req.valid('query');
+    // The query can carry the list view state: a reverse flag, game filters,
+    // status, player identities, household and date personalization, play type,
+    // and the learning-game flag.
+    const {
+      reverse, games, status, players, match, household, from, to, playType,
+      learning
+    } = ctx.req.valid('query');
 
     // Use the list in a lookup to map it to objects that we can use to get to
     // definitive gameId values to pass in.
     //
-    // The lookup has a variable return; a single lookup returns an object or null
-    // and a list always returns an array. The session code always wants an array.
+    // The lookup has a variable return; a single lookup returns an object or
+    // null and a list always returns an array. The session code always wants an
+    // array.
     let lookup = await dbGameLookup(ctx, games, undefined, false);
     if (Array.isArray(lookup) === false) {
       lookup = [lookup];
@@ -53,7 +57,15 @@ export const $get = routeHandler(
     const result = await dbSessionList(ctx, {
       gameIds: lookup.map(e => e.id),
       reverse,
-      status
+      status,
+      players,
+      match,
+      household,
+      from,
+      to,
+      playType,
+      learning,
+      userId: ctx.get('userId')
     });
 
     return success(ctx, `found ${result.length} session(s)`, result);

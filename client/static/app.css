@@ -181,12 +181,13 @@ wa-drawer::part(dialog) {
 
 
 /* Data grid boxes (components/DataGrid.svelte). The toolbar row and the grid
- * share one bordered box; the grid's own border and corners are stripped so
- * the seam between them stays single.
+ * share one bordered box; the grid's own border and corners are stripped so the
+ * seam between them stays single.
  *
  * Page level lists pass `fill`: the grid then takes all of the vertical space
- * the layout has left over and scrolls its rows internally, instead of the page
- * growing a stray scrollbar that matches nothing visible. */
+ * the layout has left over and scrolls its rows internally. A minimum keeps it
+ * usable when filter panels add height above it; only then does the main column
+ * grow a scrollbar for the extra. */
 .grid-wrap wa-data-grid::part(data-grid) {
   border: none;
   border-radius: 0;
@@ -197,7 +198,7 @@ wa-drawer::part(dialog) {
  * not the other way around. */
 .grid-wrap.fill {
   flex: 1 1 0;
-  min-height: 0;
+  min-height: 280px;
   contain: size;
 }
 

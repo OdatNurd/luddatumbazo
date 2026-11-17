@@ -11,7 +11,7 @@ import { dbSessionList, dbSessionStatus } from '#db/session';
  * is personalization, but the wrong player join would make the menu shortcut
  * appear for the wrong people. These checks use a real local D1 database so
  * the joins and distinct-session behavior are exercised together. */
-export default Collection`Session Status Counts`({
+export default Collection`Session Status and List Filters`({
   "dbSessionStatus": async ({ runScope: ctx }) => {
     // Load only the tables these counts exercise. The full bootstrap schema
     // contains multi-line triggers that the lightweight test SQL splitter does
@@ -65,7 +65,11 @@ export default Collection`Session Status Counts`({
                     (105, 100, 100, 'cardboard', 3, '2026-01-05T10:00:00Z', NULL),
                     (106, 100, 100, 'cardboard', 4, '2026-01-06T10:00:00Z', '2026-01-06T11:00:00Z'),
                     (107, 100, 100, 'cardboard', 1, '2026-01-07T10:00:00Z', NULL),
-                    (108, 100, 100, 'cardboard', 2, '2026-01-08T10:00:00Z', '2026-01-08T11:00:00Z')
+                    (108, 100, 100, 'cardboard', 2, '2026-01-08T10:00:00Z', '2026-01-08T11:00:00Z'),
+                    (109, 100, 100, 'steam', 1, '2026-01-09T10:00:00Z', NULL)
+      `),
+      ctx.env.DB.prepare(`
+        UPDATE SessionReport SET isLearning = 1 WHERE id = 109
       `),
       ctx.env.DB.prepare(`
         INSERT INTO SessionReportDetails (sessionId, title, content)
@@ -76,7 +80,8 @@ export default Collection`Session Status Counts`({
                     (105, 'Session 105', ''),
                     (106, 'Session 106', ''),
                     (107, 'Session 107', ''),
-                    (108, 'Session 108', '')
+                    (108, 'Session 108', ''),
+                    (109, 'Session 109', '')
       `),
       ctx.env.DB.prepare(`
         INSERT INTO SessionReportPlayer
@@ -90,27 +95,29 @@ export default Collection`Session Status Counts`({
                     (1007, 106, 4, NULL, 1),
                     (1008, 107, 1, NULL, 1),
                     (1009, 107, 2, NULL, 0),
-                    (1010, 108, 2, NULL, 1)
+                    (1010, 108, 2, NULL, 1),
+                    (1011, 109, 1, NULL, 1),
+                    (1012, 109, NULL, 50, 0)
       `)
     ]);
 
     await $check`should count all reports and only null-ended reports as open`
       .value(await dbSessionStatus(ctx, 1))
       .isObject()
-      .eq($.total, 8)
-      .eq($.open, 4);
+      .eq($.total, 9)
+      .eq($.open, 5);
 
     await $check`should count distinct reports with a player in any shared household`
       .value(await dbSessionStatus(ctx, 1))
       .isObject()
-      .eq($.householdSessions, 5)
-      .eq($.householdOpen, 3);
+      .eq($.householdSessions, 6)
+      .eq($.householdOpen, 4);
 
     await $check`should return zero household counts for a user with no memberships`
       .value(await dbSessionStatus(ctx, 999))
       .isObject()
-      .eq($.total, 8)
-      .eq($.open, 4)
+      .eq($.total, 9)
+      .eq($.open, 5)
       .eq($.householdSessions, 0)
       .eq($.householdOpen, 0);
 
@@ -118,11 +125,13 @@ export default Collection`Session Status Counts`({
     const closed = await dbSessionList(ctx, { status: 'closed' });
     const complete = await dbSessionList(ctx);
     const seven = open.find(row => row.id === 107);
+    const ids = rows => rows.map(row => row.id);
+    const players = (...keys) => ({ keys });
 
     await $check`should filter the list to open reports and mark them open`
       .value(open)
       .isArray($)
-      .eq($.length, 4)
+      .eq($.length, 5)
       .eq($[0].isOpen, true);
 
     await $check`should filter the list to closed reports`
@@ -134,7 +143,7 @@ export default Collection`Session Status Counts`({
     await $check`should return the complete list when status is omitted`
       .value(complete)
       .isArray($)
-      .eq($.length, 8);
+      .eq($.length, 9);
 
     await $check`should attach the batched player summary to each list row`
       .value(seven)
@@ -142,6 +151,191 @@ export default Collection`Session Status Counts`({
       .eq($.players.length, 2)
       .eq($.players[0].key, 'u:1')
       .eq($.players[1].key, 'u:2');
+
+    await $check`should mark household sessions from every shared household`
+      .value(ids(await dbSessionList(ctx, {
+        userId: 1,
+        household: 'me',
+        reverse: true
+      })))
+      .isArray($)
+      .eq($.length, 6)
+      .eq($[0], 109)
+      .eq($[1], 107)
+      .eq($[2], 105)
+      .eq($[3], 102)
+      .eq($[4], 108)
+      .eq($[5], 101);
+
+    await $check`should exclude guest-only and other-household sessions from the me filter`
+      .value(ids(await dbSessionList(ctx, { userId: 1, household: 'me', reverse: true })))
+      .isArray($)
+      .eq($.length, 6)
+      .eq($[0], 109)
+      .eq($[5], 101);
+
+    await $check`should match any selected user when match is any`
+      .value(ids(await dbSessionList(ctx, {
+        userId: 1,
+        players: players('u:1', 'u:2'),
+        match: 'any'
+      })))
+      .isArray($)
+      .eq($.length, 5)
+      .includes($, 101)
+      .includes($, 102)
+      .includes($, 107)
+      .includes($, 108)
+      .includes($, 109);
+
+    await $check`should require every selected user by default`
+      .value(ids(await dbSessionList(ctx, {
+        userId: 1,
+        players: players('u:1', 'u:2')
+      })))
+      .isArray($)
+      .eq($.length, 1)
+      .eq($[0], 107);
+
+    await $check`should mix users and guests when match is any`
+      .value(ids(await dbSessionList(ctx, {
+        userId: 1,
+        players: players('u:3', 'g:50'),
+        match: 'any'
+      })))
+      .isArray($)
+      .eq($.length, 5)
+      .includes($, 101)
+      .includes($, 103)
+      .includes($, 104)
+      .includes($, 105)
+      .includes($, 109);
+
+    await $check`should return no rows when all match cannot be satisfied`
+      .value(await dbSessionList(ctx, {
+        userId: 1,
+        players: players('u:3', 'g:50'),
+        match: 'all'
+      }))
+      .isArray($)
+      .eq($.length, 0);
+
+    await $check`should collapse duplicate player keys`
+      .value(ids(await dbSessionList(ctx, {
+        userId: 1,
+        players: players('u:1', 'u:1')
+      })))
+      .isArray($)
+      .eq($.length, 3)
+      .includes($, 101)
+      .includes($, 107)
+      .includes($, 109);
+
+    await $check`should return the complete list when no players are selected`
+      .value(ids(await dbSessionList(ctx, {
+        userId: 1,
+        players: players()
+      })))
+      .isArray($)
+      .eq($.length, 9);
+
+    await $check`should compose status with a player filter`
+      .value(ids(await dbSessionList(ctx, {
+        userId: 1,
+        status: 'open',
+        players: players('u:1')
+      })))
+      .isArray($)
+      .eq($.length, 2)
+      .includes($, 107)
+      .includes($, 109);
+
+    await $check`should compose a date range with the other filters`
+      .value(ids(await dbSessionList(ctx, {
+        userId: 1,
+        from: '2026-01-02T00:00:00.000Z',
+        to: '2026-01-04T23:59:59.999Z'
+      })))
+      .isArray($)
+      .eq($.length, 3)
+      .includes($, 102)
+      .includes($, 103)
+      .includes($, 104);
+
+    await $check`should filter by play type and learning flag`
+      .value(ids(await dbSessionList(ctx, {
+        userId: 1,
+        playType: 'steam',
+        learning: true
+      })))
+      .isArray($)
+      .eq($.length, 1)
+      .eq($[0], 109);
+
+    await $check`should return isHousehold as a real boolean`
+      .value(await dbSessionList(ctx, { userId: 1, status: 'open' }))
+      .isArray($)
+      .eq($.find(row => row.id === 109).isHousehold, true)
+      .eq($.find(row => row.id === 104).isHousehold, false);
+
+    await $check`should group household and open rows before date order`
+      .value(ids(await dbSessionList(ctx, { userId: 1, reverse: true })))
+      .isArray($)
+      .eq($.length, 9)
+      .eq($[0], 109)
+      .eq($[1], 107)
+      .eq($[2], 105)
+      .eq($[3], 102)
+      .eq($[4], 108)
+      .eq($[5], 101)
+      .eq($[6], 104)
+      .eq($[7], 106)
+      .eq($[8], 103);
+
+    await $check`should reverse only the date direction within each group`
+      .value(ids(await dbSessionList(ctx, { userId: 1 })))
+      .isArray($)
+      .eq($[0], 102)
+      .eq($[1], 105)
+      .eq($[2], 107)
+      .eq($[3], 109)
+      .eq($[4], 101)
+      .eq($[5], 108);
+
+    await $check`should keep game-scoped session lists chronological`
+      .value(ids(await dbSessionList(ctx, {
+        userId: 1,
+        gameIds: [100],
+        reverse: true
+      })))
+      .isArray($)
+      .eq($.length, 9)
+      .eq($[0], 109)
+      .eq($[1], 108)
+      .eq($[8], 101);
+
+    await $check`should compose a game filter with player and status filters`
+      .value(ids(await dbSessionList(ctx, {
+        userId: 1,
+        gameIds: [100],
+        status: 'open',
+        players: { keys: ['u:1'] }
+      })))
+      .isArray($)
+      .eq($.length, 2)
+      .eq($[0], 107)
+      .eq($[1], 109);
+
+    await $check`should mark the same number of household rows as the status count`
+      .value((await dbSessionList(ctx, { userId: 1 }))
+        .filter(row => row.isHousehold === true).length)
+      .eq($, 6);
+
+    await $check`should expose a searchable roster string with the players`
+      .value((await dbSessionList(ctx, { userId: 1 }))
+        .find(row => row.id === 107)
+        .playerNames)
+      .eq($, 'User One, User Two');
   },
 });
 

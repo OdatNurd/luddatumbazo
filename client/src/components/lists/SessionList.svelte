@@ -7,6 +7,7 @@
 
   import { server } from '$stores/server';
 
+  import { readBooleanPreference, writeBooleanPreference } from '$lib/preferences.js';
   import * as cells from '$lib/cells.js';
 
   // ---------------------------------------------------------------------------
@@ -42,6 +43,20 @@
   export let status = 'all';
   export let showOpenPanel = false;
 
+  // A page with active filters can explain an empty result more precisely than
+  // the generic open-only message.
+  export let emptyMessage = undefined;
+
+  // Remember whether the in-progress section is folded. It defaults open, and
+  // the choice follows the user across list refreshes and visits.
+  const OPEN_PANEL_KEY = 'luddatumbazo:sessions-open-panel-open';
+  let openPanelOpen = readBooleanPreference(OPEN_PANEL_KEY) ?? true;
+
+  const toggleOpenPanel = () => {
+    openPanelOpen = !openPanelOpen;
+    writeBooleanPreference(OPEN_PANEL_KEY, openPanelOpen);
+  };
+
   // ---------------------------------------------------------------------------
 
   // The links in all of the table entries link to either sessions by ID or
@@ -70,12 +85,6 @@
   // session report, and (optionally) the game column links to the game the
   // session was for.
   const columns = [
-    {
-      field: 'id',
-      label: 'ID',
-      width: 72,
-      sortFn: 'alphanumeric'
-    },
     {
       id: 'playType',
       field: 'playType',
@@ -127,6 +136,15 @@
       sortFn: 'datetime',
       formatter: (value) => cells.text(DateTime.fromISO(value).toLocaleString(DateTime.DATETIME_SHORT))
     },
+    {
+      // The server supplies both the compact players array and the searchable
+      // playerNames string this column sorts and displays.
+      field: 'playerNames',
+      label: 'Players',
+      width: 200,
+      sortFn: 'alphanumeric',
+      formatter: (value) => cells.text(value)
+    },
   ];
 
   // The status is only part of the full sessions page (and its open-only
@@ -143,14 +161,16 @@
       : cells.badge('Closed', 'neutral')
   };
 
-  // The optional trailing column that links to the game for the session.
+  // The optional trailing column that links to the game for the session. The
+  // game name is the link text; the chain-only icon made the column hard to
+  // scan in the full list.
   const gameColumn = {
     id: 'game',
+    field: 'name',
     label: 'Game',
-    width: 72,
-    align: 'center',
-    sortable: false,
-    formatter: (value, row) => cells.link(game(row.slug), '', { icon: 'link-45deg' })
+    width: 180,
+    sortFn: 'alphanumeric',
+    formatter: (value, row) => cells.link(game(row.slug), value)
   };
 
   // Assemble the actual column list based on whether game links should show.
@@ -169,59 +189,65 @@
 <LoadZone source={loader()} let:result>
   {#if result !== null && result !== undefined}
     {@const openRows = result.filter(row => row.isOpen === true)}
-    {@const closedRows = result.filter(row => row.isOpen !== true)}
-    {@const gridRows = showSessionStatus === true ? [...openRows, ...closedRows] : result}
 
     <div class="session-list" class:fill>
       {#if showOpenPanel === true && status === 'all' && openRows.length > 0}
-        <section class="open-panel" aria-label="In progress sessions">
+        <section class="open-panel" class:folded={!openPanelOpen}
+                 aria-label="In progress sessions">
           <div class="open-head">
-            <div class="open-heading">
-              <span class="open-label">In progress</span>
-              <strong>{openRows.length}</strong>
-              <span class="muted">{openRows.length === 1 ? 'open session' : 'open sessions'}</span>
-            </div>
+            <button type="button" class="open-toggle"
+                    aria-expanded={openPanelOpen}
+                    on:click={toggleOpenPanel}>
+              <span class="open-chevron" aria-hidden="true"></span>
+              <span class="open-heading">
+                <span class="open-label">In progress</span>
+                <strong>{openRows.length}</strong>
+                <span class="muted">{openRows.length === 1 ? 'open session' : 'open sessions'}</span>
+              </span>
+            </button>
             <a href="#/sessions?status=open">View open only</a>
           </div>
 
-          <div class="open-list">
-            {#each openRows as row (row.id)}
-              <a class="open-card" href={session(row.id)}>
-                <span class="open-card-title">{row.title}</span>
-                <span class="open-card-game">{row.name}</span>
-                <span class="open-card-facts">
-                  <span class="open-card-type" title={server.gameTypeName(row.playType)}>
-                    <Icon name={server.gameTypeIcon(row.playType)} size="0.9em"
-                          color="var(--wa-color-text-link)" />
-                    {server.gameTypeName(row.playType)}
+          {#if openPanelOpen}
+            <div class="open-list">
+              {#each openRows as row (row.id)}
+                <a class="open-card" href={session(row.id)}>
+                  <span class="open-card-title">{row.title}</span>
+                  <span class="open-card-game">{row.name}</span>
+                  <span class="open-card-facts">
+                    <span class="open-card-type" title={server.gameTypeName(row.playType)}>
+                      <Icon name={server.gameTypeIcon(row.playType)} size="0.9em"
+                            color="var(--wa-color-text-link)" />
+                      {server.gameTypeName(row.playType)}
+                    </span>
+                    {#if row.isLearning === true}
+                      <span class="open-card-learning" title="Learning game">
+                        <Icon name="mortarboard-fill" size="0.9em" />
+                        Learning game
+                      </span>
+                    {/if}
                   </span>
-                  {#if row.isLearning === true}
-                    <span class="open-card-learning" title="Learning game">
-                      <Icon name="mortarboard-fill" size="0.9em" />
-                      Learning game
-                    </span>
-                  {/if}
-                </span>
-                <span class="open-card-meta">
-                  <wa-badge variant="warning">In progress</wa-badge>
-                  <span>Started {DateTime.fromISO(row.sessionBegin).toLocaleString(DateTime.DATETIME_SHORT)}</span>
-                  {#if playerSummary(row) !== ''}
-                    <span class="open-card-players" title={playerSummary(row)}>
-                      {playerSummary(row)}
-                    </span>
-                  {/if}
-                </span>
-                <span class="open-card-action">Continue</span>
-              </a>
-            {/each}
-          </div>
+                  <span class="open-card-meta">
+                    <wa-badge variant="warning">In progress</wa-badge>
+                    <span>Started {DateTime.fromISO(row.sessionBegin).toLocaleString(DateTime.DATETIME_SHORT)}</span>
+                    {#if playerSummary(row) !== ''}
+                      <span class="open-card-players" title={playerSummary(row)}>
+                        {playerSummary(row)}
+                      </span>
+                    {/if}
+                  </span>
+                  <span class="open-card-action">Continue</span>
+                </a>
+              {/each}
+            </div>
+          {/if}
         </section>
       {/if}
 
       {#key status}
-        <DataGrid data={gridRows} columns={gridColumns} {fill} {gridKey}
+        <DataGrid data={result} columns={gridColumns} {fill} {gridKey}
                   pageSize={showGames ? pageSize : Math.min(Math.max(result.length, 1), pageSize)}
-                  emptyMessage={status === 'open' ? 'No open sessions.' : undefined}>
+                  emptyMessage={emptyMessage ?? (status === 'open' ? 'No open sessions.' : undefined)}>
           <slot name="actions" slot="actions" />
         </DataGrid>
       {/key}
@@ -243,6 +269,7 @@
   }
 
   .open-panel {
+    flex: 0 0 auto;
     margin-bottom: 16px;
     border: 1px solid var(--wa-color-surface-border);
     border-radius: var(--wa-border-radius-m);
@@ -252,12 +279,56 @@
 
   .open-head {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    padding: 12px 16px;
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 6px 16px;
     border-bottom: 1px solid var(--wa-color-surface-border);
+  }
+
+  .open-toggle {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    height: 30px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .open-toggle:focus-visible {
+    outline: 2px solid var(--wa-color-brand-border-loud);
+    outline-offset: 3px;
+    border-radius: var(--wa-border-radius-s);
+  }
+
+  .open-chevron {
+    flex: 0 0 auto;
+    align-self: center;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform var(--wa-transition-normal);
+  }
+
+  .open-panel.folded .open-chevron {
+    transform: rotate(-45deg);
+  }
+
+  .open-panel.folded .open-head {
+    border-bottom: 0;
   }
 
   .open-heading {

@@ -9,11 +9,52 @@ import { asNumber, numberOrString } from '#schema/common';
 /******************************************************************************/
 
 
+/* The play types a session can record. Kept here so the write schema and the
+ * list filters cannot drift apart as values are added. */
+export const sessionPlayTypes = [
+  'cardboard',
+  'boardgamearena',
+  'steam',
+  'gog',
+  'android'
+];
+
+
+/******************************************************************************/
+
+
 /* Queries that manipulate specific sessions or get their details must provide
  * a valid numeric sessionId as a part of the request. */
 export const SessionIDSchema = z.object({
   sessionId: z.string().optional().transform(asNumber(true))
 });
+
+
+/******************************************************************************/
+
+
+/* Parse a comma separated list (or repeated query values) of player keys.
+ *
+ * The accepted form is the stable key used by the list response: `u:<id>` for a
+ * user and `g:<id>` for a guest. Duplicates collapse so that `match=all` counts
+ * identities rather than repeated query values. */
+const PlayerFilterSchema = z.union([
+  z.string().default(''),
+  z.array(z.string()).default([])
+])
+  .transform(value => (Array.isArray(value) ? value : value.split(','))
+    .map(entry => entry.trim())
+    .filter(entry => entry !== ''))
+  .pipe(z.array(z.string().regex(/^[ug]:\d+$/)))
+  .transform(keys => {
+    const unique = [...new Set(keys)];
+
+    return {
+      keys: unique,
+      users: unique.filter(key => key.startsWith('u:')).map(key => Number(key.slice(2))),
+      guests: unique.filter(key => key.startsWith('g:')).map(key => Number(key.slice(2)))
+    };
+  });
 
 
 /******************************************************************************/
@@ -29,6 +70,32 @@ export const SessionListParamSchema = z.object({
 
   // Limit the list to open or closed reports. An omitted value means both.
   status: z.enum(['open', 'closed']).optional(),
+
+  // Limit the list to sessions that include the given players. The keys are
+  // stable identities from the list response, so a user and a guest with the
+  // same display name remain distinct.
+  players: PlayerFilterSchema,
+
+  // Whether a session must include any or all of the selected players. The
+  // value is only meaningful when players were selected; an omitted value is
+  // the more restrictive "all".
+  match: z.enum(['any', 'all']).default('all'),
+
+  // Limit the list to sessions in any household the current user belongs to.
+  // This is personalization, not an access-control gate; the unfiltered list
+  // still contains every session.
+  household: z.enum(['me']).optional(),
+
+  // Inclusive bounds on sessionBegin, supplied as ISO instants. The client
+  // converts its local calendar dates to start/end of day so an evening session
+  // does not fall into the next UTC day.
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+
+  // Exact play type and learning-game flag.
+  playType: z.enum(sessionPlayTypes).optional(),
+  learning: z.enum(['true', 'false']).optional()
+    .transform(value => value === undefined ? undefined : value === 'true'),
 
   // Optionally either a comma separated string of numbers and slugs, or an
   // array of same (by using the same parameter multiple times as one ought).
@@ -53,6 +120,15 @@ export const SessionListParamSchema = z.object({
     // numbers and not strings.
     return value.map(el => numberOrString(el));
   })
+}).refine(value => {
+  if (value.from === undefined || value.to === undefined) {
+    return true;
+  }
+
+  return Date.parse(value.from) <= Date.parse(value.to);
+}, {
+  message: 'from must not be after to',
+  path: ['from']
 });
 
 
@@ -71,7 +147,7 @@ export const NewSessionReportSchema = z.object({
 
   // The type of game that is being played; there are a specific set of values
   // to choose from.
-  playType: z.enum(["cardboard", "boardgamearena", "steam", "gog", "android"]),
+  playType: z.enum(sessionPlayTypes),
 
   // The time the session began and the time that it ended; the end time is
   // optional and can be NULL if the session is stil open
