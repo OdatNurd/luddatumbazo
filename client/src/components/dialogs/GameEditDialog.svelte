@@ -657,7 +657,7 @@
   }
 
   .game-dialog wa-tab-group,
-  .game-dialog wa-tab-group::part(base) {
+  .game-dialog wa-tab-group::part(tab-group) {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;

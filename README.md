@@ -33,6 +33,25 @@ on my ability to remember to update this):
 - [@axel669/sanic-xml](https://www.npmjs.com/package/@axel669/sanic-xml) for handling XML API data from BoardGameGeek
 
 
+### Image variants
+
+Game art is served through Cloudflare Images. The account defines four variants;
+the sizes are also the layout sizes to design around for each position:
+
+| Variant | Size | Fit | Used for |
+| --- | --- | --- | --- |
+| `thumb` | 32×32 | contain | table cells and compact lists |
+| `entry` | 175×175 | contain | session report summary at rest |
+| `cover` | 350×350 | contain | game detail at rest |
+| `public` | 1366×768 | scale down | full-size lightbox images |
+
+The application maps its internal image names onto these variants in
+`wrangler.jsonc`: `thumbnail` → `thumb`, `smallboxart` → `entry`, `boxart` →
+`cover`, and `full` → `public`. The `public` rendition is the largest one and is
+what every full-size lightbox uses; the smaller variants are only the images at
+rest.
+
+
 The following things were planned inclusions in the project but the MVP that we
 ended with at the end of Devember did not include them. Future development will
 bring these changes in, or possibly already did and I just forgot to update this

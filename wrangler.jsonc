@@ -230,17 +230,33 @@
     "CF_IMAGEURL_TEMPLATE": "https://luddatumbazo.odatnurd.net/images/{imagePath}/{variant}",
 
     // Cloudflare images provides you the ability to have one or more variants,
-    // but they are not namespaced to a particular project.
+    // but they are not namespaced to a particular project. The account's four
+    // variants, and the sizes they are used for, are:
     //
-    // This values are used to make our internal names for the image sizes we
-    // want (whose names are visible in the CF_VARIANT names) to the actual
-    // variant name.
+    //   thumb   32x32     fit=contain
+    //   entry   175x175   fit=contain
+    //   cover   350x350   fit=contain
+    //   public  1366x768  fit=scale-down
+    //
+    // These values map our internal names for the image sizes we want (whose
+    // names are visible in the CF_VARIANT names) to the actual variant name.
+    //
+    //   thumbnail   -> thumb    compact lists and table cells
+    //   smallboxart -> entry    session report summary at rest
+    //   boxart      -> cover    game detail at rest
+    //   full        -> public   full-size lightbox images
     //
     // For example, a request for a 'boxart' image consults CF_VARIANT_BOXART
     // and determines that the variant name to use is 'cover'.
     "CF_VARIANT_THUMB": "thumb",
     "CF_VARIANT_BOXART": "cover",
     "CF_VARIANT_SMALLBOXART": "entry",
+
+    // The largest rendition; every full-size lightbox (game details and session
+    // reports) uses this, so the opened image is not limited to the size of the
+    // at-rest cover. The dimensions above are also the layout sizes to design
+    // around for each position.
+    "CF_VARIANT_FULL": "public",
 
   //----------------------------------------------------------------------------
   // T O K E N S

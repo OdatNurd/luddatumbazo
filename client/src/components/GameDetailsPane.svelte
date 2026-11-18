@@ -382,7 +382,13 @@
 
         <wa-tab-panel name="images">
           <div class="game-image">
-            <GameImage imagePath={gameData.imagePath} name={gameData.primaryName} />
+            <wa-lightbox label={`${gameData.primaryName} box art`}
+                         without-counter without-navigation>
+              <wa-lightbox-item src={gameData.imageFullPath}
+                                alt={`${gameData.primaryName} box art`}>
+                <GameImage imagePath={gameData.imagePath} name={gameData.primaryName} />
+              </wa-lightbox-item>
+            </wa-lightbox>
           </div>
         </wa-tab-panel>
 
@@ -605,6 +611,12 @@
   .game-image {
     display: flex;
     flex-wrap: wrap;
+  }
+
+  /* Keep the lightbox host out of the flex layout so the resting image keeps
+     exactly the same box it had before the lightbox was added. */
+  .game-image wa-lightbox {
+    display: contents;
   }
 
   .actions {

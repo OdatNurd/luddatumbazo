@@ -857,7 +857,11 @@ export async function dbSessionDetails(ctx, sessionId, actorId) {
   // Our session data is the first (and only) returned object; update any of the
   // boolean fields and add in a mapped version of the image URL that we
   // gathered.
+  //
+  // The summary keeps the entry-sized image at rest; opening it shows the
+  // largest public rendition, matching the game-details lightbox.
   const sessionData = mapIntFieldsToBool(result[0]);
+  sessionData.imageFullPath = imgGetAssetURL(ctx, sessionData.imagePath, 'full');
   sessionData.imagePath = imgGetAssetURL(ctx, sessionData.imagePath, 'smallboxart');
 
   // Check for the list of expansions that were used to play this game.

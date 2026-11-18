@@ -433,7 +433,9 @@ export async function dbGameDetails(ctx, idOrSlug, householdId) {
     return null;
   }
 
-  // Set up the game data and map the game image URL.
+  // Set up the game data and map the game image URLs. The detail pane uses the
+  // cover at rest and the full public variant when the image is opened.
+  gameData.imageFullPath = imgGetAssetURL(ctx, gameData.imagePath, 'full');
   gameData.imagePath = imgGetAssetURL(ctx, gameData.imagePath, 'boxart');
 
   // Gather the list of all of the names that this game is known by; much like

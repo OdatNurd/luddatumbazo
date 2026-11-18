@@ -12,6 +12,7 @@ export const imageVariantMap = {
   'boxart': 'CF_VARIANT_BOXART',
   'smallboxart': 'CF_VARIANT_SMALLBOXART',
   'thumbnail': 'CF_VARIANT_THUMB',
+  'full': 'CF_VARIANT_FULL',
 }
 
 

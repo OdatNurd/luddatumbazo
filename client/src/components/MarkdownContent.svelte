@@ -78,7 +78,7 @@
   .markdown-body :global(blockquote) {
     margin: 0 0 1em;
     padding-left: 1em;
-    border-left: 3px solid var(--wa-color-surface-border);
+    border-left: 3px solid var(--wa-color-neutral-border-loud);
     color: var(--wa-color-text-quiet);
   }
 
@@ -106,7 +106,7 @@
   .markdown-body :global(hr) {
     margin: 1.25em 0;
     border: 0;
-    border-top: 1px solid var(--wa-color-surface-border);
+    border-top: 1px solid var(--wa-color-neutral-border-loud);
   }
 
   .markdown-body :global(table) {

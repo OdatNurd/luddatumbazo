@@ -18,7 +18,7 @@ import terser from '@rollup/plugin-terser';
 import $path from '@axel669/rollup-dollar-path';
 import asuid from "@axel669/asuid/node";
 import copy from '@axel669/rollup-copy-static';
-import html from '@axel669/rollup-html-input';
+import { htmlEntry } from './tools/rollupHtmlEntry.js';
 
 import { commitReference } from './commitReference.js';
 
@@ -54,7 +54,9 @@ const buildList = [
     // output.
     input: './client/src/index.html',
     output: {
-      file: `./output/client/app-${asuid()}.js`,
+      dir: './output/client',
+      entryFileNames: `app-${asuid()}.js`,
+      chunkFileNames: 'chunks/[name]-[hash].js',
       format: 'esm',
       sourcemap: true
     },
@@ -81,14 +83,15 @@ const buildList = [
       del({
         targets: [
           "./output/client/app-*.js",
-          "./output/client/app-*.js.map"
+          "./output/client/app-*.js.map",
+          "./output/client/chunks"
         ],
         force: true
       }),
 
 
-      // Do the processing that associates the input HTML with the output JS.
-      html(),
+      // Do the processing that associates the input HTML with the entry chunk.
+      htmlEntry(),
 
       // Compile svelte components; CSS is generated out to JS code that applies
       // styles dynamically as needed.

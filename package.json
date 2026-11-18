@@ -37,7 +37,7 @@
     "#legacyvalidator": "./service/src/lib/validateZod.js"
   },
   "dependencies": {
-    "@awesome.me/webawesome-pro": "^3.14.0",
+    "@awesome.me/webawesome-pro": "^3.15.0",
     "@axel669/sanic-xml": "^0.3.0",
     "@odatnurd/cf-requests": "^0.1.16",
     "@odatnurd/d1-query": "^0.3.2",
@@ -58,7 +58,6 @@
     "@axel669/hono-file-routes": "^1.0.2",
     "@axel669/rollup-copy-static": "^0.2.0",
     "@axel669/rollup-dollar-path": "^0.1.0",
-    "@axel669/rollup-html-input": "^0.1.2",
     "@odatnurd/cf-aegis": "^0.1.10",
     "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-node-resolve": "^16.0.3",

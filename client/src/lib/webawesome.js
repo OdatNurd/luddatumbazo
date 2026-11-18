@@ -8,6 +8,8 @@
  * relies on. */
 import '@awesome.me/webawesome-pro/dist/components/page/page.js';
 import '@awesome.me/webawesome-pro/dist/components/button/button.js';
+import '@awesome.me/webawesome-pro/dist/components/lightbox/lightbox.js';
+import '@awesome.me/webawesome-pro/dist/components/lightbox-item/lightbox-item.js';
 import '@awesome.me/webawesome-pro/dist/components/icon/icon.js';
 import '@awesome.me/webawesome-pro/dist/components/avatar/avatar.js';
 import '@awesome.me/webawesome-pro/dist/components/badge/badge.js';

@@ -7,8 +7,8 @@
   import { sessionStatus } from '$stores/sessionStatus';
   import { foldText } from '$lib/text.js';
 
-  import MarkdownContent from '$components/MarkdownContent.svelte';
   import Icon from '$components/Icon.svelte';
+  import { applyRichTextEditorStyles, loadRichTextEditor } from '$lib/richTextEditor.js';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -103,36 +103,226 @@
     }
   };
 
-  // The Details panel has its own Edit/Preview tabs. It is mounted inside the
-  // hidden outer panel too, so it needs the same explicit activation when its
-  // parent tab is shown. The preview only renders while it is visible, which
-  // avoids parsing Markdown on every keystroke in the editor.
-  let contentTabs = null;
-  let contentTab = 'edit';
+  // The rich text editor is loaded only when the Details tab is first shown, so
+  // opening a report does not pull its large ProseMirror chunk into the initial
+  // page bundle. It stays loaded for the life of the dialog so moving between
+  // tabs after that is instant.
+  let contentEditor = null;
+  let editorReady = false;
+  let editorLoading = false;
+  let editorError = null;
 
-  const contentShown = event => {
-    contentTab = event.detail.name;
-  };
+  // The custom link editor replaces the editor's URL-only popover: a link in a
+  // report needs both its label and its destination.
+  let linkPopover = null;
+  let linkTextField = null;
+  let linkHrefField = null;
+  let linkText = '';
+  let linkHref = '';
+  let linkWarning = null;
+  let linkOpen = false;
 
-  const showContentTab = async name => {
-    await tick();
+  const loadEditor = async () => {
+    if (editorReady === true || editorLoading === true) {
+      return;
+    }
 
-    if (contentTabs !== null) {
-      contentTabs.active = '';
+    editorLoading = true;
+    editorError = null;
+
+    try {
+      await loadRichTextEditor();
+      await customElements.whenDefined('wa-rich-text-editor');
+      editorReady = true;
+
+      // Set the initial value after the element exists. This also marks the
+      // existing report as the editor's default, so its dirty state is clear.
       await tick();
-      contentTabs.active = name;
+      if (contentEditor !== null) {
+        applyRichTextEditorStyles(contentEditor);
+        contentEditor.addEventListener('keydown', editorShortcut, true);
+        contentEditor.value = form.content ?? '';
+        contentEditor.defaultValue = form.content ?? '';
+      }
+    }
+    catch (error) {
+      editorError = error.message ?? 'Unable to load the rich text editor.';
+    }
+    finally {
+      editorLoading = false;
     }
   };
 
   const outerTabShown = event => {
-    // The nested tab group's events bubble up here as well; only respond to
-    // the outer group's own tabs.
+    // Only respond to the outer group's own tabs; a bubbled event from any
+    // nested control must not trigger an editor load.
     if (event.target !== event.currentTarget) {
       return;
     }
 
     if (event.detail.name === 'details') {
-      showContentTab(contentTab);
+      loadEditor();
+    }
+  };
+
+  const contentChanged = event => {
+    form.content = event.target.value ?? '';
+  };
+
+  // Find the href of a link at the current editor selection, if there is one.
+  const selectedLinkHref = () => {
+    const view = contentEditor?.view;
+    if (view === null || view === undefined) {
+      return '';
+    }
+
+    const state = view.state;
+    const link = state.schema.marks.link;
+
+    if (state.selection.empty === true) {
+      const mark = state.doc.resolve(state.selection.from).marks(link)[0];
+      return mark?.attrs.href ?? '';
+    }
+
+    let href = '';
+    state.doc.nodesBetween(state.selection.from, state.selection.to, node => {
+      if (href !== '') {
+        return false;
+      }
+
+      const mark = node.marks.find(entry => entry.type === link);
+
+      if (mark !== undefined) {
+        href = mark.attrs.href ?? '';
+        return false;
+      }
+    });
+
+    return href;
+  };
+
+  const prepareLink = () => {
+    linkWarning = null;
+    linkText = contentEditor?.selectedText ?? '';
+    linkHref = selectedLinkHref();
+  };
+
+  const showLinkEditor = async () => {
+    prepareLink();
+    await linkPopover?.show();
+  };
+
+  // Intercept the editor's built-in Mod-K shortcut so it opens the same
+  // label-and-destination form as the toolbar action.
+  const editorShortcut = event => {
+    if ((event.ctrlKey === true || event.metaKey === true) &&
+        event.altKey === false &&
+        event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      event.stopPropagation();
+      showLinkEditor();
+    }
+  };
+
+  const linkShown = async () => {
+    linkOpen = true;
+    await tick();
+
+    if (linkText === '') {
+      linkTextField?.focus();
+    }
+    else {
+      linkHrefField?.focus();
+    }
+  };
+
+  const linkHidden = () => {
+    linkOpen = false;
+    linkWarning = null;
+  };
+
+  const cancelLink = async () => {
+    await linkPopover?.hide();
+    contentEditor?.focus();
+  };
+
+  const escapeHtml = text => text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+
+  const normalizeHref = value => {
+    const href = String(value ?? '').trim();
+
+    if (href === '') {
+      return null;
+    }
+
+    if (href.startsWith('#/') || href.startsWith('/')) {
+      return href;
+    }
+
+    if (/^(https?:\/\/|mailto:)/i.test(href)) {
+      return href;
+    }
+
+    // Reject other schemes (javascript:, data:, ...) rather than letting a
+    // pasted value become executable content.
+    if (/^[a-z][a-z0-9+.-]*:/i.test(href)) {
+      return null;
+    }
+
+    // Be forgiving about a bare external host, the same way the old link
+    // control treated a destination without a scheme.
+    if (/\s/.test(href) === false && href.includes('.')) {
+      return `https://${href}`;
+    }
+
+    return null;
+  };
+
+  const applyLink = async () => {
+    if (contentEditor === null) {
+      return;
+    }
+
+    const text = linkText.trim();
+    if (text === '') {
+      linkWarning = 'Enter the text to display for the link.';
+      linkTextField?.focus();
+      return;
+    }
+
+    const href = normalizeHref(linkHref);
+    if (href === null) {
+      linkWarning = 'Enter an internal address such as #/game/ark-nova, or a full external URL.';
+      linkHrefField?.focus();
+      return;
+    }
+
+    const selected = contentEditor.selectedText ?? '';
+    let applied = false;
+
+    // When the label is the selected text, applying the link mark preserves
+    // any formatting already inside the selection. A changed label replaces
+    // the selection with the new linked text.
+    if (selected !== '' && selected === text) {
+      applied = contentEditor.runCommand('link', { href });
+    }
+
+    if (applied === false) {
+      contentEditor.insertHtml(`<a href="${escapeHtml(href)}">${escapeHtml(text)}</a>`);
+    }
+
+    await linkPopover?.hide();
+    contentEditor.focus();
+  };
+
+  const linkFieldKeyDown = event => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applyLink();
     }
   };
 
@@ -151,7 +341,6 @@
     settled = false;
     saving = false;
     warning = null;
-    contentTab = 'edit';
     helpOpen = false;
   }
 
@@ -395,6 +584,16 @@
       if (gameBox !== null) {
         gameBox.value = (form.gameId === null) ? '' : String(form.gameId);
         gameBox.inputValue = form.gameName ?? '';
+      }
+
+      // If the editor was opened while the populate request was still in
+      // flight, adopt the loaded report's content now. This is deliberately
+      // done here and when the editor first loads rather than through a
+      // reactive value binding, which would write every keystroke back into
+      // the editor and reset short-lived states such as an empty heading.
+      if (editorReady === true && contentEditor !== null) {
+        contentEditor.value = form.content ?? '';
+        contentEditor.defaultValue = form.content ?? '';
       }
     }
     catch (error) {
@@ -811,86 +1010,175 @@
                   on:change={e => type(e.target, v => form.title = v)}></wa-input>
 
         <div class="content-editor">
-          <span class="content-label">Content</span>
+          {#if editorReady}
+            <!-- Disable the features the session renderer strips (images,
+                 embeds, underline, highlight, color, alignment, sub/superscript).
+                 Tables are not disabled: they render on the session page, so
+                 existing reports that contain them must survive editing. -->
+            <wa-rich-text-editor label="Content" format="markdown"
+                                 placeholder="Write up what happened…"
+                                 toolbar="block | bold italic strikethrough code | actions | bullet-list ordered-list blockquote | horizontal-rule | undo redo"
+                                 disabled-features="image embed underline highlight color align subscript superscript"
+                                 bind:this={contentEditor}
+                                 on:input={contentChanged}
+                                 on:change={contentChanged}>
+              <!-- wa-button wraps a real <button>; the a11y warnings are false positives. -->
+              <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+              <wa-button slot="actions" id="content-link" appearance="plain" size="s"
+                         title="Insert link" aria-label="Insert link"
+                         aria-haspopup="dialog" aria-expanded={linkOpen}
+                         on:click={prepareLink}>
+                <Icon name="link-45deg" />
+              </wa-button>
 
-          <wa-tab-group bind:this={contentTabs} on:wa-tab-show={contentShown}>
-            <wa-tab slot="nav" panel="edit">Edit</wa-tab>
-            <wa-tab slot="nav" panel="preview">Preview</wa-tab>
+              <wa-button slot="actions" id="content-help" appearance="plain" size="s"
+                         title="Formatting help" aria-label="Formatting help"
+                         aria-haspopup="dialog" aria-expanded={helpOpen}>
+                <Icon name="question-circle-fill" />
+              </wa-button>
+            </wa-rich-text-editor>
 
-            <wa-tab-panel name="edit">
-              <wa-textarea class="wa-visually-hidden-label" label="Content" rows="8" value={form.content}
-                           on:input={e => type(e.target, v => form.content = v)}
-                           on:change={e => type(e.target, v => form.content = v)}></wa-textarea>
-            </wa-tab-panel>
-
-            <wa-tab-panel name="preview">
-              <div class="content-preview">
-                {#if contentTab === 'preview'}
-                  <MarkdownContent content={form.content}
-                                   empty="Nothing to preview yet. Add some text in the Edit tab." />
-                {/if}
-              </div>
-            </wa-tab-panel>
-          </wa-tab-group>
-
-          <wa-button id="content-help" appearance="plain" title="Markdown help"
-                     aria-label="Markdown help" aria-haspopup="dialog"
-                     aria-expanded={helpOpen}>
-            <Icon name="question-circle-fill" />
-          </wa-button>
-
-          <wa-popover for="content-help" class="help-popover"
-                      placement="left-start" distance="6"
-                      on:wa-show={helpShown} on:wa-hide={helpHidden}>
-            <div class="markdown-help">
-              <div class="help-heading">
-                <strong>Markdown cheat sheet</strong>
-                <span class="muted">The Preview tab shows the formatted result.</span>
-              </div>
-
-              <div class="help-section">
-                <strong>Formatting</strong>
-                <dl class="help-list">
-                  <dt><code>## Heading</code></dt><dd>Section heading</dd>
-                  <dt><code>**bold**</code></dt><dd>Bold text</dd>
-                  <dt><code>*italic*</code></dt><dd>Italic text</dd>
-                  <dt><code>- item</code></dt><dd>Bulleted list</dd>
-                  <dt><code>1. item</code></dt><dd>Numbered list</dd>
-                  <dt><code>&gt; quote</code></dt><dd>Block quote</dd>
-                  <dt><code>`code`</code></dt><dd>Inline code</dd>
-                </dl>
-              </div>
-
-              <div class="help-section">
-                <strong>Links</strong>
-
-                <div class="help-example">
-                  <code>[Ark Nova](#/game/ark-nova)</code>
-                  <span>Link to a game page</span>
+            <wa-popover for="content-help" class="help-popover"
+                        placement="left-start" distance="6"
+                        on:wa-show={helpShown} on:wa-hide={helpHidden}>
+              <div class="markdown-help">
+                <div class="help-heading">
+                  <strong>Formatting help</strong>
+                  <span class="muted">Select text, then use the toolbar. Markdown block shortcuts work at the start of a line.</span>
                 </div>
 
-                <div class="help-example">
-                  <code>[This session](#/session/123)</code>
-                  <span>Link to a session report</span>
+                <!-- Web Awesome's Markdown typing rules cover block structures
+                     only. Do not list inline Markdown syntax here: bold, italic,
+                     strikethrough, inline code, and links are toolbar-only. -->
+                <div class="help-section">
+                  <strong>Text formatting</strong>
+                  <dl class="help-list">
+                    <dt><code>Bold</code></dt><dd>Select text, then use the Bold button.</dd>
+                    <dt><code>Italic</code></dt><dd>Select text, then use the Italic button.</dd>
+                    <dt><code>Strikethrough</code></dt><dd>Select text, then use the Strikethrough button.</dd>
+                    <dt><code>Code</code></dt><dd>Inline code: select text, then use the Code button.</dd>
+                  </dl>
                 </div>
 
-                <div class="help-example">
-                  <code>[External site](https://example.com)</code>
-                  <span>Link outside the app</span>
+                <div class="help-section">
+                  <strong>Typing shortcuts</strong>
+                  <dl class="help-list">
+                    <dt><code># Heading</code></dt><dd>Heading level 1; use <code>##</code> or <code>###</code> for levels 2–3.</dd>
+                    <dt><code>- item</code></dt><dd>Bulleted list</dd>
+                    <dt><code>1. item</code></dt><dd>Numbered list</dd>
+                    <dt><code>&gt; quote</code></dt><dd>Block quote</dd>
+                    <dt><code>```</code></dt><dd>Code block</dd>
+                    <dt><code>---</code></dt><dd>Horizontal rule</dd>
+                  </dl>
+                </div>
+
+                <div class="help-section">
+                  <strong>Links</strong>
+
+                  <div class="help-example">
+                    <code>Link button</code>
+                    <span>Set the text and destination together. Selecting text first fills in the text.</span>
+                  </div>
+
+                  <div class="help-example">
+                    <code>https://example.com</code>
+                    <span>Type an external address and press Space to link it automatically.</span>
+                  </div>
+                </div>
+
+                <div class="help-section">
+                  <strong>Internal short links</strong>
+
+                  <div class="help-example">
+                    <code>#/game/&lt;slug&gt;</code>
+                    <span>Game page, for example <code>#/game/ark-nova</code>.</span>
+                  </div>
+
+                  <div class="help-example">
+                    <code>#/session/&lt;id&gt;</code>
+                    <span>Session report, for example <code>#/session/249</code>.</span>
+                  </div>
+
+                  <dl class="help-list help-targets">
+                    <dt><code>#/category/&lt;slug&gt;</code></dt><dd>Category</dd>
+                    <dt><code>#/mechanic/&lt;slug&gt;</code></dt><dd>Mechanic</dd>
+                    <dt><code>#/designer/&lt;slug&gt;</code></dt><dd>Designer</dd>
+                    <dt><code>#/artist/&lt;slug&gt;</code></dt><dd>Artist</dd>
+                    <dt><code>#/publisher/&lt;slug&gt;</code></dt><dd>Publisher</dd>
+                  </dl>
+
+                  <div class="muted help-note">
+                    Put one of these in the Destination field; they do not turn
+                    into links on their own. These are short hash routes, not
+                    web addresses outside the app. External links open in a new
+                    tab.
+                  </div>
                 </div>
 
                 <div class="muted help-note">
-                  Game links use the slug after <code>#/game/</code>; session
-                  links use the numeric session ID. External links open in a
-                  new tab.
+                  Leave a blank line between paragraphs. Images are not
+                  supported; tables already in a report are kept when it is
+                  edited.
                 </div>
               </div>
+            </wa-popover>
 
-              <div class="muted help-note">
-                Leave a blank line between paragraphs. Images are not supported.
+            <wa-popover bind:this={linkPopover} for="content-link" class="link-popover"
+                        placement="left-start" distance="6"
+                        on:wa-show={linkShown} on:wa-hide={linkHidden}>
+              <div class="link-form">
+                <div class="help-heading">
+                  <strong>Insert link</strong>
+                  <span class="muted">The link text is what appears in the report.</span>
+                </div>
+
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <wa-input bind:this={linkTextField} size="s"
+                          label="Link text" value={linkText} placeholder="Ark Nova"
+                          on:input={e => linkText = e.target.value}
+                          on:change={e => linkText = e.target.value}
+                          on:keydown={linkFieldKeyDown}></wa-input>
+
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <wa-input bind:this={linkHrefField} size="s"
+                          label="Destination" value={linkHref}
+                          placeholder="#/game/ark-nova or https://example.com"
+                          on:input={e => linkHref = e.target.value}
+                          on:change={e => linkHref = e.target.value}
+                          on:keydown={linkFieldKeyDown}></wa-input>
+
+                <div class="muted link-note">
+                  Game: <code>#/game/&lt;slug&gt;</code> · Session:
+                  <code>#/session/&lt;id&gt;</code> · External:
+                  <code>https://…</code>
+                </div>
+
+                {#if linkWarning !== null}
+                  <div class="link-warning" role="alert">{linkWarning}</div>
+                {/if}
+
+                <div class="link-actions">
+                  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+                  <wa-button size="s" appearance="outlined" variant="neutral"
+                             on:click={cancelLink}>Cancel</wa-button>
+                  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+                  <wa-button size="s" appearance="filled" variant="brand"
+                             on:click={applyLink}>Insert link</wa-button>
+                </div>
               </div>
+            </wa-popover>
+          {:else if editorError !== null}
+            <div class="editor-error" role="alert">
+              <span>{editorError}</span>
+              <!-- wa-button wraps a real <button>; the a11y warnings are false positives. -->
+              <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+              <wa-button size="s" appearance="outlined" on:click={loadEditor} disabled={editorLoading}>
+                Retry
+              </wa-button>
             </div>
-          </wa-popover>
+          {:else}
+            <div class="editor-loading" role="status">Loading editor…</div>
+          {/if}
         </div>
       </div>
     </wa-tab-panel>
@@ -943,7 +1231,7 @@
   }
 
   .session-dialog > wa-tab-group,
-  .session-dialog > wa-tab-group::part(base) {
+  .session-dialog > wa-tab-group::part(tab-group) {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
@@ -962,23 +1250,15 @@
     padding: 6px;
   }
 
-  /* Both tab strips are secondary affordances here: the fields are the task,
+  /* The tab strip is a secondary affordance here: the fields are the task,
      and the dialog has a fixed height. Use smaller type and tighter padding so
      the chrome leaves more room for the active panel. */
   .session-dialog wa-tab {
     font-size: var(--wa-font-size-s);
   }
 
-  .session-dialog wa-tab::part(base) {
+  .session-dialog wa-tab::part(tab) {
     padding: 0.4rem 0.85rem;
-  }
-
-  .session-dialog .content-editor wa-tab {
-    font-size: var(--wa-font-size-xs);
-  }
-
-  .session-dialog .content-editor wa-tab::part(base) {
-    padding: 0.25rem 0.65rem;
   }
 
   /* Web Awesome gives panels 32px of vertical padding. That is generous for a
@@ -1036,7 +1316,7 @@
 
   /* The Details panel fills the space the dialog gives it, and the editor
      inside it grows into whatever remains after the title field. This keeps
-     the textarea usefully tall without forcing the whole tab body to scroll. */
+     the write-up usefully tall without forcing the whole tab body to scroll. */
   :global(.session-dialog > wa-tab-group > wa-tab-panel[name="details"][active]) {
     box-sizing: border-box;
     height: 100%;
@@ -1044,7 +1324,7 @@
     flex-direction: column;
   }
 
-  :global(.session-dialog > wa-tab-group > wa-tab-panel[name="details"][active]::part(base)) {
+  :global(.session-dialog > wa-tab-group > wa-tab-panel[name="details"][active]::part(tab-panel)) {
     box-sizing: border-box;
     flex: 1 1 auto;
     min-height: 0;
@@ -1057,119 +1337,46 @@
     min-height: 0;
   }
 
-  /* The write-up: the field label sits above the Edit/Preview tabs, so it
-     stays put when the panels swap and the content keeps its context. The
-     tabs and help button share the second row. */
+  /* The write-up grows into the space left after the title field. The editor
+     host and its bordered box are both flex containers, so the editable
+     region fills the available height and scrolls internally; the tab body
+     takes over when the dialog itself is too short to show the full editor. */
   .content-editor {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) max-content;
-    grid-template-rows: max-content minmax(0, 1fr);
-    column-gap: 8px;
-    row-gap: 4px;
-    flex: 1 1 auto;
-    min-height: 0;
-  }
-
-  .content-label {
-    grid-column: 1 / -1;
-    color: var(--wa-form-control-label-color);
-    font-weight: var(--wa-form-control-label-font-weight);
-    line-height: var(--wa-form-control-label-line-height);
-  }
-
-  .content-editor > wa-tab-group {
-    grid-column: 1;
-    grid-row: 2;
-    min-width: 0;
-    min-height: 0;
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 15em;
   }
 
-  .content-editor > wa-tab-group::part(base) {
-    flex: 1 1 auto;
-    min-height: 0;
+  .content-editor wa-rich-text-editor {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 15em;
+    --content-min-height: 10em;
   }
 
-  .content-editor > wa-tab-group::part(body) {
+  .content-editor wa-rich-text-editor::part(rich-text-editor) {
     flex: 1 1 auto;
     min-height: 0;
+  }
+
+  .editor-loading {
+    padding: 24px 0;
+    color: var(--wa-color-text-quiet);
+    font-size: var(--wa-font-size-s);
+  }
+
+  .editor-error {
     display: flex;
-    padding: 0;
-  }
-
-  .content-editor wa-tab-panel {
-    --padding: var(--wa-space-s) 0 0;
-  }
-
-  :global(.content-editor wa-tab-panel[name="edit"][active]) {
-    box-sizing: border-box;
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Both panels share the row with the help button, so the preview has to
-     grow like the editor; left to its content it would size to its text and
-     come out narrower than the field. */
-  :global(.content-editor wa-tab-panel[name="preview"][active]) {
-    box-sizing: border-box;
-    flex: 1 1 auto;
-    min-width: 0;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  :global(.content-editor wa-tab-panel[name="preview"][active]::part(base)) {
-    box-sizing: border-box;
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  :global(.content-editor wa-tab-panel[name="edit"][active]::part(base)) {
-    box-sizing: border-box;
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  :global(.content-editor wa-tab-panel[name="edit"][active] wa-textarea) {
-    flex: 1 1 auto;
-    min-height: 0;
-  }
-
-  :global(.content-editor wa-tab-panel[name="edit"][active] wa-textarea::part(base)) {
-    flex: 1 1 auto;
-    min-height: 0;
-  }
-
-  :global(.content-editor wa-tab-panel[name="edit"][active] wa-textarea::part(textarea)) {
-    box-sizing: border-box;
-    height: 100%;
-  }
-
-  .content-editor > wa-button {
-    grid-column: 2;
-    grid-row: 2;
-    align-self: start;
-  }
-
-  /* The preview is the report as the session page presents it, so it gets no
-     inset panel of its own: no padding, border or background. Its text then
-     starts and ends at the same edges as the editor above it, and it scrolls
-     in place rather than making the dialog scroll. */
-  .content-preview {
-    box-sizing: border-box;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--wa-color-surface-border);
+    border-radius: var(--wa-border-radius-s);
+    color: var(--wa-color-text-quiet);
+    font-size: var(--wa-font-size-s);
   }
 
   /* The cheat sheet is wider than the default popover and scrolls when the
@@ -1216,8 +1423,7 @@
   }
 
   .help-list code,
-  .help-example code,
-  .help-note code {
+  .help-example code {
     padding: 1px 5px;
     border-radius: var(--wa-border-radius-s);
     background: var(--wa-color-surface-lowered);
@@ -1226,13 +1432,52 @@
     overflow-wrap: anywhere;
   }
 
-  .help-example code {
+  .help-example > code {
     display: block;
     padding: 4px 6px;
   }
 
   .help-note {
     line-height: 1.45;
+  }
+
+  .help-targets {
+    margin-top: 2px;
+  }
+
+  /* The link editor is a compact form rather than a cheat sheet. */
+  .link-popover {
+    --max-width: 27rem;
+  }
+
+  .link-popover::part(body) {
+    width: min(27rem, 82vw);
+    max-height: min(70vh, 26rem);
+    overflow-y: auto;
+    padding: var(--wa-space-m);
+  }
+
+  .link-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: var(--wa-font-size-s);
+  }
+
+  .link-note {
+    line-height: 1.45;
+  }
+
+  .link-warning {
+    color: var(--wa-color-danger-on-quiet);
+    font-size: var(--wa-font-size-s);
+  }
+
+  .link-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 2px;
   }
 
   .stats {

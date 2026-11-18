@@ -15,7 +15,7 @@
  * Authored markup and database-referenced icon names use bootstrap-icons, so
  * the "bootstrap" library maps those names to vendored files under
  * client/static/icons. */
-import { registerIconLibrary } from '@awesome.me/webawesome-pro/dist/webawesome.js';
+import { registerIconLibrary } from '@awesome.me/webawesome-pro/dist/components/icon/library.js';
 
 
 /******************************************************************************/

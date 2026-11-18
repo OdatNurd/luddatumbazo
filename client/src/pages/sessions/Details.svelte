@@ -239,10 +239,17 @@
 <LoadZone source={detailsSource} let:result>
   <div class="stack">
     <div class="session-summary">
-      <GameImage imagePath={result.imagePath} name={result.name} />
-        <div class="session-content">
-          <MarkdownContent content={result.content} />
-        </div>
+      <wa-lightbox label={`${result.name} box art`}
+                   without-counter without-navigation>
+        <wa-lightbox-item src={result.imageFullPath}
+                          alt={`${result.name} box art`}>
+          <GameImage imagePath={result.imagePath} name={result.name} />
+        </wa-lightbox-item>
+      </wa-lightbox>
+
+      <div class="session-content">
+        <MarkdownContent content={result.content} />
+      </div>
     </div>
 
     <div class="row-lg">
@@ -311,6 +318,12 @@
     grid-template-columns: max-content auto;
     gap: 16px;
     align-items: start;
+  }
+
+  /* Keep the lightbox host out of the grid layout so the resting image keeps
+     exactly the same column it had before the lightbox was added. */
+  .session-summary wa-lightbox {
+    display: contents;
   }
 
   .session-content {
