@@ -8,6 +8,10 @@
   import Confirm from '$components/Confirm.svelte';
   import Icon from '$components/Icon.svelte';
   import IconButton from '$components/IconButton.svelte';
+  import PageHead from '$components/PageHead.svelte';
+  import SummaryGrid from '$components/SummaryGrid.svelte';
+  import SummaryCard from '$components/SummaryCard.svelte';
+  import Panel from '$components/Panel.svelte';
 
   // ---------------------------------------------------------------------------
   // State
@@ -306,22 +310,17 @@
 
 
 {#if !$user.household}
-  <h3>Storage</h3>
+  <PageHead title="Storage" />
   <p>No storage; you do not belong to a household yet.</p>
 {:else}
-  <div class="page-head">
-    <div>
-      <h3>Storage for {$user.household.name}</h3>
-      <p class="muted">
-        Organize shelves, cabinets, cubbies and drawers. Games without a
-        location are listed as Unstored.
-      </p>
-    </div>
-
-    <IconButton variant="brand" appearance="filled" title="Add a storage location"
-                caption="" icon="plus"
-                onclick={() => openCreate(null)} />
-  </div>
+  <PageHead title={`Storage for ${$user.household.name}`}
+            description="Organize shelves, cabinets, cubbies and drawers. Games without a location are listed as Unstored.">
+    <svelte:fragment slot="actions">
+      <IconButton variant="brand" appearance="filled" title="Add a storage location"
+                  caption="" icon="plus"
+                  onclick={() => openCreate(null)} />
+    </svelte:fragment>
+  </PageHead>
 
   {#if actionError !== null}
     <wa-callout variant="warning">{actionError}</wa-callout>
@@ -332,31 +331,18 @@
   {:else if loading}
     <div class="loading"><wa-spinner></wa-spinner></div>
   {:else}
-    <div class="summary">
-      <a class="summary-card summary-link" href="#/storage/unstored"
-         title="View the games that do not have a location">
-        <span class="summary-label">Unstored</span>
-        <strong>{data.unstoredCount}</strong>
-        <span class="muted">{plural(data.unstoredCount)}</span>
-      </a>
-      <a class="summary-card summary-link" href="#/storage/off-shelf"
-         title="View the games that are off shelf">
-        <span class="summary-label">Off shelf</span>
-        <strong>{data.offShelfCount}</strong>
-        <span class="muted">{plural(data.offShelfCount)}</span>
-      </a>
-      <div class="summary-card">
-        <span class="summary-label">Locations</span>
-        <strong>{data.locations.length}</strong>
-        <span class="muted">defined</span>
-      </div>
-    </div>
+    <SummaryGrid>
+      <SummaryCard label="Unstored" value={data.unstoredCount}
+                   note={plural(data.unstoredCount)} href="#/storage/unstored"
+                   title="View the games that do not have a location" />
+      <SummaryCard label="Off shelf" value={data.offShelfCount}
+                   note={plural(data.offShelfCount)} href="#/storage/off-shelf"
+                   title="View the games that are off shelf" />
+      <SummaryCard label="Locations" value={data.locations.length} note="defined" />
+    </SummaryGrid>
 
-    <div class="storage-panel">
-      <div class="tree-head">
-        <strong>Locations</strong>
-        <span class="muted">Select a game from the collection to assign it.</span>
-      </div>
+    <Panel title="Locations" note="Select a game from the collection to assign it."
+           flush hideNoteOnNarrow>
 
       <a class="unstored-row" href="#/storage/unstored"
          title="View and assign the unstored games">
@@ -419,7 +405,7 @@
           {/each}
         </div>
       {/if}
-    </div>
+    </Panel>
   {/if}
 
   <Confirm bind:this={confirmModal} />
@@ -475,80 +461,10 @@
 
 
 <style>
-  .page-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
-  }
-
-  .page-head p {
-    margin: 4px 0 0;
-  }
-
   .loading {
     display: flex;
     justify-content: center;
     padding: 32px;
-  }
-
-  .summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  .summary-card {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    padding: 12px;
-    border: 1px solid var(--wa-color-surface-border);
-    border-radius: var(--wa-border-radius-m);
-    background: var(--wa-color-surface-lowered);
-  }
-
-  .summary-label {
-    flex: 1 1 100%;
-    color: var(--wa-color-text-quiet);
-    font-size: var(--wa-font-size-s);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .summary-card strong {
-    font-size: var(--wa-font-size-xl);
-  }
-
-  .summary-link {
-    color: inherit;
-    text-decoration: none;
-  }
-
-  .summary-link:hover,
-  .summary-link:focus-visible {
-    border-color: var(--wa-color-brand-border-loud);
-  }
-
-  .storage-panel {
-    border: 1px solid var(--wa-color-surface-border);
-    border-radius: var(--wa-border-radius-m);
-    background: var(--wa-color-surface-default);
-    overflow: hidden;
-  }
-
-  .tree-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--wa-color-surface-border);
-    background: var(--wa-color-surface-lowered);
   }
 
   .unstored-row,
@@ -666,10 +582,6 @@
   }
 
   @media (max-width: 640px) {
-    .tree-head .muted {
-      display: none;
-    }
-
     .node-actions {
       gap: 0;
     }

@@ -9,6 +9,9 @@
   import { sessionStatus } from '$stores/sessionStatus';
 
   import SessionList from '$components/lists/SessionList.svelte';
+  import PageHead from '$components/PageHead.svelte';
+  import SummaryGrid from '$components/SummaryGrid.svelte';
+  import SummaryCard from '$components/SummaryCard.svelte';
   import IconButton from '$components/IconButton.svelte';
   import SessionAddDialog from '$components/dialogs/SessionAddDialog.svelte';
 
@@ -321,42 +324,27 @@
 </script>
 
 
-<div class="page-head">
-  <div>
-    <h3>Session Reports</h3>
-    <p class="muted">
-      Track what the group has played and pick up sessions that are still in
-      progress.
-    </p>
-  </div>
+<PageHead title="Session Reports"
+          description="Track what the group has played and pick up sessions that are still in progress.">
+  <svelte:fragment slot="actions">
+    <IconButton variant="brand" appearance="filled" title="Add a new session report"
+                caption="" icon="plus-lg"
+                onclick={() => addDialogOpen = true} />
+  </svelte:fragment>
+</PageHead>
 
-  <IconButton variant="brand" appearance="filled" title="Add a new session report"
-              caption="" icon="plus-lg"
-              onclick={() => addDialogOpen = true} />
-</div>
-
-<div class="summary">
-  <a class="summary-card summary-link" class:active={activeFilterCount === 0}
-     href="#/sessions" title="Show every session">
-    <span class="summary-label">Total</span>
-    <strong>{$sessionStatus.data?.total ?? '—'}</strong>
-    <span class="muted">sessions</span>
-  </a>
-
-  <a class="summary-card summary-link" class:active={filters.status === 'open'}
-     href="#/sessions?status=open" title="Show sessions that are still open">
-    <span class="summary-label">In progress</span>
-    <strong>{$sessionStatus.data?.open ?? '—'}</strong>
-    <span class="muted">open</span>
-  </a>
-
-  <a class="summary-card summary-link" class:active={filters.household}
-     href="#/sessions?household=me" title="Show sessions with players from your households">
-    <span class="summary-label">Household</span>
-    <strong>{$sessionStatus.data?.householdSessions ?? '—'}</strong>
-    <span class="muted">sessions</span>
-  </a>
-</div>
+<SummaryGrid>
+  <SummaryCard label="Total" value={$sessionStatus.data?.total ?? '—'} note="sessions"
+               href="#/sessions" title="Show every session"
+               active={activeFilterCount === 0} />
+  <SummaryCard label="In progress" value={$sessionStatus.data?.open ?? '—'} note="open"
+               href="#/sessions?status=open" title="Show sessions that are still open"
+               active={filters.status === 'open'} />
+  <SummaryCard label="Household" value={$sessionStatus.data?.householdSessions ?? '—'}
+               note="sessions" href="#/sessions?household=me"
+               title="Show sessions with players from your households"
+               active={filters.household} />
+</SummaryGrid>
 
 <details class="filters" open={filtersOpen}>
   <summary on:click|preventDefault={toggleFilters}>
@@ -487,59 +475,6 @@
 
 
 <style>
-  .page-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
-  }
-
-  .page-head p {
-    margin: 4px 0 0;
-  }
-
-  .summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  .summary-card {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    padding: 12px;
-    border: 1px solid var(--wa-color-surface-border);
-    border-radius: var(--wa-border-radius-m);
-    background: var(--wa-color-surface-lowered);
-  }
-
-  .summary-label {
-    flex: 1 1 100%;
-    color: var(--wa-color-text-quiet);
-    font-size: var(--wa-font-size-s);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .summary-card strong {
-    font-size: var(--wa-font-size-xl);
-  }
-
-  .summary-link {
-    color: inherit;
-    text-decoration: none;
-  }
-
-  .summary-link:hover,
-  .summary-link:focus-visible,
-  .summary-link.active {
-    border-color: var(--wa-color-brand-border-loud);
-  }
-
   .filters {
     margin-bottom: 16px;
     border: 1px solid var(--wa-color-surface-border);
@@ -668,9 +603,4 @@
     background: var(--wa-color-surface-default);
   }
 
-  @media (max-width: 640px) {
-    .page-head {
-      align-items: stretch;
-    }
-  }
 </style>

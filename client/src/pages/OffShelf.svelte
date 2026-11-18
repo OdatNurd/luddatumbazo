@@ -4,6 +4,7 @@
 
   import * as cells from '$lib/cells.js';
   import SlugList from '$components/lists/SlugList.svelte';
+  import PageHead from '$components/PageHead.svelte';
   import StorageBreadcrumb from '$components/StorageBreadcrumb.svelte';
   import Confirm from '$components/Confirm.svelte';
 
@@ -77,11 +78,11 @@
 
 
 {#if !$user.household}
-  <h3>Off shelf</h3>
+  <PageHead title="Off shelf" />
   <p>No storage; you do not belong to a household yet.</p>
 {:else}
-  <div class="page-head">
-    <div class="heading">
+  <PageHead>
+    <svelte:fragment slot="description">
       <StorageBreadcrumb {trail} />
       <p class="muted">
         Games with a storage location that are currently off shelf.
@@ -89,8 +90,8 @@
           {count} {plural(count)} waiting to go back.
         {/if}
       </p>
-    </div>
-  </div>
+    </svelte:fragment>
+  </PageHead>
 
   {#if actionError !== null}
     <wa-callout variant="warning">{actionError}</wa-callout>
@@ -126,23 +127,6 @@
 
 
 <style>
-  .page-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
-  }
-
-  .heading {
-    min-width: 0;
-  }
-
-  .page-head p {
-    margin: 4px 0 0;
-  }
-
   .selection-count {
     color: var(--wa-color-text-quiet);
     font-size: var(--wa-font-size-s);

@@ -4,6 +4,7 @@
   import { wishlists } from '$stores/wishlists';
 
   import SlugList from '$components/lists/SlugList.svelte';
+  import PageHead from '$components/PageHead.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -26,13 +27,18 @@
 </script>
 
 {#if $user.household}
-  <h3>Games Wishlists for {$user.household?.name ?? 'Unknown'}</h3>
-  <wa-select label="Wishlist" value={loaderKey} on:change={pick} on:wa-input={pick}>
-    {#each $wishlists as entry (entry.value)}
-      <wa-option value={entry.value}>{entry.label}</wa-option>
-    {/each}
-  </wa-select>
+  <PageHead title={`Wishlists for ${$user.household?.name ?? 'Unknown'}`}>
+    <svelte:fragment slot="actions">
+      <wa-select label="Wishlist" value={loaderKey} on:change={pick} on:wa-input={pick}>
+        {#each $wishlists as entry (entry.value)}
+          <wa-option value={entry.value}>{entry.label}</wa-option>
+        {/each}
+      </wa-select>
+    </svelte:fragment>
+  </PageHead>
+
   <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} {loaderKey} gridKey="wishlists" />
 {:else}
-  No wishlists; you do not belong to any households yet!
+  <PageHead title="Wishlists" />
+  <p>No wishlists; you do not belong to any households yet!</p>
 {/if}

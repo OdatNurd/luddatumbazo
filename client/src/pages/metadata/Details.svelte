@@ -1,7 +1,7 @@
 <script>
   import { api } from '$api';
 
-  import BackButton from '$components/BackButton.svelte';
+  import PageHead from '$components/PageHead.svelte';
   import SlugList from '$components/lists/SlugList.svelte';
 
   // ---------------------------------------------------------------------------
@@ -35,6 +35,18 @@
     publisher: '#/publishers'
   };
 
+  const labels = {
+    category:  'Categories',
+    mechanic:  'Mechanics',
+    designer:  'Designers',
+    artist:    'Artists',
+    publisher: 'Publishers'
+  };
+
+  // Use a proper plural label rather than relying on CSS capitalization.
+  $: niceType = labels[metaType] ?? metaType;
+  $: pageTitle = `${niceType}: ${name}`;
+
   // Our loader queries the details for all games that are associated with the
   // provided metadata.
   const loader = async () => api.metadata.details(metaType, name, true);
@@ -58,16 +70,7 @@
 </script>
 
 
-<BackButton to={listPages[metaType]}>
-  <h3>{metaType}: {name}</h3>
-</BackButton>
+<PageHead title={pageTitle} backTo={listPages[metaType]} />
 
 <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} filter={gameFilter}
           gridKey={`meta-games:${metaType}:${routeInfo.params.slug}`} />
-
-
-<style>
-  h3 {
-    text-transform: capitalize;
-  }
-</style>

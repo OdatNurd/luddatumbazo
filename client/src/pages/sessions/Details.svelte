@@ -1,12 +1,15 @@
 <script>
-  import { DateTime, Interval } from 'luxon';
+  import { DateTime } from 'luxon';
 
   import { api } from '$api';
   import { server } from '$stores/server';
 
   import LoadZone from '$components/LoadZone.svelte';
   import DataGrid from '$components/DataGrid.svelte';
-  import BackButton from '$components/BackButton.svelte';
+  import PageHead from '$components/PageHead.svelte';
+  import SummaryGrid from '$components/SummaryGrid.svelte';
+  import SummaryCard from '$components/SummaryCard.svelte';
+  import Panel from '$components/Panel.svelte';
   import IconButton from '$components/IconButton.svelte';
   import BGGLink from '$components/links/BGGLink.svelte';
   import GameImage from '$components/GameImage.svelte';
@@ -42,9 +45,93 @@
   let editOpen = false;
   let editSession = null;
 
+  // The permission note in the page head, or undefined when the viewer can
+  // edit and no note is needed.
+  $: permissionNote = loaded === null || loaded.canEdit === true
+    ? undefined
+    : (loaded.isOpen === true
+      ? 'Only session participants or its reporter can edit this open report.'
+      : 'Only the reporter can edit this closed report.');
+
   // Using the props that we were given, generate out the kinds of links that
   // the table needs to generate internal links to the data that it contains.
   const slugLink = slug => '#/game/:slug'.replaceAll(':slug', slug);
+
+  // Format a whole-minute duration for the summary cards. Open sessions don't
+  // have a duration yet and are handled by the caller.
+  const formatDuration = minutes => {
+    if (minutes === null || minutes === undefined) {
+      return 'In progress';
+    }
+
+    if (minutes < 1) {
+      return 'Less than a minute';
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+
+    if (hours === 0) {
+      return `${remainder} min`;
+    }
+
+    if (remainder === 0) {
+      return `${hours} hr`;
+    }
+
+    return `${hours} hr, ${remainder} min`;
+  };
+
+  const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
+
+  // The compact user/guest split shown below the player count.
+  const playerBreakdown = players => {
+    if (players.length === 0) {
+      return 'No players';
+    }
+
+    const users = players.filter(player => player.isUser === true).length;
+    const guests = players.length - users;
+    const parts = [];
+
+    if (users > 0) {
+      parts.push(plural(users, 'user'));
+    }
+
+    if (guests > 0) {
+      parts.push(plural(guests, 'guest'));
+    }
+
+    return parts.join(' · ');
+  };
+
+  // Build the display-only summary once, after the dates and duration have
+  // been normalized. Keeping this on the loaded result means the page head and
+  // the summary strip cannot disagree about date, duration or player counts.
+  const buildSummary = result => {
+    const players = result.players ?? [];
+    const winners = players.filter(player => player.isWinner === true);
+    const beginTime = result.sessionBegin.toLocaleString(DateTime.TIME_SIMPLE);
+    const endTime = result.sessionEnd?.toLocaleString(DateTime.TIME_SIMPLE) ?? null;
+
+    return {
+      playedLabel:  result.isOpen ? 'Started' : 'Played',
+      dateText:     result.sessionBegin.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY),
+      timeText:     beginTime,
+      endTimeText:  endTime,
+      durationText: result.isOpen ? 'In progress' : formatDuration(result.sessionDurationMinutes),
+      durationNote: result.isOpen
+        ? 'No end time yet'
+        : (endTime === null ? beginTime : `${beginTime} – ${endTime}`),
+      playerCount:  players.length,
+      playerNote:   playerBreakdown(players),
+      winnerText:   winners.length > 0
+        ? winners.map(player => player.name).join(', ')
+        : 'No winner recorded',
+      winnerNote:   winners.length > 1 ? plural(winners.length, 'winner') : null,
+      reporterText: result.reporterName || 'Unknown'
+    };
+  };
 
   // Fetch the list of data that we need from the back end API, and return
   // the result back.
@@ -61,20 +148,14 @@
     const begin = DateTime.fromISO(result.sessionBegin);
     const end   = result.sessionEnd === null ? null : DateTime.fromISO(result.sessionEnd);
 
-    let duration = null;
-    if (end !== null) {
-      // Calculate the duration; we want this to be in minutes unless the game
-      // took at least an hour.
-      duration = Interval.fromDateTimes(begin, end).toDuration(['minutes']);
-      if (duration.minutes > 60) {
-        duration = duration.shiftTo('hours', 'minutes');
-      }
-    }
-
-    // Store back now
+    // Store whole minutes; the summary formatter never shows the fractional
+    // minutes that Luxon's Duration produced in the old display.
     result.sessionBegin = begin
     result.sessionEnd = end
-    result.sessionDuration = duration;
+    result.sessionDurationMinutes = end === null
+      ? null
+      : Math.max(0, Math.round(end.diff(begin, 'minutes').minutes));
+    result.summary = buildSummary(result);
 
     return result;
   };
@@ -107,14 +188,10 @@
   };
 
   // The columns of the players grid; the flag and trophy glyph columns mark the
-  // starting player and the winner of the session.
+  // starting player and the winner of the session. The raw user id is not
+  // useful to a reader, so the Type column carries the user/guest distinction
+  // instead.
   const playerColumns = [
-    {
-      field: 'userId',
-      label: 'ID',
-      width: 128,
-      sortFn: 'alphanumeric'
-    },
     {
       id: 'starting',
       field: 'isStartingPlayer',
@@ -142,7 +219,18 @@
       label: 'Name',
       filterable: true,
       filterType: 'text',
-      flex: 1
+      flex: 1,
+      sortFn: 'alphanumeric'
+    },
+    {
+      id: 'type',
+      field: 'isUser',
+      label: 'Type',
+      width: 84,
+      align: 'center',
+      sortFn: 'basic',
+      formatter: (value) => cells.badge(value === true ? 'User' : 'Guest',
+                                        value === true ? 'brand' : 'neutral')
     },
     {
       field: 'score',
@@ -154,14 +242,8 @@
   ];
 
   // The columns of the expansions grid; the name links to the expansion's own
-  // page when it has one.
+  // page when it has one. The internal game id is not shown.
   const expansionColumns = [
-    {
-      field: 'gameId',
-      label: 'ID',
-      width: 96,
-      sortFn: 'alphanumeric'
-    },
     {
       // The cell shows a picture; its underlying URL is not searchable text.
       // (Every image URL contains the image account name, so leaving this
@@ -197,96 +279,90 @@
   ];
 </script>
 
-<div class="stack">
-  <BackButton to="#/sessions">
-    {#if slug !== 'unknown'}
-      <h3><a href="{slugLink(slug)}">{name}</a></h3>
-    {:else}
-      <h3>No session data loaded</h3>
+<PageHead backTo="#/sessions"
+          title={slug === 'unknown' ? 'No session data loaded' : title}
+          description={permissionNote}>
+  <svelte:fragment slot="media">
+    {#if slug !== 'unknown' && loaded?.imagePath}
+      <div class="game-thumb">
+        <wa-lightbox label={`${loaded.name} box art`}
+                     without-counter without-navigation>
+          <wa-lightbox-item src={loaded.imageFullPath}
+                            alt={`${loaded.name} box art`}>
+            <GameImage imagePath={loaded.imagePath} name={loaded.name} />
+          </wa-lightbox-item>
+        </wa-lightbox>
+      </div>
     {/if}
-  </BackButton>
+  </svelte:fragment>
 
-  {#if slug !== 'unknown'}
-    <div class="title-row">
-      <h3>{title}</h3>
+  <svelte:fragment slot="eyebrow">
+    {#if slug !== 'unknown'}
+      <a class="game-link" href={slugLink(slug)}>{name}</a>
+    {/if}
+  </svelte:fragment>
 
-      {#if loaded?.canEdit === true}
-        <div class="row">
-          {#if loaded.isOpen === true}
-            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-            <wa-button appearance="filled" variant="brand" on:click={finishReport}>
-              Finish Session
-            </wa-button>
-          {/if}
+  <svelte:fragment slot="badges">
+    {#if loaded !== null}
+      <wa-badge variant={loaded.isOpen ? 'warning' : 'neutral'}>
+        {loaded.isOpen ? 'In progress' : 'Closed'}
+      </wa-badge>
 
-          <IconButton variant="brand" appearance="filled" title="Edit this session report"
-                      caption="" icon="pencil-fill"
-                      onclick={editReport} />
-        </div>
-      {:else if loaded !== null}
-        <span class="muted">
-          {#if loaded.isOpen === true}
-            Only session participants or its reporter can edit this open report.
-          {:else}
-            Only the reporter can edit this closed report.
-          {/if}
-        </span>
+      {#if loaded.isLearning}
+        <wa-badge variant="warning">Learning game</wa-badge>
       {/if}
-    </div>
-  {/if}
-</div>
+
+      <wa-badge variant="brand">{server.gameTypeName(loaded.playType)}</wa-badge>
+    {/if}
+  </svelte:fragment>
+
+  <svelte:fragment slot="actions">
+    {#if loaded?.canEdit === true}
+      {#if loaded.isOpen === true}
+        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+        <wa-button appearance="filled" variant="brand" on:click={finishReport}>
+          Finish Session
+        </wa-button>
+      {/if}
+
+      <IconButton variant="brand" appearance="filled" title="Edit this session report"
+                  caption="" icon="pencil-fill"
+                  onclick={editReport} />
+    {/if}
+  </svelte:fragment>
+</PageHead>
 
 <LoadZone source={detailsSource} let:result>
   <div class="stack">
-    <div class="session-summary">
-      <wa-lightbox label={`${result.name} box art`}
-                   without-counter without-navigation>
-        <wa-lightbox-item src={result.imageFullPath}
-                          alt={`${result.name} box art`}>
-          <GameImage imagePath={result.imagePath} name={result.name} />
-        </wa-lightbox-item>
-      </wa-lightbox>
+    <SummaryGrid spaced={false}>
+      <SummaryCard label={result.summary.playedLabel}
+                   value={result.summary.dateText}
+                   note={result.summary.timeText} />
+      <SummaryCard label="Duration" value={result.summary.durationText}
+                   note={result.summary.durationNote} />
+      <SummaryCard label="Players" value={result.summary.playerCount}
+                   note={result.summary.playerNote} />
+      <SummaryCard label="Winner" value={result.summary.winnerText}
+                   note={result.summary.winnerNote} />
+      <SummaryCard label="Reporter" value={result.summary.reporterText} />
+    </SummaryGrid>
 
-      <div class="session-content">
-        <MarkdownContent content={result.content} />
+    <Panel title="Players" note={plural(result.summary.playerCount, 'player')} flush>
+      <DataGrid data={result.players} columns={playerColumns}
+                withSearch={false} paginate={false}
+                flush emptyMessage="No players recorded." />
+    </Panel>
+
+    <Panel title="Report" note="Session write-up">
+      <div class="report-copy">
+        <MarkdownContent content={result.content} empty="No report text yet." />
       </div>
-    </div>
-
-    <div class="row-lg">
-      {#if result.isLearning}
-        <wa-badge variant="warning">Learning Game!</wa-badge>
-      {/if}
-      <wa-badge variant="brand">{server.gameTypeName(result.playType)}</wa-badge>
-
-      {#if result.isOpen === true}
-        <wa-badge variant="warning">In progress</wa-badge>
-        <wa-badge variant="neutral">
-          Started {result.sessionBegin.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)}
-          @
-          {result.sessionBegin.toLocaleString(DateTime.TIME_SIMPLE)}
-        </wa-badge>
-      {:else}
-        <wa-badge variant="neutral">
-          Played {result.sessionBegin.toLocaleString(DateTime.DATE_MED_WITH_WEEKDAY)}
-          @
-          {result.sessionBegin.toLocaleString(DateTime.TIME_SIMPLE)}
-          &#x276F;
-          {result.sessionEnd.toLocaleString(DateTime.TIME_SIMPLE)}
-          ({result.sessionDuration.toHuman({'unitDisplay': 'short'})})
-        </wa-badge>
-      {/if}
-
-      {#if result.reporterName !== null && result.reporterName !== undefined}
-        <wa-badge variant="neutral">Logged by {result.reporterName}</wa-badge>
-      {/if}
-    </div>
-
-    <h4>Players</h4>
-    <DataGrid data={result.players} columns={playerColumns} pageSize={10} />
+    </Panel>
 
     {#if result.expansions.length > 0}
-      <h4>Expansions</h4>
-      <DataGrid data={result.expansions} columns={expansionColumns} pageSize={5} />
+      <Panel title="Expansions" note={plural(result.expansions.length, 'expansion')} flush>
+        <DataGrid data={result.expansions} columns={expansionColumns} pageSize={5} flush />
+      </Panel>
     {/if}
   </div>
 
@@ -300,35 +376,50 @@
 {/if}
 
 <style>
-  h3 {
-    text-transform: capitalize;
+  .game-thumb {
+    flex: 0 0 96px;
+    width: 96px;
   }
 
-  /* The report title with its edit control pushed to the far side. */
-  .title-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  .session-summary {
-    display: grid;
-    grid-template-columns: max-content auto;
-    gap: 16px;
-    align-items: start;
-  }
-
-  /* Keep the lightbox host out of the grid layout so the resting image keeps
-     exactly the same column it had before the lightbox was added. */
-  .session-summary wa-lightbox {
+  /* Keep the lightbox host out of the layout so the resting image keeps the
+     thumb's width instead of adding a wrapper box. */
+  .game-thumb wa-lightbox {
     display: contents;
   }
 
-  .session-content {
-    min-width: 0;
-    padding-left: 12px;
-    border-left: 1.5px solid var(--wa-color-surface-border);
+  .game-thumb :global(img) {
+    width: 100%;
+    height: auto;
+  }
+
+  .game-link {
+    color: var(--wa-color-text-quiet);
+    font-size: var(--wa-font-size-s);
+    font-weight: var(--wa-font-weight-semibold);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  .game-link:hover,
+  .game-link:focus-visible {
+    text-decoration: underline;
+  }
+
+  .report-copy {
+    max-width: 80ch;
+  }
+
+  @media (max-width: 720px) {
+    .game-thumb {
+      flex-basis: 72px;
+      width: 72px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .game-thumb {
+      flex-basis: 64px;
+      width: 64px;
+    }
   }
 </style>

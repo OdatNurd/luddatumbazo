@@ -3,6 +3,7 @@
   import { user } from '$stores/user';
 
   import SlugList from '$components/lists/SlugList.svelte';
+  import PageHead from '$components/PageHead.svelte';
   import StorageBreadcrumb from '$components/StorageBreadcrumb.svelte';
   import BulkStorageAssignDialog from '$components/dialogs/BulkStorageAssignDialog.svelte';
 
@@ -42,11 +43,11 @@
 
 
 {#if !$user.household}
-  <h3>Unstored</h3>
+  <PageHead title="Unstored" />
   <p>No storage; you do not belong to a household yet.</p>
 {:else}
-  <div class="page-head">
-    <div class="heading">
+  <PageHead>
+    <svelte:fragment slot="description">
       <StorageBreadcrumb {trail} />
       <p class="muted">
         Games that do not have a storage location yet.
@@ -54,8 +55,8 @@
           {count} {plural(count)} waiting to be put away.
         {/if}
       </p>
-    </div>
-  </div>
+    </svelte:fragment>
+  </PageHead>
 
   <SlugList bggType="boardgame" baseLink="#/game/:slug" {loader}
             gridKey="unstored" bind:this={list} bind:selectedKeys selectable
@@ -87,23 +88,6 @@
 
 
 <style>
-  .page-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
-  }
-
-  .heading {
-    min-width: 0;
-  }
-
-  .page-head p {
-    margin: 4px 0 0;
-  }
-
   .selection-count {
     color: var(--wa-color-text-quiet);
     font-size: var(--wa-font-size-s);

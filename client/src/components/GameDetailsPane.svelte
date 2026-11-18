@@ -17,7 +17,7 @@
   import AsyncIconButton from '$components/AsyncIconButton.svelte';
   import BGGLink from '$components/links/BGGLink.svelte';
   import WishlistLink from '$components/links/WishlistLink.svelte';
-  import BackButton from '$components/BackButton.svelte';
+  import PageHead from '$components/PageHead.svelte';
   import ExpansionList from '$components/lists/ExpansionList.svelte';
   import MetaDataList from '$components/MetaDataList.svelte';
   import FileList from '$components/lists/FileList.svelte';
@@ -232,9 +232,7 @@
 <!-- *********************************************************************** -->
 
 
-<BackButton to="#/games">
-  <h3>Game Details</h3>
-</BackButton>
+<PageHead title="Game Details" backTo="#/games" />
 
 <Confirm bind:this={confirmModal} />
 
@@ -496,10 +494,6 @@
 
 
 <style>
-  h3 {
-    text-transform: capitalize;
-  }
-
   .game-header {
     display: flex;
     flex-direction: column;

@@ -63,12 +63,6 @@
   // BGG id, the external column links to BoardGameGeek.
   const baseColumns = [
     {
-      field: 'id',
-      label: 'ID',
-      width: 72,
-      sortFn: 'alphanumeric'
-    },
-    {
       // The cell shows a picture; its underlying URL is not searchable text.
       // (Every image URL contains the image account name, so leaving this
       // searchable makes common substrings match every row in the grid.)

@@ -6,6 +6,7 @@
 
   import * as cells from '$lib/cells.js';
   import SlugList from '$components/lists/SlugList.svelte';
+  import PageHead from '$components/PageHead.svelte';
   import StorageBreadcrumb from '$components/StorageBreadcrumb.svelte';
   import BulkStorageAssignDialog from '$components/dialogs/BulkStorageAssignDialog.svelte';
 
@@ -210,17 +211,17 @@
 
 
 {#if !$user.household}
-  <h3>Storage</h3>
+  <PageHead title="Storage" />
   <p>No storage; you do not belong to a household yet.</p>
 {:else if loadingLocation}
   <div class="loading"><wa-spinner></wa-spinner></div>
 {:else if locationError !== null}
-  <h3>Storage Location</h3>
+  <PageHead title="Storage Location" />
   <wa-callout variant="danger">{locationError}</wa-callout>
   <p><a href="#/storage">Back to storage</a></p>
 {:else}
-  <div class="page-head">
-    <div class="heading">
+  <PageHead>
+    <svelte:fragment slot="description">
       <StorageBreadcrumb {trail} />
       <p class="muted">
         {location.gameCount} {plural(location.gameCount)} stored directly here
@@ -228,14 +229,16 @@
           &middot; {location.totalGameCount} {plural(location.totalGameCount)} including sub-locations
         {/if}
       </p>
-    </div>
+    </svelte:fragment>
 
-    {#if hasChildren}
-      <wa-switch checked={includeChildren} on:change={setIncludeChildren}>
-        Include sub-locations
-      </wa-switch>
-    {/if}
-  </div>
+    <svelte:fragment slot="actions">
+      {#if hasChildren}
+        <wa-switch checked={includeChildren} on:change={setIncludeChildren}>
+          Include sub-locations
+        </wa-switch>
+      {/if}
+    </svelte:fragment>
+  </PageHead>
 
   {#if actionError !== null}
     <wa-callout variant="warning">{actionError}</wa-callout>
@@ -276,23 +279,6 @@
 
 
 <style>
-  .page-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
-  }
-
-  .heading {
-    min-width: 0;
-  }
-
-  .page-head p {
-    margin: 4px 0 0;
-  }
-
   .loading {
     display: flex;
     justify-content: center;

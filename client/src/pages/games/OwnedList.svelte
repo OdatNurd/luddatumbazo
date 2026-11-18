@@ -4,6 +4,7 @@
 
   import * as cells from '$lib/cells.js';
   import SlugList from '$components/lists/SlugList.svelte';
+  import PageHead from '$components/PageHead.svelte';
 
   // The current shelf/status filter. Changing this also changes loaderKey,
   // which makes SlugList reload and apply the filter again.
@@ -45,10 +46,7 @@
 </script>
 
 {#if $user.household}
-  <h3>Games owned by {$user.household?.name ?? 'Unknown'}</h3>
-
-  <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} {filter}
-            extraColumns={storageColumns} loaderKey={status} gridKey="owned">
+  <PageHead title={`Games owned by ${$user.household?.name ?? 'Unknown'}`}>
     <svelte:fragment slot="actions">
       <wa-select size="s" label="Shelf" value={status}
                  on:change={pick} on:wa-input={pick}>
@@ -60,8 +58,12 @@
 
       <a class="storage-link" href="#/storage">Manage storage</a>
     </svelte:fragment>
-  </SlugList>
+  </PageHead>
+
+  <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} {filter}
+            extraColumns={storageColumns} loaderKey={status} gridKey="owned" />
 {:else}
+  <PageHead title="Games owned" />
   <p>No collection; you do not belong to any households yet!</p>
 {/if}
 

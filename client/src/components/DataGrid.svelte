@@ -52,6 +52,17 @@
   // useful thing to say.
   export let emptyMessage = undefined;
 
+  // When the grid is embedded in a surface that already supplies its own border
+  // and rounded corners (the session detail panels), suppress the grid's outer
+  // chrome so the two surfaces do not double up. Existing grids keep the
+  // default and are unchanged.
+  export let flush = false;
+
+  // Client-side pagination and its pager footer. Short inline lists can turn
+  // this off without losing sorting or per-column filters; existing grids keep
+  // the default and are unchanged.
+  export let paginate = true;
+
   // ---------------------------------------------------------------------------
 
   // The grid element; the toolbar's search box feeds the grid's own filtering
@@ -242,7 +253,7 @@
 </script>
 
 
-<div class="grid-wrap" class:fill>
+<div class="grid-wrap" class:fill class:flush>
   {#if withSearch}
     <div class="grid-toolbar">
       <wa-input
@@ -273,7 +284,7 @@
     {data}
     {columns}
     {striped}
-    paginate
+    paginate={paginate}
     page-size={pageSize}
     selectable={selectable ? 'multiple' : 'none'}
     row-key={rowKey}
@@ -300,6 +311,11 @@
     background: var(--wa-color-surface-default);
     overflow: hidden;
     min-width: 0;
+  }
+
+  .grid-wrap.flush {
+    border: 0;
+    border-radius: 0;
   }
 
   /* The toolbar row matches the grid's own rhythm: a search box on the left

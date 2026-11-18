@@ -3,6 +3,7 @@
   import { invalidateSearch } from '$stores/search';
 
   import SlugList from '$components/lists/SlugList.svelte';
+  import PageHead from '$components/PageHead.svelte';
   import IconButton from '$components/IconButton.svelte';
   import GameEditDialog from '$components/dialogs/GameEditDialog.svelte';
 
@@ -27,15 +28,17 @@
   };
 </script>
 
-<h3>Game List</h3>
-<SlugList bind:this={gameList} bggType='boardgame' baseLink='#/game/:slug' {loader} gridKey="games">
+<PageHead title="Game List">
   <!-- BGG import flows are handled through the game dialog's BGG lookup
-       (pending the BGG API token), so no separate import buttons live here. -->
+       (pending the BGG API token), so no separate import button lives in the
+       grid toolbar. -->
   <svelte:fragment slot="actions">
     <IconButton variant="brand" appearance="filled" title="Add a new game"
                 caption="" icon="plus-lg"
                 onclick={() => addDialogOpen = true} />
   </svelte:fragment>
-</SlugList>
+</PageHead>
+
+<SlugList bind:this={gameList} bggType='boardgame' baseLink='#/game/:slug' {loader} gridKey="games" />
 
 <GameEditDialog open={addDialogOpen} onclose={closeAddDialog} />

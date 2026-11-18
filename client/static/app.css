@@ -34,6 +34,35 @@ a:hover {
 /* -------------------------------------------------------------------------- */
 
 
+/* Shared page chrome and summary/panel spacing.
+ *
+ * These are app layout/type tokens, not theme replacements. Keeping them here
+ * makes it possible to tune page-head padding, card padding and panel body
+ * spacing globally after the shared components have settled in. */
+:root {
+  --app-page-head-gap: 16px;
+  --app-page-head-margin: 16px;
+  --app-summary-gap: 12px;
+  --app-card-padding: 12px;
+  --app-card-label-size: var(--wa-font-size-s);
+  --app-card-value-size: var(--wa-font-size-xl);
+  --app-panel-head-padding: 10px 16px;
+  --app-panel-body-padding: 16px;
+  --app-page-title-size: var(--wa-font-size-xl);
+  --app-section-title-size: var(--wa-font-size-m);
+}
+
+@media (max-width: 720px) {
+  :root {
+    --app-page-head-gap: 12px;
+    --app-panel-body-padding: 12px;
+  }
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+
 /* Page chrome; the app shell regions get their own surface so the header,
  * navigation and footer read as distinct bars instead of blending into the
  * content area.

@@ -3,6 +3,7 @@
   import { invalidateSearch } from '$stores/search';
 
   import SlugList from '$components/lists/SlugList.svelte';
+  import PageHead from '$components/PageHead.svelte';
   import IconButton from '$components/IconButton.svelte';
   import MetaDataAddDialog from '$components/dialogs/MetaDataAddDialog.svelte';
 
@@ -13,6 +14,18 @@
   // The type of metadata that this list is supposed to contain. This controls
   // how this page sources its data and what links it generates.
   export let metaType = 'artist';
+
+  // The page title uses the plural label rather than a CSS-capitalized raw
+  // type name, so stored names and labels are never mangled by the browser.
+  const labels = {
+    category:  'Categories',
+    mechanic:  'Mechanics',
+    designer:  'Designers',
+    artist:    'Artists',
+    publisher: 'Publishers'
+  };
+
+  $: title = labels[metaType] ?? `${metaType} List`;
 
   const loader = async () => api.metadata.list(metaType);
 
@@ -34,20 +47,15 @@
   };
 </script>
 
-<h3>{metaType} List</h3>
-<SlugList bind:this={list} bggType='boardgame{metaType}' baseLink='#/{metaType}/:slug'
-          {loader} gridKey={`meta:${metaType}`}>
+<PageHead {title}>
   <svelte:fragment slot="actions">
     <IconButton variant="brand" appearance="filled" title="Add a new {metaType}"
                 caption="" icon="plus-lg"
                 onclick={() => addDialogOpen = true} />
   </svelte:fragment>
-</SlugList>
+</PageHead>
+
+<SlugList bind:this={list} bggType='boardgame{metaType}' baseLink='#/{metaType}/:slug'
+          {loader} gridKey={`meta:${metaType}`} />
 
 <MetaDataAddDialog open={addDialogOpen} {metaType} onclose={added} />
-
-<style>
-  h3 {
-    text-transform: capitalize;
-  }
-</style>

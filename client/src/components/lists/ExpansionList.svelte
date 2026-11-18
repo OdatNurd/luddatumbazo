@@ -26,13 +26,6 @@
   // its own page, and the external column links to BoardGameGeek.
   const columns = [
     {
-      field: 'id',
-      label: 'ID',
-      width: 72,
-      sortFn: 'alphanumeric',
-      formatter: (value) => value ?? '--'
-    },
-    {
       field: 'name',
       label: 'Name',
       filterable: true,
