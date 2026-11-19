@@ -27,11 +27,16 @@
   // right-aligned.
   export let stackActionsOnNarrow = false;
 
+  // On phones, keep a single compact action beside the title instead of giving
+  // it a full-width row of its own. Pages with wider action groups leave this
+  // off so the title is not squeezed.
+  export let inlineActionsOnNarrow = false;
+
   // ---------------------------------------------------------------------------
 </script>
 
 
-<div class="page-head" class:hide-description-on-narrow={hideDescriptionOnNarrow} class:stack-actions-on-narrow={stackActionsOnNarrow}>
+<div class="page-head" class:hide-description-on-narrow={hideDescriptionOnNarrow} class:stack-actions-on-narrow={stackActionsOnNarrow} class:inline-actions-on-narrow={inlineActionsOnNarrow}>
   {#if backTo}
     <BackButton to={backTo} />
   {/if}
@@ -200,6 +205,25 @@
 
     .page-actions {
       width: 100%;
+      justify-content: flex-end;
+      margin-inline-start: 0;
+    }
+  }
+
+  /* A lone add/edit button does not need a row of its own on a phone. Laying
+     the body out as two columns keeps the title wrapping in the space that is
+     left instead of pushing the action underneath it. */
+  @media (max-width: 720px) {
+    .page-head.inline-actions-on-narrow .page-head-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      column-gap: var(--app-page-head-gap);
+    }
+
+    .page-head.inline-actions-on-narrow .page-actions {
+      grid-column: 2;
+      width: auto;
       justify-content: flex-end;
       margin-inline-start: 0;
     }

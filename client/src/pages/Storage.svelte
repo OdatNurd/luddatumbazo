@@ -319,7 +319,7 @@
 {:else}
   <PageHead title="Storage"
             description={`Storage for ${$user.household.name}. Organize shelves and locations; games without one are listed as Unstored.`}
-            hideDescriptionOnNarrow>
+            hideDescriptionOnNarrow inlineActionsOnNarrow>
     <svelte:fragment slot="actions">
       <IconButton variant="brand" appearance="filled" title="Add a storage location"
                   caption="" label="Add storage location" icon="plus"

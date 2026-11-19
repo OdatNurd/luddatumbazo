@@ -58,7 +58,7 @@
   };
 </script>
 
-<PageHead {title} {description} hideDescriptionOnNarrow>
+<PageHead {title} {description} hideDescriptionOnNarrow inlineActionsOnNarrow>
   <svelte:fragment slot="actions">
     <IconButton variant="brand" appearance="filled" title="Add a new {metaType}"
                 caption="" label={`Add ${metadataSingularLabels[metaType] ?? metaType}`}

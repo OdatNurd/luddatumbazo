@@ -326,7 +326,7 @@
 
 <PageHead title="Sessions"
           description="Track what the group has played and pick up sessions that are still in progress."
-          hideDescriptionOnNarrow>
+          hideDescriptionOnNarrow inlineActionsOnNarrow>
   <svelte:fragment slot="actions">
     <IconButton variant="brand" appearance="filled" title="Add a new session report"
                 caption="" label="Add session report" icon="plus-lg"

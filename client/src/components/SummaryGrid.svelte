@@ -40,4 +40,25 @@
       --summary-min: 130px;
     }
   }
+
+  /* On phones the grid settles into two columns. A card left alone on the last
+     row would waste half the width, so let it span the row and fold its label,
+     value and note onto one compact line. */
+  @media (max-width: 440px) {
+    .summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .summary-grid > :global(.summary-card:last-child:nth-child(odd)) {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 2px 8px;
+    }
+
+    .summary-grid > :global(.summary-card:last-child:nth-child(odd) strong) {
+      margin-inline-start: auto;
+    }
+  }
 </style>

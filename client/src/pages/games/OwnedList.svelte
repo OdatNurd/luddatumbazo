@@ -4,6 +4,7 @@
 
   import * as cells from '$lib/cells.js';
   import SlugList from '$components/lists/SlugList.svelte';
+  import Icon from '$components/Icon.svelte';
   import PageHead from '$components/PageHead.svelte';
   import EmptyState from '$components/EmptyState.svelte';
   import SummaryGrid from '$components/SummaryGrid.svelte';
@@ -63,6 +64,15 @@
   ];
 
   const pick = event => status = event.target.value;
+
+  // The storage button is icon-only, so it needs a native tooltip. Web
+  // Awesome's custom elements do not reflect the `title` property, so the
+  // attribute has to be set directly for the browser to show it.
+  let storageButton = null;
+
+  $: if (storageButton !== null) {
+    storageButton.setAttribute('title', 'Manage storage');
+  }
 </script>
 
 {#if $user.household}
@@ -70,15 +80,20 @@
             description={`Games owned by ${$user.household?.name ?? 'Unknown'}.`}
             hideDescriptionOnNarrow>
     <svelte:fragment slot="actions">
-      <wa-select size="s" label="Shelf" value={status}
-                 on:change={pick} on:wa-input={pick}>
+      <wa-select size="s" class="wa-visually-hidden-label collection-filter"
+                 label="Shelf" value={status} on:change={pick} on:wa-input={pick}>
         <wa-option value="all">All games</wa-option>
         <wa-option value="unstored">Unstored</wa-option>
         <wa-option value="on">On shelf</wa-option>
         <wa-option value="off">Off shelf</wa-option>
       </wa-select>
 
-      <a class="storage-link" href="#/storage">Manage storage</a>
+      <!-- The same box icon the profile drawer and storage tree use, so the
+           action reads as "storage" without spending a row of header space. -->
+      <wa-button bind:this={storageButton} size="s" variant="brand" appearance="filled"
+                 href="#/storage" aria-label="Manage storage">
+        <Icon name="box-seam" />
+      </wa-button>
     </svelte:fragment>
   </PageHead>
 
@@ -104,9 +119,3 @@
               description="You need to belong to a household before you can view a collection." />
 {/if}
 
-<style>
-  .storage-link {
-    white-space: nowrap;
-    font-size: var(--wa-font-size-s);
-  }
-</style>

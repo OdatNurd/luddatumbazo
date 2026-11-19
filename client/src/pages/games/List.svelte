@@ -41,7 +41,7 @@
 
 <PageHead title="Games"
           description="The shared catalog of every game known to the household."
-          hideDescriptionOnNarrow>
+          hideDescriptionOnNarrow inlineActionsOnNarrow>
   <!-- BGG import flows are handled through the game dialog's BGG lookup
        (pending the BGG API token), so no separate import button lives in the
        grid toolbar. -->

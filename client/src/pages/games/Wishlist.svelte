@@ -381,6 +381,16 @@
     flex: 1 1 180px;
   }
 
+  /* On phones the picker gets a row of its own. The action buttons then share
+     the next line, instead of the add button being orphaned when the picker's
+     minimum width leaves no room for all three of them. */
+  @media (max-width: 720px) {
+    .wishlist-picker {
+      flex: 1 0 100%;
+      width: 100%;
+    }
+  }
+
   .hint {
     font-size: var(--wa-font-size-s);
   }
