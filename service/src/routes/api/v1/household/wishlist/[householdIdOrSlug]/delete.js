@@ -7,16 +7,17 @@ import { validateZod } from '#legacyvalidator';
 import { HouseholdLookupIDSchema } from '#schema/household';
 import { WishlistDeleteSchema } from '#schema/wishlist';
 
-import { dbHouseholdDetails } from '#db/household';
+import { householdAccess } from '#lib/household';
 import { dbWishlistDetails, dbWishlistDelete } from '#db/wishlist';
-import { dbGameDetails } from '#db/game';
 
 
 /******************************************************************************/
 
 
-/* Given information on a household and a wishlist for that household, remove
- * that wishlist and all of the games that are contained within it, if any. */
+/* Given a household and one of its wishlists, remove that wishlist.
+ *
+ * The root wishlist cannot be removed, and a wishlist that still contains games
+ * is refused so that a delete cannot silently drop those entries. */
 export const $delete = routeHandler(
   validateZod('param', HouseholdLookupIDSchema),
   validateZod('json', WishlistDeleteSchema),
@@ -25,29 +26,33 @@ export const $delete = routeHandler(
     const { householdIdOrSlug } = ctx.req.valid('param');
     const { wishlist } = ctx.req.valid('json');
 
-    // Try to find the household we want to remove the game from.
-    const householdInfo = await dbHouseholdDetails(ctx, householdIdOrSlug);
-    if (householdInfo === null) {
-      return fail(ctx, `unable to locate household with id ${householdIdOrSlug}`, 404);
+    // Resolve the household and make sure the current user belongs to it.
+    const access = await householdAccess(ctx, householdIdOrSlug);
+    if (access.response !== undefined) {
+      return access.response;
     }
 
-    // Try to find a wishlist using this id for this household; if it does not
-    // exist, we should complain.
-    let wishlistData = await dbWishlistDetails(ctx, householdInfo.id, wishlist);
+    // Try to find the wishlist in this household; if it does not exist, we
+    // should complain.
+    const wishlistData = await dbWishlistDetails(ctx, access.household.id, wishlist);
     if (wishlistData === null) {
-      return fail(ctx, `unable to delete wishlist with id ${wishlist}; does not exist`, 400);
+      return fail(ctx, `unable to delete wishlist with id ${wishlist}; does not exist`, 404);
     }
 
-    // It is not possible to delete a root wishlist from a household for the same
-    // reason it is not possible to create one; there must always be exactly one,
-    // and it is manipulated by the overall household code.
+    // The root wishlist is created with the household and must always exist.
     if (wishlistData.isRoot === true) {
-      return fail(ctx, `unable to delete wishlist with id ${wishlist}; cannot delete root wishlist`, 400);
+      return fail(ctx, `unable to delete wishlist '${wishlistData.name}'; the default wishlist cannot be removed`, 409);
     }
 
-    // Trigger the deletion of the wishlist and its contents.
-    await dbWishlistDelete(ctx, householdInfo.id, wishlistData.id);
-    return success(ctx, `removed wishlist ${wishlist} from ${householdInfo.name}`);
+    // Refuse to delete a list that still has games. The UI disables this, but
+    // the API must enforce it for every caller.
+    const gameCount = Number(wishlistData.gameCount ?? 0);
+    if (gameCount > 0) {
+      return fail(ctx, `unable to delete wishlist '${wishlistData.name}'; it still contains ${gameCount} game${gameCount === 1 ? '' : 's'}`, 409);
+    }
+
+    await dbWishlistDelete(ctx, access.household.id, wishlistData.id);
+    return success(ctx, `removed wishlist '${wishlistData.name}' from ${access.household.name}`);
   }
 );
 

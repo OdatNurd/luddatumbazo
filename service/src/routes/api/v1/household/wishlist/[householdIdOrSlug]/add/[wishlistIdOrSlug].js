@@ -6,8 +6,9 @@ import { validateZod } from '#legacyvalidator';
 
 import { WishlistContentsIDSchema, WishlistAddGameSchema } from '#schema/wishlist';
 
-import { dbHouseholdDetails, dbHouseholdInsertWishlisted } from '#db/household';
-import { dbWishlistDetails  } from '#db/wishlist';
+import { householdAccess } from '#lib/household';
+import { dbHouseholdInsertWishlisted } from '#db/household';
+import { dbWishlistDetails } from '#db/wishlist';
 import { dbGameDetails, dbGameNames } from '#db/game';
 
 
@@ -23,44 +24,44 @@ export const $put = routeHandler(
 
   async (ctx) => {
     const { householdIdOrSlug, wishlistIdOrSlug } = ctx.req.valid('param');
-    const { game, name, publisher } = ctx.req.valid('json');
+    const { game, name } = ctx.req.valid('json');
 
-    // Try to find the household we want to add the game to.
-    const householdInfo = await dbHouseholdDetails(ctx, householdIdOrSlug);
-    if (householdInfo === null) {
-      return fail(ctx, `unable to locate household with id ${householdIdOrSlug}`, 404);
+    // Resolve the household and make sure the current user belongs to it.
+    const access = await householdAccess(ctx, householdIdOrSlug);
+    if (access.response !== undefined) {
+      return access.response;
     }
 
     // Check to see if this wishlist exists for this household or not; if not,
     // then we need to bail.
-    const wishlistInfo = await dbWishlistDetails(ctx, householdInfo.id, wishlistIdOrSlug);
+    const wishlistInfo = await dbWishlistDetails(ctx, access.household.id, wishlistIdOrSlug);
     if (wishlistInfo === null) {
       return fail(ctx, `unable to locate wishlist with id ${wishlistIdOrSlug} in household ${householdIdOrSlug}`, 404);
     }
 
     // Look up and validate the game that was specified in the request.
-    const gameInfo = await dbGameDetails(ctx, game, householdInfo.id);
+    const gameInfo = await dbGameDetails(ctx, game, access.household.id);
     if (gameInfo === null) {
       return fail(ctx, `unable to locate game with id ${game}`, 404);
     }
 
     // If this game is already wishlisted, then there is nothing else that needs
-    // to be done; this will short circut below validation, which is less
-    // interesting if know we don't need to do anything anyway.
+    // to be done; this will short circuit below validation, which is less
+    // interesting if we know we don't need to do anything anyway.
     if (gameInfo.wishlist !== undefined) {
-      return fail(ctx, `game ${gameInfo.slug} is already wishlisted by ${householdInfo.slug}`, 400);
+      return fail(ctx, `game ${gameInfo.slug} is already wishlisted by ${access.household.slug}`, 400);
     }
 
     // Grab the list of names that are known for this game and verify that an
     // entry with the name that we were given appears here.
     const nameInfo = await dbGameNames(ctx, gameInfo.id);
-    const nameRecord = nameInfo.find(e => e.id === name || e.name === name)
+    const nameRecord = nameInfo.find(e => e.id === name || e.name === name);
     if (nameRecord === undefined) {
       return fail(ctx, `game ${gameInfo.slug} does not have a name with ID ${name}`, 404);
     }
 
-    const result = await dbHouseholdInsertWishlisted(ctx, householdInfo.id, wishlistInfo.id, gameInfo.id, nameRecord.id);
-    return success(ctx, `added ${gameInfo.slug} to the wishlist for ${householdInfo.slug}`, result);
+    const result = await dbHouseholdInsertWishlisted(ctx, access.household.id, wishlistInfo.id, gameInfo.id, nameRecord.id);
+    return success(ctx, `added ${gameInfo.slug} to the wishlist for ${access.household.slug}`, result);
   }
 );
 

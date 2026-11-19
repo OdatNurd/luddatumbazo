@@ -424,17 +424,18 @@
 
       {#if gameData.names.length > 1 || gameData.wishlist !== undefined || gameData.owned !== undefined}
         <div class="detail-rows">
+          {#if gameData.wishlist !== undefined}
+            <div class="detail-row wishlist-row">
+              <Icon name="heart-fill" />
+              <span>Added to Wishlist <WishlistLink wishlist={gameData.wishlist.wishlist} /></span>
+              <span>by <strong>{gameData.wishlist.wishlister.name}</strong></span>
+            </div>
+          {/if}
+
           {#if gameData.names.length > 1}
             <div class="detail-row">
               <strong>Also known as:</strong>
               <span>{gameData.names.map(el => el.name).join(', ')}</span>
-            </div>
-          {/if}
-
-          {#if gameData.wishlist !== undefined}
-            <div class="detail-row">
-              <span>Added to Wishlist <WishlistLink wishlist={gameData.wishlist.wishlist} /></span>
-              <span>by <strong>{gameData.wishlist.wishlister.name}</strong></span>
             </div>
           {/if}
 
@@ -615,6 +616,35 @@
 
   .detail-row > span {
     overflow-wrap: anywhere;
+  }
+
+  /* The wishlist row is a household relationship rather than game data, and it
+     sat directly above the alias list where it read as one more line of names.
+     The tinted, heart-marked treatment keeps it visually separate. */
+  .detail-row.wishlist-row {
+    align-self: flex-start;
+    padding: 6px 12px;
+    border: 1px solid var(--wa-color-danger-border-normal);
+    border-radius: var(--wa-border-radius-m);
+    background: var(--wa-color-danger-fill-quiet);
+    color: var(--wa-color-danger-on-quiet);
+    line-height: 1.4;
+  }
+
+  .wishlist-row :global(wa-icon) {
+    color: var(--wa-color-danger-fill-loud);
+  }
+
+  .wishlist-row :global(a) {
+    color: inherit;
+    font-weight: var(--wa-font-weight-semibold);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .wishlist-row :global(a:hover),
+  .wishlist-row :global(a:focus-visible) {
+    text-decoration-thickness: 2px;
   }
 
   .storage-path {

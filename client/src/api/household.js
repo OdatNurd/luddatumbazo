@@ -41,11 +41,11 @@ async function rawGameDataAction(doInsert, URI, game, name, publisher) {
  * list of wish lists itself (the rawGameDataAction helper is used to manipulate
  * the contents of lists currently).
  *
- * Creating a new wishlist requires a name and a slug, while deleting requires
- * either the ID value or the slug, in a field called wishlist. */
-async function rawWishlistAction(doInsert, URI, name, slug, wishlist) {
+ * Creating a wishlist sends only a name; the back end derives the slug. Rename
+ * and delete identify the list in a field called wishlist. */
+async function rawWishlistAction(doInsert, URI, body) {
   const func = (doInsert === true) ? raw.put : raw.delete;
-  return func(URI, { name, slug, wishlist });
+  return func(URI, body);
 }
 
 
@@ -246,10 +246,20 @@ async function getListOfWishlists(household) {
 /******************************************************************************/
 
 
-/* Invoke the API to remove the record that says that the game with the given
- * name and publisher identifiers is a part of the provided wishlist */
-async function createNewWishlist (household, name, slug) {
-  return rawWishlistAction(true, `/household/wishlist/${slug(household)}/create`, name, slug,);
+/* Invoke the API to create a new wishlist in the provided household. The slug
+ * is generated on the back end from the name, so it is not sent here. */
+async function createNewWishlist(household, name) {
+  return rawWishlistAction(true, `/household/wishlist/${slug(household)}/create`, { name });
+}
+
+
+/******************************************************************************/
+
+
+/* Invoke the API to rename an existing wishlist. The list can be identified by
+ * either its ID or its slug; its slug is not changed by the rename. */
+async function updateExistingWishlist(household, wishlist, name) {
+  return rawWishlistAction(true, `/household/wishlist/${slug(household)}/update`, { wishlist, name });
 }
 
 
@@ -262,7 +272,7 @@ async function createNewWishlist (household, name, slug) {
  * No wishlist is required here because a game can only appear in one wishlist
  * at a time for any given household. */
 async function deleteExistingWishlist(household, slugOrId) {
-  return rawWishlistAction(false, `/household/wishlist/${slug(household)}/delete`, null, null, slugOrId);
+  return rawWishlistAction(false, `/household/wishlist/${slug(household)}/delete`, { wishlist: slugOrId });
 }
 
 
@@ -295,6 +305,7 @@ export const household = {
     lists: {
       list: getListOfWishlists,
       add: createNewWishlist,
+      update: updateExistingWishlist,
       remove: deleteExistingWishlist,
     },
     contents: {

@@ -41,11 +41,29 @@ export const WishlistRemoveGameSchema = z.object({
 /******************************************************************************/
 
 
-/* Operations to create a wishlist require a textual name and a textual slug in
- * the body of the request. */
+/* A wishlist name is the only user supplied value; the slug is derived from it
+ * on the back end when the list is created. */
+const WishlistNameSchema = z.string().trim().min(1).max(80);
+
+
+/******************************************************************************/
+
+
+/* Operations to create a wishlist require only a textual name in the body of
+ * the request. */
 export const WishlistCreateSchema = z.object({
-    name: z.string(),
-    slug: z.string(),
+  name: WishlistNameSchema,
+});
+
+
+/******************************************************************************/
+
+
+/* Renaming a wishlist identifies the list by ID or slug and supplies the new
+ * display name. The slug itself is never changed. */
+export const WishlistUpdateSchema = z.object({
+  wishlist: z.string().or(z.number()).transform(numberOrString),
+  name: WishlistNameSchema,
 });
 
 

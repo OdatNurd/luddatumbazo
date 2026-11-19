@@ -7,6 +7,7 @@ import {
   WishlistAddGameSchema,
   WishlistRemoveGameSchema,
   WishlistCreateSchema,
+  WishlistUpdateSchema,
   WishlistDeleteSchema
 } from "#schema/wishlist";
 
@@ -78,17 +79,63 @@ export default Collection`Wishlist Schema Validation`({
 
   "WishlistCreateSchema": async ({ runScope: ctx }) => {
     await $check`should succeed with valid data`
-      .value(schemaTest('json', WishlistCreateSchema, { name: 'My Wishlist', slug: 'my-wishlist' }, validateZod))
+      .value(schemaTest('json', WishlistCreateSchema, { name: 'My Wishlist' }, validateZod))
       .isObject()
-      .eq($.name, 'My Wishlist')
-      .eq($.slug, 'my-wishlist');
+      .eq($.name, 'My Wishlist');
+
+    await $check`should trim surrounding whitespace`
+      .value(schemaTest('json', WishlistCreateSchema, { name: '  My Wishlist  ' }, validateZod))
+      .isObject()
+      .eq($.name, 'My Wishlist');
 
     await $check`should fail if name is missing`
-        .value(schemaTest('json', WishlistCreateSchema, { slug: 'my-wishlist' }, validateZod))
+        .value(schemaTest('json', WishlistCreateSchema, { }, validateZod))
         .isResponseWithStatus($, 400);
 
-    await $check`should fail if slug is missing`
-        .value(schemaTest('json', WishlistCreateSchema, { name: 'My Wishlist' }, validateZod))
+    await $check`should fail if name is blank`
+        .value(schemaTest('json', WishlistCreateSchema, { name: '   ' }, validateZod))
+        .isResponseWithStatus($, 400);
+
+    await $check`should fail if name is longer than 80 characters`
+        .value(schemaTest('json', WishlistCreateSchema, { name: 'x'.repeat(81) }, validateZod))
+        .isResponseWithStatus($, 400);
+  },
+
+
+  /****************************************************************************/
+
+
+  "WishlistUpdateSchema": async ({ runScope: ctx }) => {
+    await $check`should succeed with an ID and a name`
+      .value(schemaTest('json', WishlistUpdateSchema, { wishlist: '123', name: 'New Name' }, validateZod))
+      .isObject()
+      .eq($.wishlist, 123)
+      .eq($.name, 'New Name');
+
+    await $check`should accept a wishlist slug`
+      .value(schemaTest('json', WishlistUpdateSchema, { wishlist: 'my-wishlist', name: 'New Name' }, validateZod))
+      .isObject()
+      .eq($.wishlist, 'my-wishlist');
+
+    await $check`should trim surrounding whitespace from the name`
+      .value(schemaTest('json', WishlistUpdateSchema, { wishlist: '123', name: '  New Name  ' }, validateZod))
+      .isObject()
+      .eq($.name, 'New Name');
+
+    await $check`should fail if wishlist is missing`
+        .value(schemaTest('json', WishlistUpdateSchema, { name: 'New Name' }, validateZod))
+        .isResponseWithStatus($, 400);
+
+    await $check`should fail if name is missing`
+        .value(schemaTest('json', WishlistUpdateSchema, { wishlist: '123' }, validateZod))
+        .isResponseWithStatus($, 400);
+
+    await $check`should fail if name is blank`
+        .value(schemaTest('json', WishlistUpdateSchema, { wishlist: '123', name: '   ' }, validateZod))
+        .isResponseWithStatus($, 400);
+
+    await $check`should fail if name is longer than 80 characters`
+        .value(schemaTest('json', WishlistUpdateSchema, { wishlist: '123', name: 'x'.repeat(81) }, validateZod))
         .isResponseWithStatus($, 400);
   },
 
