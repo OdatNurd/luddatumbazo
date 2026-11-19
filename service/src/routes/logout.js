@@ -16,6 +16,7 @@ import { loggedOutURL } from '#lib/auth/pages';
  * unless the provider session has also lapsed. */
 export const $get = async (ctx) => {
   const res = ctx.redirect(loggedOutURL());
+  res.headers.set('Cache-Control', 'no-store');
   res.headers.append('Set-Cookie', clearSessionCookieHeader());
   return res;
 };

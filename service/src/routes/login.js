@@ -46,6 +46,7 @@ export const $get = async (ctx) => {
     : authURL;
 
   const res = ctx.redirect(redirectURL);
+  res.headers.set('Cache-Control', 'no-store');
   res.headers.append('Set-Cookie', flowCookieHeader(flow));
   return res;
 };

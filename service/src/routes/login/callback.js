@@ -24,13 +24,21 @@ import { deniedURL, authErrorURL, safeReturnPath } from '#lib/auth/pages';
  * Anything that goes wrong along the way lands the user on a styled error page
  * rather than a raw error string. */
 export const $get = async (ctx) => {
+  // A login response is never reusable; do not let a browser or intermediary
+  // replay one of these redirects with a stale authorization flow.
+  const redirect = url => {
+    const res = ctx.redirect(url);
+    res.headers.set('Cache-Control', 'no-store');
+    return res;
+  };
+
   // If the provider reported an error then the user either has no access or
   // something went wrong on that side; show the denial page. This is what
   // triggers when the user is valid but their groups do not include the one for
   // this application.
   const error = ctx.req.query('error');
   if (error !== undefined) {
-    const res = ctx.redirect(deniedURL(ctx, ctx.req.query('error_description') ?? error));
+    const res = redirect(deniedURL(ctx, ctx.req.query('error_description') ?? error));
     res.headers.append('Set-Cookie', clearFlowCookieHeader());
     return res;
   }
@@ -48,7 +56,7 @@ export const $get = async (ctx) => {
   }
 
   const bail = (message) => {
-    const res = ctx.redirect(authErrorURL(message));
+    const res = redirect(authErrorURL(message));
     res.headers.append('Set-Cookie', clearFlowCookieHeader());
     return res;
   };
@@ -74,7 +82,7 @@ export const $get = async (ctx) => {
   // Mint the application session and send the user on their way, back to
   // wherever they were headed when all of this started.
   console.log(`login completed for ${identity.username || identity.sub}`);
-  const res = ctx.redirect(safeReturnPath(flow.returnTo));
+  const res = redirect(safeReturnPath(flow.returnTo));
   res.headers.append('Set-Cookie', sessionCookieHeader(ctx, await issueSession(ctx, identity)));
   res.headers.append('Set-Cookie', clearFlowCookieHeader());
   return res;

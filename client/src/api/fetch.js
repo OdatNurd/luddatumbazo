@@ -155,11 +155,12 @@ async function api_call(method, endpoint, body, options) {
  * This deliberately does not use api_call(): the version endpoint lives behind
  * the normal API auth gate, and a background check that gets a 401 must return
  * null rather than booting the browser to the login page. */
-export async function fetchVersion() {
+export async function fetchVersion(options = {}) {
   const response = await fetch(`${API}/version`, {
     ...baseOptions,
     cache: 'no-store',
     headers: { 'Accept': 'application/json' },
+    ...options,
   });
 
   if (response.status === 401 || response.ok === false) {

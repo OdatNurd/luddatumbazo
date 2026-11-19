@@ -16,6 +16,7 @@
   // Visibility and focus checks cover the common "reopen the app" case without
   // waiting for the next interval.
   const CHECK_INTERVAL = 5 * 60 * 1000;
+  const CHECK_TIMEOUT = 5 * 1000;
 
   let updateAvailable = false;
   let checking = false;
@@ -26,9 +27,11 @@
     }
 
     checking = true;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), CHECK_TIMEOUT);
 
     try {
-      const build = await fetchVersion();
+      const build = await fetchVersion({ signal: controller.signal });
 
       if (build !== null &&
           typeof build.buildId === 'string' &&
@@ -37,10 +40,12 @@
       }
     }
     catch {
-      // Version checks are best effort. Being offline, or a transient failure,
-      // must not interrupt the app or produce a misleading update notice.
+      // Version checks are best effort. Being offline, a transient failure, or
+      // a request that exceeds the timeout must not interrupt the app or
+      // produce a misleading update notice.
     }
     finally {
+      clearTimeout(timeout);
       checking = false;
     }
   };
@@ -58,13 +63,27 @@
       }
     };
 
+    const onPageShow = event => {
+      // A bfcache restore can return to a stale app without a network load or a
+      // focus event; only the persisted pageshow needs this extra check.
+      if (event.persisted) {
+        check();
+      }
+    };
+
+    const onOnline = () => check();
+
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('focus', check);
+    window.addEventListener('pageshow', onPageShow);
+    window.addEventListener('online', onOnline);
 
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('focus', check);
+      window.removeEventListener('pageshow', onPageShow);
+      window.removeEventListener('online', onOnline);
     };
   });
 </script>
