@@ -18,6 +18,9 @@
   import BGGLink from '$components/links/BGGLink.svelte';
   import WishlistLink from '$components/links/WishlistLink.svelte';
   import PageHead from '$components/PageHead.svelte';
+  import Panel from '$components/Panel.svelte';
+  import SummaryGrid from '$components/SummaryGrid.svelte';
+  import SummaryCard from '$components/SummaryCard.svelte';
   import ExpansionList from '$components/lists/ExpansionList.svelte';
   import MetaDataList from '$components/MetaDataList.svelte';
   import FileList from '$components/lists/FileList.svelte';
@@ -93,6 +96,89 @@
   // appears without leaving the game page.
   let sessionVersion = 0;
 
+  // Format a numeric range for the summary strip without repeating a value when
+  // both ends are the same.
+  const formatRange = (min, max, suffix = '') => {
+    return min === max ? `${min}${suffix}` : `${min}–${max}${suffix}`;
+  };
+
+  // The game details payload currently carries one box-art pair. This helper is
+  // also the seam for the future image collection: when the data supplies
+  // ordered images, they are normalized alongside the box art and the Images
+  // tab opens automatically. It deliberately does not inspect GameAssets.
+  const normalizeImages = data => {
+    if (data === undefined || data === null) {
+      return [];
+    }
+
+    const name = data.primaryName ?? 'Game';
+
+    const boxArt = (data.imagePath || data.imageFullPath) ? [{
+      thumb: data.imagePath || data.imageFullPath,
+      full: data.imageFullPath || data.imagePath,
+      alt: `${name} box art`
+    }] : [];
+
+    const supplied = Array.isArray(data.images) ? data.images : [];
+    const normalized = supplied
+      .map((image, index) => {
+        if (image === null || image === undefined) {
+          return null;
+        }
+
+        if (typeof image === 'string') {
+          return {
+            thumb: image,
+            full: image,
+            alt: `${name} image ${index + 1}`
+          };
+        }
+
+        return {
+          thumb: image.thumb ?? image.thumbnail ?? image.imagePath ?? image.full ?? image.imageFullPath,
+          full: image.full ?? image.imageFullPath ?? image.thumb ?? image.thumbnail ?? image.imagePath,
+          alt: image.alt ?? image.caption ?? `${name} image ${index + 1}`
+        };
+      })
+      .filter(Boolean);
+
+    // Keep the box art first, then any attached images, and avoid showing the
+    // same full-size URL twice if the future payload also includes the box art.
+    const seen = [];
+    return [...boxArt, ...normalized].filter(image => {
+      const key = image.full ?? image.thumb;
+
+      if (!key || seen.includes(key)) {
+        return false;
+      }
+
+      seen.push(key);
+      return true;
+    });
+  };
+
+  // The preferred name follows the same ownership rules as the old page: the
+  // owned copy, then the wishlist entry, then the primary name.
+  $: titleName = gameData?.owned?.name?.name
+    ?? gameData?.wishlist?.name?.name
+    ?? gameData?.primaryName
+    ?? 'Game Details';
+
+  $: headTitle = gameData === undefined || gameData === null
+    ? 'Game Details'
+    : `${titleName} (${gameData.publishedIn})`;
+
+  $: images = normalizeImages(gameData);
+
+  $: summary = gameData === undefined || gameData === null ? null : {
+    players: formatRange(gameData.minPlayers, gameData.maxPlayers),
+    playTime: formatRange(gameData.minPlaytime, gameData.maxPlaytime, ' min'),
+    age: `${gameData.minPlayerAge}+`,
+    weight: Number.isFinite(Number(gameData.complexity))
+      ? `${Number(gameData.complexity).toFixed(2)}/5`
+      : '—'
+  };
+
   const logSession = () => {
     logSessionPreset = {
       gameId: gameData.id,
@@ -118,6 +204,11 @@
   const loadData = async () => {
     gameData = await api.game.details($user, slug);
   }
+
+  // The load zone watches a stored promise so a failed request can be retried
+  // in place instead of only by reloading the page.
+  let detailsSource = loadData();
+  const reloadDetails = () => detailsSource = loadData();
 
   // Load the list of files that are associated with this game, if any.
   // TODO: This is currently (and stupidly) fetching the list every time the
@@ -232,7 +323,87 @@
 <!-- *********************************************************************** -->
 
 
-<PageHead title="Game Details" backTo="#/games" />
+<PageHead backTo="#/games" stackActionsOnNarrow>
+  <svelte:fragment slot="eyebrow">Game Details</svelte:fragment>
+
+  <svelte:fragment slot="title">{headTitle}</svelte:fragment>
+
+  <svelte:fragment slot="badges">
+    {#if gameData !== undefined && gameData !== null}
+      {#if gameData.owned !== undefined}
+        <wa-badge variant="warning">
+          <Icon name="star-fill" padRight="4px"></Icon>Owned
+        </wa-badge>
+      {/if}
+
+      {#if gameData.wishlist !== undefined}
+        <wa-badge variant="danger">
+          <Icon name="heart-fill" padRight="4px"></Icon>Wishlisted
+        </wa-badge>
+      {/if}
+
+      {#if gameData.owned !== undefined}
+        {#if gameData.owned.storage !== null && gameData.owned.storage !== undefined}
+          <wa-badge variant={gameData.owned.isOnShelf ? 'success' : 'warning'}>
+            {gameData.owned.isOnShelf ? 'On shelf' : 'Off shelf'}
+          </wa-badge>
+        {:else}
+          <wa-badge>Unstored</wa-badge>
+        {/if}
+      {/if}
+    {/if}
+  </svelte:fragment>
+
+  <svelte:fragment slot="description">
+    {#if gameData !== undefined && gameData !== null && gameData.owned !== undefined}
+      Your copy published by
+      <a href={`#/publisher/${gameData.owned.publisher.slug}`}
+         title="View this publisher">{gameData.owned.publisher.name}</a>
+    {/if}
+  </svelte:fragment>
+
+  <svelte:fragment slot="actions">
+    {#if gameData !== undefined && gameData !== null}
+      {#if $user.household}
+        <IconButton variant="brand" appearance="filled" title="Edit this game"
+                    caption="" label="Edit game" icon="pencil-fill"
+                    onclick={() => editDialogOpen = true} />
+      {/if}
+
+      <IconButton variant="brand" appearance="filled" icon="plus"
+                  caption="Log Session" title="Log a session of this game"
+                  onclick={logSession} />
+
+      {#if $user.household}
+        {#if gameData.owned !== undefined}
+          <AsyncIconButton variant="brand" appearance="filled"
+                           caption="Remove from Collection"
+                           icon="star"
+                           handler={async () => removeFromCollection(gameData.slug)} />
+
+        {:else}
+          <IconButton variant="brand" appearance="filled"
+                      caption="Add to Collection"
+                      icon="star-fill"
+                      onclick={() => addDialog = collectionProps()} />
+
+          {#if gameData.wishlist !== undefined}
+            <AsyncIconButton variant="neutral" appearance="filled"
+                             caption="Remove from Wishlist"
+                             icon="heart-slash"
+                             handler={async () => removeFromWishlist(gameData.slug)} />
+
+          {:else}
+            <IconButton variant="neutral" appearance="filled"
+                        caption="Add to Wishlist"
+                        icon="heart-fill"
+                        onclick={() => addDialog = wishlistProps()} />
+          {/if}
+        {/if}
+      {/if}
+    {/if}
+  </svelte:fragment>
+</PageHead>
 
 <Confirm bind:this={confirmModal} />
 
@@ -240,117 +411,93 @@
   <RecordAddDialog open {...addDialog} onclose={addDialogResult} />
 {/if}
 
-<LoadZone source={loadData()}>
-  <wa-card>
-    <div slot="header" class="game-header">
-      <div class="game-header-top">
-        <div class="game-title">
-          <div class="game-title-main">
-            {#if gameData.owned !== undefined}
-              <Icon name="star-fill" color="var(--wa-color-warning-on-quiet)"></Icon>
-              {gameData.owned.name.name} ({gameData.publishedIn})
-            {:else}
-              {#if gameData.wishlist !== undefined}
-                <Icon name="heart-fill" color="var(--wa-color-danger-on-quiet)"></Icon>
-                {gameData.wishlist.name.name} ({gameData.publishedIn})
-              {:else}
-                <Icon name="star"></Icon>
-                {gameData.primaryName} ({gameData.publishedIn})
-              {/if}
-            {/if}
-          </div>
+<LoadZone source={detailsSource} onretry={reloadDetails}>
+  {#if gameData !== undefined && gameData !== null}
+    <div class="stack">
+      <SummaryGrid spaced={false}>
+        <SummaryCard label="Players" value={summary.players} />
+        <SummaryCard label="Play Time" value={summary.playTime} />
+        <SummaryCard label="Age" value={summary.age} />
+        <SummaryCard label="Weight" value={summary.weight} />
+      </SummaryGrid>
+
+      {#if gameData.names.length > 1 || gameData.wishlist !== undefined || gameData.owned !== undefined}
+        <div class="detail-rows">
+          {#if gameData.names.length > 1}
+            <div class="detail-row">
+              <strong>Also known as:</strong>
+              <span>{gameData.names.map(el => el.name).join(', ')}</span>
+            </div>
+          {/if}
+
+          {#if gameData.wishlist !== undefined}
+            <div class="detail-row">
+              <span>Added to Wishlist <WishlistLink wishlist={gameData.wishlist.wishlist} /></span>
+              <span>by <strong>{gameData.wishlist.wishlister.name}</strong></span>
+            </div>
+          {/if}
 
           {#if gameData.owned !== undefined}
-            <div class="game-publisher">
-              Your copy published by
-              <a href={`#/publisher/${gameData.owned.publisher.slug}`}
-                 title="View this publisher">{gameData.owned.publisher.name}</a>
+            <div class="detail-row">
+              <strong>Storage:</strong>
+              {#if gameData.owned.storage !== null && gameData.owned.storage !== undefined}
+                <a class="storage-path" href={`#/storage/${gameData.owned.storage.slug ?? gameData.owned.storage.id}`}
+                   title="View the games stored in this location">{gameData.owned.storage.path}</a>
+                <wa-badge variant={gameData.owned.isOnShelf ? 'success' : 'warning'}>
+                  {gameData.owned.isOnShelf ? 'On shelf' : 'Off shelf'}
+                </wa-badge>
+              {:else}
+                <wa-badge>Unstored</wa-badge>
+              {/if}
+
+              <!-- wa-button wraps a real <button>; the a11y warnings are false positives. -->
+              <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+              <wa-button appearance="outlined" size="s"
+                         on:click={() => storageDialogOpen = true}>
+                {gameData.owned.storage ? 'Change storage' : 'Assign storage'}
+              </wa-button>
             </div>
           {/if}
         </div>
-
-        {#if $user.household}
-          <IconButton variant="brand" appearance="filled" title="Edit this game"
-                      caption="" icon="pencil-fill"
-                      onclick={() => editDialogOpen = true} />
-        {/if}
-      </div>
-
-      <div class="stat-row">
-        <div class="stat">
-          <span class="stat-label">Players</span>
-          <span class="stat-value">
-            {#if gameData.minPlayers === gameData.maxPlayers}
-              {gameData.minPlayers}
-            {:else}
-              {gameData.minPlayers}-{gameData.maxPlayers}
-            {/if}
-          </span>
-        </div>
-
-        <div class="stat">
-          <span class="stat-label">Play Time</span>
-          <span class="stat-value">
-            {#if gameData.minPlaytime === gameData.maxPlaytime}
-              {gameData.minPlaytime} min
-            {:else}
-              {gameData.minPlaytime}-{gameData.maxPlaytime} min
-            {/if}
-          </span>
-        </div>
-
-        <div class="stat">
-          <span class="stat-label">Age</span>
-          <span class="stat-value">{gameData.minPlayerAge}+</span>
-        </div>
-
-        <div class="stat">
-          <span class="stat-label">Weight</span>
-          <span class="stat-value">{gameData.complexity.toFixed(2)}/5</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="stack">
-      {#if gameData.wishlist !== undefined}
-        <div class="row">
-          <span>Added to Wishlist <WishlistLink wishlist={gameData.wishlist.wishlist} /></span>
-          <span>by <strong>{gameData.wishlist.wishlister.name}</strong></span>
-        </div>
       {/if}
 
-      {#if gameData.owned !== undefined}
-        <div class="storage-summary">
-          <div class="storage-copy">
-            <span class="storage-label">Storage</span>
-            {#if gameData.owned.storage !== null && gameData.owned.storage !== undefined}
-              <a class="storage-path" href={`#/storage/${gameData.owned.storage.slug ?? gameData.owned.storage.id}`}
-                 title="View the games stored in this location">{gameData.owned.storage.path}</a>
-              <wa-badge variant={gameData.owned.isOnShelf ? 'success' : 'warning'}>
-                {gameData.owned.isOnShelf ? 'On shelf' : 'Off shelf'}
-              </wa-badge>
+      <Panel title="About">
+        <div class="about-grid">
+          <div class="about-media">
+            {#if images.length > 0}
+              <wa-lightbox label={`${gameData.primaryName} box art`}
+                           without-counter without-navigation>
+                <wa-lightbox-item src={images[0].full} alt={images[0].alt}>
+                  <GameImage imagePath={images[0].thumb} name={images[0].alt} />
+                </wa-lightbox-item>
+              </wa-lightbox>
             {:else}
-              <wa-badge>Unstored</wa-badge>
+              <div class="no-art">
+                <Icon name="card-image" size="2rem"></Icon>
+                <span>No box art</span>
+              </div>
             {/if}
           </div>
 
-          <!-- wa-button wraps a real <button>; the a11y warnings are false positives. -->
-          <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-          <wa-button appearance="outlined" size="s"
-                     on:click={() => storageDialogOpen = true}>
-            {gameData.owned.storage ? 'Change storage' : 'Assign storage'}
-          </wa-button>
+          <!-- A scrollable region needs to be focusable so keyboard users can
+               scroll it; the a11y rule treats region as noninteractive. -->
+          <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+          <div class="about-description" role="region" aria-label="Game description" tabindex="0">
+            <div class="description-content">
+              {#if gameData.description !== undefined && gameData.description !== null && gameData.description !== ''}
+                <!-- The stored description is trusted content (household database,
+                     BGG import) rendered as HTML by design. -->
+                <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                {@html gameData.description}
+              {:else}
+                <p class="muted">No description available.</p>
+              {/if}
+            </div>
+          </div>
         </div>
-      {/if}
+      </Panel>
 
-      {#if gameData.names.length > 1}
-        <div class="row">
-          <strong>Also Known As:</strong>
-          <span>{gameData.names.map(el => el.name).join(', ')}</span>
-        </div>
-      {/if}
-
-      <div class="row-lg">
+      <div class="reference-row">
         {#if gameData.teachingURL !== ''}
           <a href={gameData.teachingURL} target="_blank" rel="noreferrer">
             Learn to Play <Icon padLeft="4px" name="box-arrow-up-right"></Icon>
@@ -374,119 +521,82 @@
       </div>
 
       <wa-tab-group>
-        <wa-tab slot="nav" panel="images">Images</wa-tab>
-        <wa-tab slot="nav" panel="files">Files</wa-tab>
-        <wa-tab slot="nav" panel="description">Description</wa-tab>
-
-        <wa-tab-panel name="images">
-          <div class="game-image">
-            <wa-lightbox label={`${gameData.primaryName} box art`}
-                         without-counter without-navigation>
-              <wa-lightbox-item src={gameData.imageFullPath}
-                                alt={`${gameData.primaryName} box art`}>
-                <GameImage imagePath={gameData.imagePath} name={gameData.primaryName} />
-              </wa-lightbox-item>
-            </wa-lightbox>
-          </div>
-        </wa-tab-panel>
-
-        <wa-tab-panel name="files">
-          <FileList loader={loadFileData} gameName={gameData.primaryName} />
-        </wa-tab-panel>
-
-        <wa-tab-panel name="description">
-          <!-- The stored description is trusted content (household database,
-               BGG import) rendered as HTML by design. -->
-          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-          {@html gameData.description}
-        </wa-tab-panel>
-      </wa-tab-group>
-
-      <wa-tab-group>
         <wa-tab slot="nav" panel="production">Production</wa-tab>
         <wa-tab slot="nav" panel="gameplay">Gameplay</wa-tab>
         <wa-tab slot="nav" panel="expansions">Expansions</wa-tab>
+        <wa-tab slot="nav" panel="files">Files</wa-tab>
+        {#if images.length > 1}
+          <wa-tab slot="nav" panel="images">Images</wa-tab>
+        {/if}
         <wa-tab slot="nav" panel="sessions">Sessions</wa-tab>
 
         <wa-tab-panel name="production">
-          <MetaDataList {gameData} keyList={productionMetaKeys} />
+          <Panel title="Production">
+            <MetaDataList {gameData} keyList={productionMetaKeys} />
+          </Panel>
         </wa-tab-panel>
 
         <wa-tab-panel name="gameplay">
-          <MetaDataList {gameData} keyList={gameplayMetaKeys} />
+          <Panel title="Gameplay">
+            <MetaDataList {gameData} keyList={gameplayMetaKeys} />
+          </Panel>
         </wa-tab-panel>
 
         <wa-tab-panel name="expansions">
           <div class="stack">
-            <ExpansionList data={gameData.expansionGames} title="Expansions:" />
-            <ExpansionList data={gameData.baseGames} title="Expansion For:" />
+            <ExpansionList data={gameData.expansionGames} title="Expansions" />
+            <ExpansionList data={gameData.baseGames} title="Expansion For" />
           </div>
         </wa-tab-panel>
 
-        <wa-tab-panel name="sessions">
-          <div class="stack">
-            <div class="grid-auto">
-              <IconButton variant="brand" appearance="filled" icon="plus" caption="Log a Session"
-                          title="Log a session of this game"
-                          onclick={logSession} />
-            </div>
+        <wa-tab-panel name="files">
+          <Panel title="Files" flush>
+            <FileList loader={loadFileData} gameName={gameData.primaryName} />
+          </Panel>
+        </wa-tab-panel>
 
+        {#if images.length > 1}
+          <wa-tab-panel name="images">
+            <Panel title="Images">
+              <div class="image-gallery">
+                <wa-lightbox label={`${gameData.primaryName} images`}>
+                  {#each images as image (image.full)}
+                    <wa-lightbox-item class="gallery-item"
+                                      src={image.full}
+                                      alt={image.alt}>
+                      <img class="gallery-thumb" src={image.thumb} alt={image.alt}>
+                    </wa-lightbox-item>
+                  {/each}
+                </wa-lightbox>
+              </div>
+            </Panel>
+          </wa-tab-panel>
+        {/if}
+
+        <wa-tab-panel name="sessions">
+          <Panel title="Sessions" flush>
             {#key sessionVersion}
               <SessionList loader={loadSessionData} pageSize={5} showGames={false} />
             {/key}
-          </div>
+          </Panel>
         </wa-tab-panel>
       </wa-tab-group>
-
-      {#if $user.household}
-        <div class="actions">
-          {#if gameData.owned !== undefined}
-            <AsyncIconButton variant="brand" appearance="filled"
-                             caption="Remove from Collection"
-                             icon="star"
-                             handler={async () => removeFromCollection(gameData.slug)} />
-
-          {:else}
-            <IconButton variant="brand" appearance="filled"
-                        caption="Add to Collection"
-                        icon="star-fill"
-                        onclick={() => addDialog = collectionProps()} />
-
-            {#if gameData.wishlist !== undefined}
-              <AsyncIconButton variant="neutral" appearance="filled"
-                               caption="Remove from Wishlist"
-                               icon="heart-slash"
-                               handler={async () => removeFromWishlist(gameData.slug)} />
-
-            {:else}
-              <IconButton variant="neutral" appearance="filled"
-                          caption="Add to Wishlist"
-                          icon="heart-fill"
-                          onclick={() => addDialog = wishlistProps()} />
-            {/if}
-          {/if}
-        </div>
-      {/if}
     </div>
-  </wa-card>
 
-  <GameEditDialog open={editDialogOpen} game={gameData}
-                  onclose={() => editDialogOpen = false} />
+    <GameEditDialog open={editDialogOpen} game={gameData}
+                    onclose={() => editDialogOpen = false} />
 
-  {#if storageDialogOpen}
-    <StorageAssignDialog open={true} game={gameData.slug}
-                         current={gameData.owned}
-                         onclose={storageDialogResult} />
+    {#if storageDialogOpen}
+      <StorageAssignDialog open={true} game={gameData.slug}
+                           current={gameData.owned}
+                           onclose={storageDialogResult} />
+    {/if}
+
+    {#if logSessionOpen}
+      <SessionAddDialog open={true} preset={logSessionPreset}
+                        onclose={logSessionClosed} />
+    {/if}
   {/if}
-
-  {#if logSessionOpen}
-    <SessionAddDialog open={true} preset={logSessionPreset}
-                      onclose={logSessionClosed} />
-  {/if}
-
-  <svelte:fragment slot="error" let:error>
-    {error}
-  </svelte:fragment>
 </LoadZone>
 
 
@@ -494,100 +604,22 @@
 
 
 <style>
-  .game-header {
+  .detail-rows {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-  }
-
-  .game-header-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  .game-header-top :global(wa-button) {
-    flex-shrink: 0;
-  }
-
-  .game-title {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-    font-family: var(--wa-font-family-heading);
-    font-size: var(--wa-font-size-xl);
-    color: var(--wa-color-text-normal);
-  }
-
-  .game-title-main {
-    display: flex;
-    align-items: center;
     gap: 8px;
   }
 
-  .game-publisher {
-    font-family: var(--wa-font-family-body);
-    font-size: var(--wa-font-size-s);
-    color: var(--wa-color-text-quiet);
-  }
-
-  .game-publisher a {
-    color: var(--wa-color-warning-on-quiet);
-    font-weight: var(--wa-font-weight-semibold);
-  }
-
-  .stat-row {
-    display: flex;
-    flex-direction: row;
-    gap: 24px;
-    flex-wrap: wrap;
-  }
-
-  .stat {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .stat-label {
-    font-size: var(--wa-font-size-s);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--wa-color-text-quiet);
-  }
-
-  .stat-value {
-    font-size: var(--wa-font-size-l);
-    font-weight: var(--wa-font-weight-semibold);
-    color: var(--wa-color-text-normal);
-  }
-
-  .storage-summary {
+  .detail-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-    padding: 10px 12px;
-    border: 1px solid var(--wa-color-surface-border);
-    border-radius: var(--wa-border-radius-m);
-    background: var(--wa-color-surface-lowered);
-  }
-
-  .storage-copy {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
     min-width: 0;
   }
 
-  .storage-label {
-    font-size: var(--wa-font-size-s);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--wa-color-text-quiet);
+  .detail-row > span {
+    overflow-wrap: anywhere;
   }
 
   .storage-path {
@@ -602,22 +634,160 @@
     text-decoration: underline;
   }
 
-  .game-image {
-    display: flex;
-    flex-wrap: wrap;
+  .about-grid {
+    --about-height: 350px;
+    display: grid;
+    grid-template-columns: minmax(220px, 350px) minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
   }
 
-  /* Keep the lightbox host out of the flex layout so the resting image keeps
-     exactly the same box it had before the lightbox was added. */
-  .game-image wa-lightbox {
+  .about-media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--about-height);
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--wa-color-surface-border);
+    border-radius: var(--wa-border-radius-m);
+    background: var(--wa-color-surface-lowered);
+  }
+
+  /* Keep the lightbox host out of the flex layout so the resting image is the
+     only thing the frame lays out. */
+  .about-media wa-lightbox {
     display: contents;
   }
 
-  .actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--wa-color-surface-border);
+  .about-media :global(img) {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: calc(var(--about-height) - 2px);
+    object-fit: contain;
+    border-radius: var(--wa-border-radius-s);
+  }
+
+  .no-art {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: var(--wa-color-text-quiet);
+    font-size: var(--wa-font-size-s);
+  }
+
+  .about-description {
+    min-width: 0;
+    height: var(--about-height);
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  /* The scroll container fills the grid column so its scrollbar sits at the
+     panel edge; the readable measure stays on the text itself. */
+  .description-content {
+    max-width: 80ch;
+  }
+
+  .about-description :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--wa-border-radius-s);
+  }
+
+  .about-description :global(p:first-child) {
+    margin-top: 0;
+  }
+
+  .about-description :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .about-description:focus-visible {
+    outline: 2px solid var(--wa-color-brand-border-loud);
+    outline-offset: 2px;
+  }
+
+  .reference-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .image-gallery {
+    --gallery-thumb: 160px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .image-gallery wa-lightbox {
+    display: contents;
+  }
+
+  .gallery-item {
+    width: var(--gallery-thumb);
+  }
+
+  .gallery-thumb {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--gallery-thumb);
+    padding: 6px;
+    object-fit: contain;
+    border: 1px solid var(--wa-color-surface-border);
+    border-radius: var(--wa-border-radius-m);
+    background: var(--wa-color-surface-lowered);
+  }
+
+  .gallery-thumb:hover {
+    border-color: var(--wa-color-brand-border-loud);
+  }
+
+  wa-tab-panel {
+    padding-top: 6px;
+  }
+
+  /* Web Awesome's tab panel adds 32px of vertical padding around the slot. */
+  wa-tab-panel::part(base) {
+    padding: 0;
+  }
+
+  @media (max-width: 1023px) {
+    .about-grid {
+      --about-height: 300px;
+      grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 720px) {
+    .about-grid {
+      --about-height: auto;
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .about-media {
+      height: auto;
+      max-height: 280px;
+    }
+
+    .about-media :global(img) {
+      max-height: 278px;
+    }
+
+    .about-description {
+      height: auto;
+      max-height: none;
+      overflow: visible;
+    }
+
+    .image-gallery {
+      --gallery-thumb: 145px;
+    }
   }
 </style>

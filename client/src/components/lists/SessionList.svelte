@@ -183,10 +183,17 @@
     ...(showGames === true ? [gameColumn] : [])
   ];
 
+  // The load zone watches a stored promise so a failed request can be retried
+  // in place; a template call to loader() would leave Retry nothing to rerun.
+  let reloadTick = 0;
+  const loadRows = async () => loader();
+
+  $: source = loadRows(reloadTick);
+  const reload = () => reloadTick += 1;
 </script>
 
 
-<LoadZone source={loader()} let:result>
+<LoadZone {source} onretry={reload} let:result>
   {#if result !== null && result !== undefined}
     {@const openRows = result.filter(row => row.isOpen === true)}
 
@@ -253,10 +260,6 @@
       {/key}
     </div>
   {/if}
-
-  <svelte:fragment slot="error" let:error>
-    {error}
-  </svelte:fragment>
 </LoadZone>
 
 

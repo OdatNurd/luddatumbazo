@@ -34,13 +34,18 @@
   // be displayed in the list.
   export let filter = result => result;
 
+  // Optional observer that receives the rows returned by the loader before this
+  // list's own filter is applied. Pages use it to summarize the complete data
+  // set without issuing a second request.
+  export let onrows = undefined;
+
   // Passed through to the grid so that the user's page size choice for this
   // list is remembered across visits; only the top level pages provide one.
   export let gridKey = undefined;
 
-  // Additional columns appended after the standard game list columns. The
-  // owned collection uses this to show storage and shelf state without
-  // duplicating the whole grid definition.
+  // Additional columns appended after the standard game list columns. The owned
+  // collection uses this to show storage and shelf state without duplicating
+  // the whole grid definition.
   export let extraColumns = [];
 
   // Optional row selection. Pages that act on a set of games (reshelving, or
@@ -103,7 +108,13 @@
   // Fetch the list of data that we need from the back end API, and return
   // the result back after filtering it. The tick argument exists only to make
   // the expression below depend on it so that refresh() re-runs the load.
-  const loadData = async (param, tick) => filter (await loader(param));
+  const loadData = async (param, tick) => {
+    const rows = await loader(param);
+
+    onrows?.(rows);
+
+    return filter(rows);
+  };
 
   // Re-run the load after something has changed the underlying data (such as
   // the add dialog creating a record). The grid stays mounted, so its sort,
@@ -116,15 +127,11 @@
 </script>
 
 
-<LoadZone source={loadData(loaderKey, tick)} let:result>
+<LoadZone source={loadData(loaderKey, tick)} onretry={refresh} let:result>
   <!-- This list is always presented as the whole page body, so the grid fills
        whatever vertical space the shell leaves for it (see app.css). -->
   <DataGrid data={result} {columns} {gridKey} {selectable} {rowKey}
             {selectableRows} {emptyMessage} bind:selectedKeys fill>
     <slot name="actions" slot="actions" />
   </DataGrid>
-
-  <svelte:fragment slot="error" let:error>
-    {error}
-  </svelte:fragment>
 </LoadZone>

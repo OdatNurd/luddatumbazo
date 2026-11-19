@@ -12,9 +12,13 @@
   // The list of links that are available in the main navigation menu on the
   // page. Items with dashed labels are separators.
   const links = [
-    { label: "Home",        value: "#/",           icon: "dice-3-fill" },
-    { label: "Games",       value: "#/games",      icon: "collection" },
-    { label: "Sessions",    value: "#/sessions",   icon: "calendar-event" },
+    { label: "Home",        value: "#/",             icon: "dice-3-fill" },
+    // Wishlists is a separate slice of the catalog, reached from the profile
+    // drawer (like Collection, but without a main-menu item). It must not make
+    // the Games item look current; its own link lives in that drawer.
+    { label: "Games",       value: "#/games",        icon: "collection", exclude: ["#/games/wishlisted"] },
+    { label: "Collection",  value: "#/games/owned",  icon: "star-fill", requiresHousehold: true },
+    { label: "Sessions",    value: "#/sessions",     icon: "calendar-event" },
     { label: "---" },
     { label: "Categories",  value: "#/categories", icon: "bookmark-star-fill" },
     { label: "Mechanics",   value: "#/mechanics",  icon: "gear-fill" },

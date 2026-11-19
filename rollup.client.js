@@ -20,7 +20,7 @@ import asuid from "@axel669/asuid/node";
 import copy from '@axel669/rollup-copy-static';
 import { htmlEntry } from './tools/rollupHtmlEntry.js';
 
-import { commitReference } from './commitReference.js';
+import { commitReference } from './service/src/generated/buildReference.js';
 
 import { syncStyles } from './tools/syncWebAwesomeAssets.js';
 

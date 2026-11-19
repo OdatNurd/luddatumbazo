@@ -1,5 +1,6 @@
 <script>
   import { api } from '$api';
+  import { metadataSingularLabels } from '$lib/metadata.js';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -112,8 +113,9 @@
   // The record cannot be saved without at least a name.
   $: canSave = name.trim() !== '';
 
-  // The capitalized type, for the dialog captions.
-  $: niceType = metaType.charAt(0).toUpperCase() + metaType.slice(1);
+  // The display label for the dialog captions.
+  $: niceType = metadataSingularLabels[metaType]
+    ?? (metaType.charAt(0).toUpperCase() + metaType.slice(1));
 
   // Keep an input's value up to date as the user types. The component emits no
   // custom event of its own; the native input event crosses out of its shadow

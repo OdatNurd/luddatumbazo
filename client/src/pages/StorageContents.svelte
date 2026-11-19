@@ -7,6 +7,9 @@
   import * as cells from '$lib/cells.js';
   import SlugList from '$components/lists/SlugList.svelte';
   import PageHead from '$components/PageHead.svelte';
+  import EmptyState from '$components/EmptyState.svelte';
+  import LoadingState from '$components/LoadingState.svelte';
+  import ErrorState from '$components/ErrorState.svelte';
   import StorageBreadcrumb from '$components/StorageBreadcrumb.svelte';
   import BulkStorageAssignDialog from '$components/dialogs/BulkStorageAssignDialog.svelte';
 
@@ -212,13 +215,15 @@
 
 {#if !$user.household}
   <PageHead title="Storage" />
-  <p>No storage; you do not belong to a household yet.</p>
+  <EmptyState title="No household yet"
+              description="You need to belong to a household before you can manage storage." />
 {:else if loadingLocation}
-  <div class="loading"><wa-spinner></wa-spinner></div>
+  <LoadingState />
 {:else if locationError !== null}
   <PageHead title="Storage Location" />
-  <wa-callout variant="danger">{locationError}</wa-callout>
-  <p><a href="#/storage">Back to storage</a></p>
+  <ErrorState error={locationError}>
+    <a slot="actions" href="#/storage">Back to storage</a>
+  </ErrorState>
 {:else}
   <PageHead>
     <svelte:fragment slot="description">
@@ -279,12 +284,6 @@
 
 
 <style>
-  .loading {
-    display: flex;
-    justify-content: center;
-    padding: 32px;
-  }
-
   .selection-count {
     color: var(--wa-color-text-quiet);
     font-size: var(--wa-font-size-s);

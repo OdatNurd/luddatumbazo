@@ -12,9 +12,12 @@
   export let appearance = 'plain';
   export let disabled = false;
 
-  // The caption of the button and the icon to use within it
+  // The caption of the button and the icon to use within it. A button whose
+  // caption is empty is icon-only; `label` then gives it the accessible name
+  // that the visible glyph cannot.
   export let caption = 'derp derp derp';
   export let icon = 'layout-wtf';
+  export let label = undefined;
 
   // Optional tooltip presented when the button is hovered.
   export let title = undefined;
@@ -76,4 +79,7 @@
 <wa-button bind:this={button} {variant} {appearance} {disabled} on:click={btnClick}>
   <Icon name={btnIcon()} padRight={btnText() !== '' ? '4px' : undefined}></Icon>
   {btnText()}
+  {#if btnText() === '' && label !== undefined}
+    <span class="wa-visually-hidden">{label}</span>
+  {/if}
 </wa-button>

@@ -5,6 +5,9 @@
 
   import SlugList from '$components/lists/SlugList.svelte';
   import PageHead from '$components/PageHead.svelte';
+  import EmptyState from '$components/EmptyState.svelte';
+  import SummaryGrid from '$components/SummaryGrid.svelte';
+  import SummaryCard from '$components/SummaryCard.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -24,12 +27,21 @@
   // underlying component fires.
   const pick = event => loaderKey = event.target.value;
 
+  // The rows behind the grid, used to summarize the selected wishlist.
+  let rows = null;
+
+  $: count = rows === null ? '—' : rows.length;
+
+  const loaded = result => rows = result;
+
 </script>
 
 {#if $user.household}
-  <PageHead title={`Wishlists for ${$user.household?.name ?? 'Unknown'}`}>
+  <PageHead title="Wishlists"
+            description={`Wishlists for ${$user.household?.name ?? 'Unknown'}.`}
+            hideDescriptionOnNarrow>
     <svelte:fragment slot="actions">
-      <wa-select label="Wishlist" value={loaderKey} on:change={pick} on:wa-input={pick}>
+      <wa-select size="s" label="Wishlist" value={loaderKey} on:change={pick} on:wa-input={pick}>
         {#each $wishlists as entry (entry.value)}
           <wa-option value={entry.value}>{entry.label}</wa-option>
         {/each}
@@ -37,8 +49,15 @@
     </svelte:fragment>
   </PageHead>
 
-  <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} {loaderKey} gridKey="wishlists" />
+  <SummaryGrid>
+    <SummaryCard label="Games" value={count} note="in this wishlist" />
+    <SummaryCard label="Wishlists" value={$wishlists.length} note="defined" />
+  </SummaryGrid>
+
+  <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} onrows={loaded}
+            {loaderKey} gridKey="wishlists" />
 {:else}
   <PageHead title="Wishlists" />
-  <p>No wishlists; you do not belong to any households yet!</p>
+  <EmptyState title="No household yet"
+              description="You need to belong to a household before you can view wishlists." />
 {/if}

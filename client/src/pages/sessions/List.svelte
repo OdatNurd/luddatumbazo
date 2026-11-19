@@ -324,11 +324,12 @@
 </script>
 
 
-<PageHead title="Session Reports"
-          description="Track what the group has played and pick up sessions that are still in progress.">
+<PageHead title="Sessions"
+          description="Track what the group has played and pick up sessions that are still in progress."
+          hideDescriptionOnNarrow>
   <svelte:fragment slot="actions">
     <IconButton variant="brand" appearance="filled" title="Add a new session report"
-                caption="" icon="plus-lg"
+                caption="" label="Add session report" icon="plus-lg"
                 onclick={() => addDialogOpen = true} />
   </svelte:fragment>
 </PageHead>

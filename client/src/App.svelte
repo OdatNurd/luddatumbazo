@@ -7,6 +7,7 @@
   import { wishlists } from '$stores/wishlists';
 
   import LoadZone from '$components/LoadZone.svelte';
+  import PageHead from '$components/PageHead.svelte';
   import Icon from '$components/Icon.svelte';
   import NavDrawer from '$components/drawers/NavDrawer.svelte';
   import ProfileDrawer from '$components/drawers/ProfileDrawer.svelte';
@@ -203,12 +204,11 @@
         <svelte:component this={matched.component} {...matched.props} routeInfo={matched.routeInfo} />
       {/key}
     {:else}
-      <h3>Page not found</h3>
+      <PageHead title="Page not found"
+                description="The page you asked for does not exist."
+                backTo="#/" />
     {/if}
 
-    <svelte:fragment slot="error" let:error>
-      {error}
-    </svelte:fragment>
   </LoadZone>
 
   <!-- The page level `footer` slot: a full width bar under the whole body
@@ -342,7 +342,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px 12px;
+    padding: var(--app-drawer-control-padding);
   }
 
   .account-id .muted {
@@ -359,6 +359,7 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    min-width: 0;
   }
 
   /* The slotted footer inherits wa-page's roomy 3xl padding by default; the

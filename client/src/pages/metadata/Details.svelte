@@ -1,5 +1,6 @@
 <script>
   import { api } from '$api';
+  import { metadataLabels, metadataListRoutes } from '$lib/metadata.js';
 
   import PageHead from '$components/PageHead.svelte';
   import SlugList from '$components/lists/SlugList.svelte';
@@ -25,26 +26,8 @@
   // anything there to start with.
   let name = routeInfo.params.slug;
 
-  // The list page for each kind of metadata; where the back button falls to
-  // when there is no recorded trail to retrace (a cold deep link, say).
-  const listPages = {
-    category:  '#/categories',
-    mechanic:  '#/mechanics',
-    designer:  '#/designers',
-    artist:    '#/artists',
-    publisher: '#/publishers'
-  };
-
-  const labels = {
-    category:  'Categories',
-    mechanic:  'Mechanics',
-    designer:  'Designers',
-    artist:    'Artists',
-    publisher: 'Publishers'
-  };
-
   // Use a proper plural label rather than relying on CSS capitalization.
-  $: niceType = labels[metaType] ?? metaType;
+  $: niceType = metadataLabels[metaType] ?? metaType;
   $: pageTitle = `${niceType}: ${name}`;
 
   // Our loader queries the details for all games that are associated with the
@@ -70,7 +53,7 @@
 </script>
 
 
-<PageHead title={pageTitle} backTo={listPages[metaType]} />
+<PageHead title={pageTitle} backTo={metadataListRoutes[metaType]} />
 
 <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} filter={gameFilter}
           gridKey={`meta-games:${metaType}:${routeInfo.params.slug}`} />

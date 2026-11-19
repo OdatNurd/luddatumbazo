@@ -3,11 +3,21 @@
   // rendered as plain text; all preceding items link back up the tree.
   export let trail = [];
 
+  // An optional return link for pages that can be opened from outside the
+  // storage tree (the collection's queue cards, for example). It is rendered
+  // beside the breadcrumb rather than inside it, so the hierarchy still reads
+  // as Storage > current page.
+  export let origin = undefined;
+
   $: items = [{ label: 'Storage', href: '#/storage' }, ...trail];
 </script>
 
 
 <nav class="breadcrumb" aria-label="Breadcrumb">
+  {#if origin !== undefined && origin !== null}
+    <a class="origin" href={origin.href}>&larr; {origin.label}</a>
+  {/if}
+
   <ol>
     {#each items as item, index (index)}
       <li>
@@ -28,7 +38,17 @@
 
 <style>
   .breadcrumb {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 10px;
     min-width: 0;
+  }
+
+  .origin {
+    color: var(--wa-color-text-quiet);
+    font-size: var(--wa-font-size-s);
+    white-space: nowrap;
   }
 
   ol {

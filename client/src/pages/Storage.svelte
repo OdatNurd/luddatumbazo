@@ -9,6 +9,9 @@
   import Icon from '$components/Icon.svelte';
   import IconButton from '$components/IconButton.svelte';
   import PageHead from '$components/PageHead.svelte';
+  import EmptyState from '$components/EmptyState.svelte';
+  import LoadingState from '$components/LoadingState.svelte';
+  import ErrorState from '$components/ErrorState.svelte';
   import SummaryGrid from '$components/SummaryGrid.svelte';
   import SummaryCard from '$components/SummaryCard.svelte';
   import Panel from '$components/Panel.svelte';
@@ -311,13 +314,15 @@
 
 {#if !$user.household}
   <PageHead title="Storage" />
-  <p>No storage; you do not belong to a household yet.</p>
+  <EmptyState title="No household yet"
+              description="You need to belong to a household before you can manage storage." />
 {:else}
-  <PageHead title={`Storage for ${$user.household.name}`}
-            description="Organize shelves, cabinets, cubbies and drawers. Games without a location are listed as Unstored.">
+  <PageHead title="Storage"
+            description={`Storage for ${$user.household.name}. Organize shelves and locations; games without one are listed as Unstored.`}
+            hideDescriptionOnNarrow>
     <svelte:fragment slot="actions">
       <IconButton variant="brand" appearance="filled" title="Add a storage location"
-                  caption="" icon="plus"
+                  caption="" label="Add storage location" icon="plus"
                   onclick={() => openCreate(null)} />
     </svelte:fragment>
   </PageHead>
@@ -327,9 +332,9 @@
   {/if}
 
   {#if error !== null}
-    <wa-callout variant="danger">{error}</wa-callout>
+    <ErrorState error={error} retry={load} />
   {:else if loading}
-    <div class="loading"><wa-spinner></wa-spinner></div>
+    <LoadingState />
   {:else}
     <SummaryGrid>
       <SummaryCard label="Unstored" value={data.unstoredCount}
@@ -461,12 +466,6 @@
 
 
 <style>
-  .loading {
-    display: flex;
-    justify-content: center;
-    padding: 32px;
-  }
-
   .unstored-row,
   .node {
     display: flex;

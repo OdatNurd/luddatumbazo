@@ -5,6 +5,7 @@
   import { user } from '$stores/user';
 
   import StorageLocationPicker from '$components/StorageLocationPicker.svelte';
+  import LoadingState from '$components/LoadingState.svelte';
 
   // The games being moved and the mode the dialog is in. "assign" is used for
   // Unstored games, which become on shelf; "move" is used for games that
@@ -125,7 +126,7 @@
   {/if}
 
   {#if loading}
-    <div class="loading"><wa-spinner></wa-spinner></div>
+    <LoadingState />
   {:else}
     <div class="stack">
       <p class="description">{description}</p>
@@ -157,12 +158,6 @@
 
 
 <style>
-  .loading {
-    display: flex;
-    justify-content: center;
-    padding: 24px;
-  }
-
   .description {
     margin: 0;
   }

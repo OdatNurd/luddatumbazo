@@ -326,13 +326,13 @@
       {/if}
 
       <IconButton variant="brand" appearance="filled" title="Edit this session report"
-                  caption="" icon="pencil-fill"
+                  caption="" label="Edit session report" icon="pencil-fill"
                   onclick={editReport} />
     {/if}
   </svelte:fragment>
 </PageHead>
 
-<LoadZone source={detailsSource} let:result>
+<LoadZone source={detailsSource} onretry={reload} let:result>
   <div class="stack">
     <SummaryGrid spaced={false}>
       <SummaryCard label={result.summary.playedLabel}
@@ -365,10 +365,6 @@
       </Panel>
     {/if}
   </div>
-
-  <svelte:fragment slot="error" let:error>
-    {error}
-  </svelte:fragment>
 </LoadZone>
 
 {#if editOpen}

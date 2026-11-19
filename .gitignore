@@ -12,9 +12,9 @@ node_modules/
 # The build output goes here
 output/
 
-# The file that contains the released git hash of the release; used for both
-# the front and back ends
-commitReference.js
+# The generated build reference used by both the front and back ends; it lives
+# under the service sources so the worker build watches it
+service/src/generated/
 
 # Database exports
 dump/

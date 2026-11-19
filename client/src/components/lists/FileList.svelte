@@ -31,6 +31,10 @@
   // The game that the files in the list are for;
   export let gameName = undefined;
 
+  // The Files tab is always available; this is what it says when the game has
+  // no attached files yet.
+  export let emptyMessage = 'No files attached.';
+
 
   // ---------------------------------------------------------------------------
 
@@ -79,6 +83,14 @@
   // the result back after filtering it.
   const loadData = async param => filter (await loader(param));
 
+  // The load zone watches a stored promise so a failed request can be retried
+  // in place; a template call to loadData() would leave Retry nothing to rerun.
+  let reloadTick = 0;
+  const loadRows = async () => loadData(loaderKey);
+
+  $: source = loadRows(reloadTick);
+  const reload = () => reloadTick += 1;
+
   // Generate a link to an asset file given its bucket key; the bucket key is
   // relative (it has no leading slash), and the result is always an absolute
   // URL on whichever origin we happen to be running on.
@@ -96,10 +108,7 @@
   onclose={() => infoFile = null}
 />
 
-<LoadZone source={loadData(loaderKey)} let:result>
-  <DataGrid data={result} {columns} pageSize={Math.min(Math.max(result.length, 1), pageSize)} />
-
-  <svelte:fragment slot="error" let:error>
-    {error}
-  </svelte:fragment>
+<LoadZone {source} onretry={reload} let:result>
+  <DataGrid data={result} {columns} {emptyMessage}
+            pageSize={Math.min(Math.max(result.length, 1), pageSize)} />
 </LoadZone>

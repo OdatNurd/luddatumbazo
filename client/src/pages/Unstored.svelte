@@ -4,8 +4,13 @@
 
   import SlugList from '$components/lists/SlugList.svelte';
   import PageHead from '$components/PageHead.svelte';
+  import EmptyState from '$components/EmptyState.svelte';
   import StorageBreadcrumb from '$components/StorageBreadcrumb.svelte';
   import BulkStorageAssignDialog from '$components/dialogs/BulkStorageAssignDialog.svelte';
+
+  // The route this page was opened from; the collection links here with
+  // `from=collection` so the breadcrumb can offer a way back.
+  export let routeInfo = {};
 
   let selectedKeys = [];
   let list = null;
@@ -13,6 +18,10 @@
   let assignOpen = false;
 
   const trail = [{ label: 'Unstored' }];
+
+  $: origin = routeInfo.query?.from === 'collection'
+    ? { label: 'Collection', href: '#/games/owned' }
+    : undefined;
 
   const loader = async () => {
     const result = await api.household.storage.unstored($user.household);
@@ -44,11 +53,12 @@
 
 {#if !$user.household}
   <PageHead title="Unstored" />
-  <p>No storage; you do not belong to a household yet.</p>
+  <EmptyState title="No household yet"
+              description="You need to belong to a household before you can manage unstored games." />
 {:else}
   <PageHead>
     <svelte:fragment slot="description">
-      <StorageBreadcrumb {trail} />
+      <StorageBreadcrumb {trail} {origin} />
       <p class="muted">
         Games that do not have a storage location yet.
         {#if count !== null}

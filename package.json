@@ -16,7 +16,7 @@
     "build:info": "node ./tools/getCurrentCommit.js",
     "check": "svelte-check",
     "client:build": "pnpm build:info && rollup -c rollup.client.js",
-    "client:watch": "test -f commitReference.js || pnpm build:info; rollup -c rollup.client.js -w",
+    "client:watch": "pnpm build:info && rollup -c rollup.client.js -w",
     "db:export:init": "node ./tools/ensureDumpDir.js",
     "db:export:remote": "pnpm db:export:init && wrangler d1 export luddatumbazo --remote --output dump/remote-dump.sql",
     "db:export:local": "pnpm db:export:init && wrangler d1 export luddatumbazo --local --output dump/local-dump.sql",
@@ -24,7 +24,7 @@
     "lint": "eslint \"client/src/**/*.svelte\"",
     "local:seed-db": "cd service && npm run local:seed-db",
     "service:deploy": "wrangler deploy",
-    "service:run": "test -f commitReference.js || pnpm build:info; wrangler dev",
+    "service:run": "test -f service/src/generated/buildReference.js || pnpm build:info; wrangler dev",
     "test": "aegis test/aegis.config.js",
     "deploy": "pnpm client:build && pnpm wrangler deploy"
   },

@@ -20,8 +20,12 @@
     </p>
 
     <div class="home-actions">
-      <a class="button primary" href="#/games/owned">Browse the collection</a>
-      <a class="button" href="#/sessions">View session reports</a>
+      <wa-button href="#/games/owned" variant="brand" appearance="filled">
+        Browse the collection
+      </wa-button>
+      <wa-button href="#/sessions" variant="neutral" appearance="outlined">
+        View session reports
+      </wa-button>
     </div>
   </section>
 
@@ -93,35 +97,6 @@
     flex-wrap: wrap;
     gap: 10px;
     margin-top: 6px;
-  }
-
-  .button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 16px;
-    border: 1px solid var(--wa-color-surface-border);
-    border-radius: var(--wa-border-radius-m);
-    background: var(--wa-color-surface-raised);
-    color: var(--wa-color-text-normal);
-    font-weight: 600;
-    line-height: 1.2;
-  }
-
-  .button:hover {
-    border-color: var(--wa-color-brand-border-loud);
-    text-decoration: none;
-  }
-
-  .button.primary {
-    border-color: var(--wa-color-brand-fill-loud);
-    background: var(--wa-color-brand-fill-loud);
-    color: var(--wa-color-brand-on-loud);
-  }
-
-  .button.primary:hover {
-    border-color: var(--wa-color-brand-border-loud);
-    background: color-mix(in oklab, var(--wa-color-brand-fill-loud), var(--wa-color-mix-hover));
   }
 
   .bgg-credit {

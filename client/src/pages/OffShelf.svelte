@@ -5,8 +5,13 @@
   import * as cells from '$lib/cells.js';
   import SlugList from '$components/lists/SlugList.svelte';
   import PageHead from '$components/PageHead.svelte';
+  import EmptyState from '$components/EmptyState.svelte';
   import StorageBreadcrumb from '$components/StorageBreadcrumb.svelte';
   import Confirm from '$components/Confirm.svelte';
+
+  // The route this page was opened from; the collection links here with
+  // `from=collection` so the breadcrumb can offer a way back.
+  export let routeInfo = {};
 
   // The games that are waiting to go back to a shelf, and the selection the
   // user has made from that list.
@@ -20,8 +25,8 @@
   let actionError = null;
 
   // The list itself carries the full storage path so each game says where it
-  // belongs. The server orders by location and then name, which is the order
-  // of the shelves rather than the alphabet.
+  // belongs. The server orders by location and then name, which is the order of
+  // the shelves rather than the alphabet.
   const loader = async () => {
     const result = await api.household.storage.offShelf($user.household);
     count = result.length;
@@ -41,6 +46,10 @@
 
   const plural = value => value === 1 ? 'game' : 'games';
   const trail = [{ label: 'Off shelf' }];
+
+  $: origin = routeInfo.query?.from === 'collection'
+    ? { label: 'Collection', href: '#/games/owned' }
+    : undefined;
 
   const reshelve = async () => {
     if (selectedKeys.length === 0 || reshelving === true) {
@@ -79,11 +88,12 @@
 
 {#if !$user.household}
   <PageHead title="Off shelf" />
-  <p>No storage; you do not belong to a household yet.</p>
+  <EmptyState title="No household yet"
+              description="You need to belong to a household before you can manage off-shelf games." />
 {:else}
   <PageHead>
     <svelte:fragment slot="description">
-      <StorageBreadcrumb {trail} />
+      <StorageBreadcrumb {trail} {origin} />
       <p class="muted">
         Games with a storage location that are currently off shelf.
         {#if count !== null}

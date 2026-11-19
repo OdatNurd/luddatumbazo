@@ -34,20 +34,26 @@ a:hover {
 /* -------------------------------------------------------------------------- */
 
 
-/* Shared page chrome and summary/panel spacing.
+/* Shared page chrome, drawer menu and summary/panel spacing.
  *
  * These are app layout/type tokens, not theme replacements. Keeping them here
- * makes it possible to tune page-head padding, card padding and panel body
- * spacing globally after the shared components have settled in. */
+ * makes it possible to tune page-head padding, card padding, drawer link
+ * spacing and panel body spacing globally after the shared components have
+ * settled in. */
 :root {
   --app-page-head-gap: 16px;
   --app-page-head-margin: 16px;
   --app-summary-gap: 12px;
+  --app-summary-min: 150px;
   --app-card-padding: 12px;
   --app-card-label-size: var(--wa-font-size-s);
   --app-card-value-size: var(--wa-font-size-xl);
   --app-panel-head-padding: 10px 16px;
   --app-panel-body-padding: 16px;
+  --app-drawer-link-padding: 4px 12px;
+  --app-drawer-control-padding: 8px 12px;
+  --app-drawer-gap: 4px;
+  --app-drawer-separator-margin: 10px 0;
   --app-page-title-size: var(--wa-font-size-xl);
   --app-section-title-size: var(--wa-font-size-m);
 }
@@ -134,6 +140,12 @@ wa-page::part(footer) {
   background: var(--app-chrome);
 }
 
+/* The navigation drawer's stock width is 25rem, which is too wide for this
+ * short menu on tablets. The profile drawer keeps the stock size. */
+wa-page::part(drawer) {
+  --size: min(20rem, 85vw);
+}
+
 wa-page::part(header) {
   border-bottom: 1px solid var(--wa-color-surface-border);
 }
@@ -149,11 +161,11 @@ wa-page::part(footer) {
   border-top: 1px solid var(--wa-color-surface-border);
 }
 
-/* The footer bar is desktop chrome. On phones and tablets it only steals
- * height from content on screens that have none to spare, so it is hidden
- * there entirely and the shell's bottom edge becomes the content area. The
- * query keys off the input type and the width, so a PC sized window keeps the
- * bar while small and touch layouts do not. */
+/* The footer bar is desktop chrome. On phones and tablets it only steals height
+ * from content on screens that have none to spare, so it is hidden there
+ * entirely and the shell's bottom edge becomes the content area. The query keys
+ * off the input type and the width, so a PC sized window keeps the bar while
+ * small and touch layouts do not. */
 @media (pointer: coarse), (max-width: 1023px) {
   wa-page::part(footer),
   wa-page > footer {
@@ -185,8 +197,34 @@ wa-page nav[slot='navigation'] {
  * chrome surface and top rule make it read as a bar instead of as loose text
  * floating over the menu. */
 wa-page span[slot='navigation-footer'] {
+  box-sizing: border-box;
+  grid-column: 1 / -1;
+  align-self: end;
+  inline-size: calc(100% - 2 * var(--wa-space-m));
+  min-inline-size: 0;
+  /* Match the width of a menu item's content, not the navigation column's outer
+     padding. The version text keeps the same left edge as the links. */
+  margin-inline: var(--wa-space-m);
+  padding: var(--wa-space-m) 0;
+  /* The version/update footer must not size the menu column; otherwise the
+     extra label width pushes the whole navigation wider. */
+  contain: inline-size;
   background: var(--app-chrome);
   border-top: 1px solid var(--wa-color-surface-border);
+}
+
+/* In the mobile navigation drawer the footer is a standalone block, not a
+ * sidebar row. Let it shrink to the version content and give the text its own
+ * horizontal padding instead of stretching across the whole drawer. */
+wa-page[view='mobile'] span[slot='navigation-footer'] {
+  inline-size: calc(100% - 2 * var(--wa-space-m));
+  max-inline-size: 100%;
+  margin-inline: var(--wa-space-m);
+  padding: var(--wa-space-m);
+  contain: none;
+  /* Fill the menu bar and center the version both ways in the drawer. */
+  align-items: center;
+  text-align: center;
 }
 
 /* Keep page content off the contrasting edges of the chrome around it. Pages
@@ -198,9 +236,9 @@ wa-page::part(main-content) {
   flex-direction: column;
 }
 
-/* The account drawer panel sits on the raised (elevated) surface so it reads
- * as a floating layer above the recessed chrome. (Tried on review and kept;
- * drop the background declaration to return to the theme's default surface.) */
+/* The account drawer panel sits on the raised (elevated) surface so it reads as
+ * a floating layer above the recessed chrome. (Tried on review and kept; drop
+ * the background declaration to return to the theme's default surface.) */
 wa-drawer::part(dialog) {
   background: var(--wa-color-surface-raised);
 }
@@ -310,8 +348,4 @@ wa-drawer::part(dialog) {
   flex-direction: row;
   gap: 16px;
   flex-wrap: wrap;
-}
-
-.capitalize {
-  text-transform: capitalize;
 }

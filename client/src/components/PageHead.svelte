@@ -18,54 +18,65 @@
   // recorded trail (a cold deep link, for example).
   export let backTo = undefined;
 
+  // Hide only the orientation copy on compact screens. Permission and error
+  // notes must stay visible, so pages opt in rather than this being global.
+  export let hideDescriptionOnNarrow = false;
+
+  // Put the action row on its own full-width line on tablet-sized screens and
+  // left-align it with the title, rather than leaving a wrapped row
+  // right-aligned.
+  export let stackActionsOnNarrow = false;
+
   // ---------------------------------------------------------------------------
 </script>
 
 
-<div class="page-head">
+<div class="page-head" class:hide-description-on-narrow={hideDescriptionOnNarrow} class:stack-actions-on-narrow={stackActionsOnNarrow}>
   {#if backTo}
     <BackButton to={backTo} />
   {/if}
 
-  <div class="page-head-main">
-    {#if $$slots.media}
-      <div class="page-media">
-        <slot name="media" />
+  <div class="page-head-body">
+    <div class="page-head-main">
+      {#if $$slots.media}
+        <div class="page-media">
+          <slot name="media" />
+        </div>
+      {/if}
+
+      <div class="page-copy">
+        {#if $$slots.eyebrow}
+          <div class="page-eyebrow">
+            <slot name="eyebrow" />
+          </div>
+        {/if}
+
+        {#if title !== '' || $$slots.title}
+          <h2><slot name="title">{title}</slot></h2>
+        {/if}
+
+        {#if $$slots.badges}
+          <div class="page-badges">
+            <slot name="badges" />
+          </div>
+        {/if}
+
+        {#if $$slots.description}
+          <div class="page-description">
+            <slot name="description" />
+          </div>
+        {:else if description !== undefined && description !== ''}
+          <p class="page-description">{description}</p>
+        {/if}
+      </div>
+    </div>
+
+    {#if $$slots.actions}
+      <div class="page-actions">
+        <slot name="actions" />
       </div>
     {/if}
-
-    <div class="page-copy">
-      {#if $$slots.eyebrow}
-        <div class="page-eyebrow">
-          <slot name="eyebrow" />
-        </div>
-      {/if}
-
-      {#if title !== '' || $$slots.title}
-        <h3><slot name="title">{title}</slot></h3>
-      {/if}
-
-      {#if $$slots.badges}
-        <div class="page-badges">
-          <slot name="badges" />
-        </div>
-      {/if}
-
-      {#if $$slots.description}
-        <div class="page-description">
-          <slot name="description" />
-        </div>
-      {:else if description !== undefined && description !== ''}
-        <p class="page-description">{description}</p>
-      {/if}
-    </div>
   </div>
-
-  {#if $$slots.actions}
-    <div class="page-actions">
-      <slot name="actions" />
-    </div>
-  {/if}
 </div>
 
 
@@ -76,6 +87,17 @@
     gap: var(--app-page-head-gap);
     flex-wrap: wrap;
     margin-bottom: var(--app-page-head-margin);
+  }
+
+  /* The back button owns the left gutter; the body keeps the title and the
+     action row in the same column so wrapped actions can align with the title. */
+  .page-head-body {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--app-page-head-gap);
+    flex: 1 1 0;
+    min-width: 0;
+    flex-wrap: wrap;
   }
 
   .page-head-main {
@@ -110,7 +132,7 @@
     flex: 1 1 auto;
   }
 
-  .page-copy h3 {
+  .page-copy h2 {
     margin: 0;
     font-size: var(--app-page-title-size);
     overflow-wrap: anywhere;
@@ -155,9 +177,25 @@
     margin-inline-start: auto;
   }
 
+  @media (max-width: 1023px) {
+    .page-head.stack-actions-on-narrow .page-head-main {
+      flex-basis: 100%;
+    }
+
+    .page-head.stack-actions-on-narrow .page-actions {
+      width: 100%;
+      justify-content: flex-start;
+      margin-inline-start: 0;
+    }
+  }
+
   @media (max-width: 720px) {
     .page-head-main {
       flex-basis: 100%;
+    }
+
+    .page-head.hide-description-on-narrow .page-description {
+      display: none;
     }
 
     .page-actions {

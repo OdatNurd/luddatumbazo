@@ -1,4 +1,7 @@
 <script>
+  import LoadingState from '$components/LoadingState.svelte';
+  import ErrorState from '$components/ErrorState.svelte';
+
   // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
@@ -6,6 +9,9 @@
   // The promise that resolves to the data to display in the zone. When this
   // changes, the zone resets to loading and awaits the new promise.
   export let source;
+
+  // When given, load failures offer this action to run the request again.
+  export let onretry = undefined;
 
   // ---------------------------------------------------------------------------
 
@@ -31,26 +37,12 @@
 
 {#if state.status === 'loading'}
   <slot name="loading">
-    <div class="loadzone-status">
-      <wa-spinner></wa-spinner>
-    </div>
+    <LoadingState />
   </slot>
 {:else if state.status === 'error'}
   <slot name="error" error={state.error}>
-    <div class="loadzone-status loadzone-error">{state.error}</div>
+    <ErrorState error={state.error} retry={onretry} />
   </slot>
 {:else}
   <slot result={state.result}></slot>
 {/if}
-
-<style>
-  .loadzone-status {
-    display: flex;
-    justify-content: center;
-    padding: 24px;
-  }
-
-  .loadzone-error {
-    color: var(--wa-color-danger-on-quiet);
-  }
-</style>

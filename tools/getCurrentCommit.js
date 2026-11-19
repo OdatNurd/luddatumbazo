@@ -2,7 +2,7 @@
 
 
 import { execSync } from 'child_process';
-import { readFileSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'fs';
 
 
 /******************************************************************************/
@@ -67,6 +67,16 @@ function getVersion() {
 /******************************************************************************/
 
 
+/* The generated reference lives under the service sources so that the worker's
+ * build watch sees it change; a root-level file is invisible to wrangler and
+ * the worker could keep serving a stale build id. */
+const OUTPUT_DIR = 'service/src/generated';
+const OUTPUT_PATH = `${OUTPUT_DIR}/buildReference.js`;
+
+
+/******************************************************************************/
+
+
 /* Entrypoint. */
 export function main() {
   const commit = getCommitHash();
@@ -94,7 +104,8 @@ export function main() {
     console.log('*******************************************************');
   }
 
-  writeFileSync('commitReference.js', `export const commitReference = ${output};\n`);
+  mkdirSync(OUTPUT_DIR, { recursive: true });
+  writeFileSync(OUTPUT_PATH, `export const commitReference = ${output};\n`);
 }
 
 

@@ -3,6 +3,7 @@
   import { user } from '$stores/user';
 
   import StorageLocationPicker from '$components/StorageLocationPicker.svelte';
+  import LoadingState from '$components/LoadingState.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -162,7 +163,7 @@
   {/if}
 
   {#if loading}
-    <div class="loading"><wa-spinner></wa-spinner></div>
+    <LoadingState />
   {:else}
     <div class="stack">
       <StorageLocationPicker {locations} value={selected}
@@ -199,12 +200,6 @@
 
 
 <style>
-  .loading {
-    display: flex;
-    justify-content: center;
-    padding: 24px;
-  }
-
   .hint {
     font-size: var(--wa-font-size-s);
   }

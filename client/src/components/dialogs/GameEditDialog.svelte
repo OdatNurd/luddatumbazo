@@ -2,6 +2,7 @@
   import { api } from '$api';
 
   import Confirm from '$components/Confirm.svelte';
+  import LoadingState from '$components/LoadingState.svelte';
 
   // ---------------------------------------------------------------------------
   // Properties
@@ -597,7 +598,7 @@
         {/each}
 
         {#if metaLoading}
-          <wa-spinner></wa-spinner>
+          <LoadingState label="Loading metadata" />
         {/if}
       </div>
     </wa-tab-panel>

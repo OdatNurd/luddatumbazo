@@ -88,16 +88,30 @@
 
 
 <style>
+  /* When there is no update, the wrapper must not take part in the navigation
+     footer's flex gap; an empty flex item would push the version text toward
+     the bottom of the bar. */
   .version-update {
-    display: flex;
+    display: none;
     width: 100%;
   }
 
   .version-update.visible {
-    margin-bottom: 8px;
+    display: flex;
   }
 
   .version-update :global(wa-button) {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* The stock button is a fixed-height single line. In the narrow navigation
+     footer, let the label wrap instead of widening the menu column. */
+  .version-update :global(wa-button)::part(base) {
+    height: auto;
+    min-height: var(--wa-form-control-height);
+    padding-block: 4px;
+    white-space: normal;
   }
 </style>

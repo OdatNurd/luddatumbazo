@@ -1,5 +1,6 @@
 <script>
   import DataGrid from '$components/DataGrid.svelte';
+  import Panel from '$components/Panel.svelte';
 
   import * as cells from '$lib/cells.js';
 
@@ -53,12 +54,13 @@
 <!-- *********************************************************************** -->
 
 
-<h4>{title ?? 'Unknown'}</h4>
-{#if data.length === 0}
-  <div class="muted">No entries</div>
-{:else}
-  <DataGrid {data} {columns} pageSize={Math.min(Math.max(data.length, 1), pageSize)} />
-{/if}
+<Panel title={title ?? 'Unknown'} note={data.length === 0 ? 'No entries' : undefined}
+       flush>
+  {#if data.length > 0}
+    <DataGrid {data} {columns} pageSize={Math.min(Math.max(data.length, 1), pageSize)}
+              flush />
+  {/if}
+</Panel>
 
 
 <!-- *********************************************************************** -->

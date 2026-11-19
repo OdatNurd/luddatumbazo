@@ -19,7 +19,7 @@
 
 <div class="panel">
   <div class="panel-head" class:hide-note-on-narrow={hideNoteOnNarrow}>
-    <h4>{title}</h4>
+    <h3>{title}</h3>
 
     {#if note !== undefined && note !== null && note !== ''}
       <span class="panel-note">{note}</span>
@@ -57,7 +57,7 @@
     background: var(--wa-color-surface-lowered);
   }
 
-  .panel-head h4 {
+  .panel-head h3 {
     margin: 0;
     font-size: var(--app-section-title-size);
   }
