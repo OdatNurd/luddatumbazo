@@ -25,6 +25,7 @@
   import MetaDataList from '$components/MetaDataList.svelte';
   import FileList from '$components/lists/FileList.svelte';
   import SessionList from '$components/lists/SessionList.svelte';
+  import MarkdownContent from '$components/MarkdownContent.svelte';
 
   import GameImage from '$components/GameImage.svelte';
 
@@ -484,14 +485,8 @@
           <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
           <div class="about-description" role="region" aria-label="Game description" tabindex="0">
             <div class="description-content">
-              {#if gameData.description !== undefined && gameData.description !== null && gameData.description !== ''}
-                <!-- The stored description is trusted content (household database,
-                     BGG import) rendered as HTML by design. -->
-                <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-                {@html gameData.description}
-              {:else}
-                <p class="muted">No description available.</p>
-              {/if}
+              <MarkdownContent content={gameData.description}
+                               empty="No description available." />
             </div>
           </div>
         </div>
@@ -690,12 +685,6 @@
      panel edge; the readable measure stays on the text itself. */
   .description-content {
     max-width: 80ch;
-  }
-
-  .about-description :global(img) {
-    max-width: 100%;
-    height: auto;
-    border-radius: var(--wa-border-radius-s);
   }
 
   .about-description :global(p:first-child) {

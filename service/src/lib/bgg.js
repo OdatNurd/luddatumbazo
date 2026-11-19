@@ -7,6 +7,8 @@ import slug from "slug";
 
 import { BGGLookupError } from '#db/exceptions';
 
+import { gameDescriptionToMarkdown } from '#lib/descriptionMarkdown';
+
 
 /******************************************************************************/
 
@@ -184,8 +186,11 @@ function makeBggGameData(gameEntry, gameId) {
   // name value.
   output.expansions = getGameExpansions(gameEntry);
 
-  // Pull in the basic information about the game
-  output.description = decodeHTML(getTextOf(gameEntry, 'description'));
+  // Pull in the basic information about the game. The converter is the single
+  // boundary for descriptions: it handles both the legacy HTML shape and the
+  // newer plain-text BGG response, and resolves the entities that BGG leaves in
+  // the XML payload.
+  output.description = gameDescriptionToMarkdown(getTextOf(gameEntry, 'description'));
   output.thumbnail = getTextOf(gameEntry, 'thumbnail');
   output.image = getTextOf(gameEntry, 'image');
 
