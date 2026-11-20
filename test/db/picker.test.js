@@ -145,7 +145,7 @@ export default Collection`Game Picker`({
 
     const animals = await dbPickerSearch(ctx, {
       householdId: 10,
-      filter: makeFilter({ categories: ['animals'] })
+      filter: makeFilter({ categories: [1] })
     });
 
     await $check`should match any selected category`
@@ -157,7 +157,7 @@ export default Collection`Game Picker`({
 
     const drafting = await dbPickerSearch(ctx, {
       householdId: 10,
-      filter: makeFilter({ mechanics: ['open-drafting'] })
+      filter: makeFilter({ mechanics: [4] })
     });
 
     await $check`should match a selected mechanic`
@@ -169,7 +169,7 @@ export default Collection`Game Picker`({
 
     const both = await dbPickerSearch(ctx, {
       householdId: 10,
-      filter: makeFilter({ categories: ['animals'], mechanics: ['open-drafting'] })
+      filter: makeFilter({ categories: [1], mechanics: [4] })
     });
 
     await $check`should require categories and mechanics together`
@@ -182,7 +182,7 @@ export default Collection`Game Picker`({
 
     const orWithin = await dbPickerSearch(ctx, {
       householdId: 10,
-      filter: makeFilter({ categories: ['animals', 'puzzle'] })
+      filter: makeFilter({ categories: [1, 3] })
     });
 
     await $check`should OR the values within one metadata field`
@@ -193,7 +193,7 @@ export default Collection`Game Picker`({
 
     const none = await dbPickerSearch(ctx, {
       householdId: 10,
-      filter: makeFilter({ categories: ['does-not-exist'] })
+      filter: makeFilter({ categories: [999] })
     });
 
     await $check`should return no pick when nothing matches`
@@ -213,7 +213,7 @@ export default Collection`Game Picker`({
     const fresh = await dbPickerSearch(ctx, {
       householdId: 10,
       filter: makeFilter({
-        history: { enabled: true, players: ['u:1'], from: '2024-12-01T00:00:00.000Z', mode: 'exclude' }
+        history: { enabled: true, players: ['u:1'], from: '2024-12-01', mode: 'exclude' }
       })
     });
 
@@ -227,7 +227,7 @@ export default Collection`Game Picker`({
     const played = await dbPickerSearch(ctx, {
       householdId: 10,
       filter: makeFilter({
-        history: { enabled: true, players: ['u:1'], from: '2024-12-01T00:00:00.000Z', mode: 'include' }
+        history: { enabled: true, players: ['u:1'], from: '2024-12-01', mode: 'include' }
       })
     });
 
@@ -241,7 +241,7 @@ export default Collection`Game Picker`({
     const old = await dbPickerSearch(ctx, {
       householdId: 10,
       filter: makeFilter({
-        history: { enabled: true, players: ['u:1'], from: '2024-01-01T00:00:00.000Z', mode: 'exclude' }
+        history: { enabled: true, players: ['u:1'], from: '2024-01-01', mode: 'exclude' }
       })
     });
 
@@ -254,7 +254,7 @@ export default Collection`Game Picker`({
     const partner = await dbPickerSearch(ctx, {
       householdId: 10,
       filter: makeFilter({
-        history: { enabled: true, players: ['u:2'], from: '2024-12-01T00:00:00.000Z', mode: 'include' }
+        history: { enabled: true, players: ['u:2'], from: '2024-12-01', mode: 'include' }
       })
     });
 
@@ -267,7 +267,7 @@ export default Collection`Game Picker`({
     const guest = await dbPickerSearch(ctx, {
       householdId: 10,
       filter: makeFilter({
-        history: { enabled: true, players: ['g:50'], from: '2024-12-01T00:00:00.000Z', mode: 'include' }
+        history: { enabled: true, players: ['g:50'], from: '2024-12-01', mode: 'include' }
       })
     });
 
@@ -302,12 +302,12 @@ export default Collection`Game Picker`({
 
     const single = await dbPickerSearch(ctx, {
       householdId: 10,
-      filter: makeFilter({ categories: ['puzzle'] })
+      filter: makeFilter({ categories: [3] })
     });
 
     const solo = await dbPickerSearch(ctx, {
       householdId: 10,
-      filter: makeFilter({ categories: ['puzzle'] }),
+      filter: makeFilter({ categories: [3] }),
       excludeGameId: 104
     });
 

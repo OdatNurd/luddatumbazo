@@ -43,8 +43,24 @@ async function playerStats(filters = {}) {
 /******************************************************************************/
 
 
+/* Draw a game from the household shelf. Passing the current pick as
+ * excludeGameId removes it from the next draw when another match exists. */
+async function pickerSearch(filter, excludeGameId = undefined) {
+  return raw.post('/insights/picker/search', {
+    filter,
+    excludeGameId
+  });
+}
+
+
+/******************************************************************************/
+
+
 export const insights = {
   players: playerStats,
+  picker: {
+    search: pickerSearch
+  }
 };
 
 

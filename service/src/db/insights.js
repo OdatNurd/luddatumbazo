@@ -3,7 +3,7 @@
 
 import { getDBResult } from '#db/common';
 
-import { imgMapAssetListURLs } from '#lib/image';
+import { imgGetAssetURL } from '#lib/image';
 
 
 /******************************************************************************/
@@ -255,7 +255,7 @@ export async function dbPickerSearch(ctx, options = {}) {
         JOIN GameMetadata AS m ON m.id = mp.itemId
        WHERE mp.gameId = g.id
          AND mp.metatype = 'category'
-         AND m.slug IN (SELECT value FROM json_each(?))
+         AND m.id IN (SELECT value FROM json_each(?))
     )`);
     params.push(JSON.stringify(categories));
   }
@@ -268,7 +268,7 @@ export async function dbPickerSearch(ctx, options = {}) {
         JOIN GameMetadata AS m ON m.id = mp.itemId
        WHERE mp.gameId = g.id
          AND mp.metatype = 'mechanic'
-         AND m.slug IN (SELECT value FROM json_each(?))
+         AND m.id IN (SELECT value FROM json_each(?))
     )`);
     params.push(JSON.stringify(mechanics));
   }
@@ -298,8 +298,13 @@ export async function dbPickerSearch(ctx, options = {}) {
               )
          )
     )`);
+    // Stored history dates are calendar days in UTC. With no date, the plan's
+    // default is one year back.
+    const from = history.from ??
+      new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
     params.push(
-      history.from ?? '1970-01-01T00:00:00.000Z',
+      `${from}T00:00:00Z`,
       JSON.stringify(users),
       JSON.stringify(guests)
     );
@@ -324,7 +329,7 @@ export async function dbPickerSearch(ctx, options = {}) {
   `).bind(...params).all();
 
   const rows = getDBResult('dbPickerSearch', 'find_games', lookup);
-  const games = imgMapAssetListURLs(ctx, rows.map(game => ({
+  const games = rows.map(game => ({
     id: game.id,
     slug: game.slug,
     name: game.name,
@@ -333,8 +338,9 @@ export async function dbPickerSearch(ctx, options = {}) {
     minPlaytime: game.minPlaytime,
     maxPlaytime: game.maxPlaytime,
     complexity: game.complexity,
-    imagePath: game.imagePath
-  })), 'imagePath', 'thumbnail');
+    imagePath: imgGetAssetURL(ctx, game.imagePath, 'boxart'),
+    imageFullPath: imgGetAssetURL(ctx, game.imagePath, 'full')
+  }));
 
   let picked = null;
   if (excludeGameId === undefined) {

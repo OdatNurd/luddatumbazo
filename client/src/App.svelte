@@ -30,6 +30,7 @@
   import SessionDetails from '$pages/sessions/Details.svelte';
 
   import PlayerStats from '$pages/insights/Players.svelte';
+  import GamePicker from '$pages/insights/Picker.svelte';
 
   import MetaList from '$pages/metadata/List.svelte';
   import MetaDetails from '$pages/metadata/Details.svelte';
@@ -54,6 +55,7 @@
     { path: '/session/:id',       component: SessionDetails, props: {} },
 
     { path: '/insights/players',  component: PlayerStats,    props: {} },
+    { path: '/insights/picker',   component: GamePicker,     props: {} },
 
     { path: '/categories',  component: MetaList,    props: { metaType: 'category'  } },
     { path: '/mechanics',   component: MetaList,    props: { metaType: 'mechanic'  } },

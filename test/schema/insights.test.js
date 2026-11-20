@@ -89,12 +89,12 @@ export default Collection`Insights Schema Validation`({
 
     await $check`should deduplicate metadata slugs`
       .value(schemaTest('json', PickerFilterSchema, {
-        categories: ['animals', 'animals'],
-        mechanics: ['open-drafting']
+        categories: [1, 1],
+        mechanics: [4]
       }, validateZod))
       .isObject()
       .eq($.categories.length, 1)
-      .eq($.mechanics[0], 'open-drafting');
+      .eq($.mechanics[0], 4);
 
     await $check`should reject a reversed bound pair`
       .value(schemaTest('json', PickerFilterSchema, {
@@ -121,7 +121,7 @@ export default Collection`Insights Schema Validation`({
           history: {
             enabled: true,
             players: ['u:1'],
-            from: '2025-01-01T00:00:00.000Z',
+            from: '2025-01-01',
             mode: 'include'
           }
         },

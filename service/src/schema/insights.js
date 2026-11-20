@@ -49,13 +49,13 @@ export const PickerFilterSchema = z.object({
   time: BoundsSchema.extend({ mode: z.enum(['overlap']).optional() }).optional(),
   complexity: BoundsSchema.optional(),
 
-  categories: z.array(z.string()).optional(),
-  mechanics: z.array(z.string()).optional(),
+  categories: z.array(z.number().int().positive()).optional(),
+  mechanics: z.array(z.number().int().positive()).optional(),
 
   history: z.object({
     enabled: z.boolean().optional(),
     players: PlayerKeyListSchema.optional(),
-    from: z.string().datetime().optional(),
+    from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     mode: z.enum(['exclude', 'include']).optional()
   }).optional()
 })
