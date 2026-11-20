@@ -24,6 +24,7 @@ export const config = {
     "test/auth/oidc.test.js",
     "test/db/session.test.js",
     "test/db/insights.test.js",
+    "test/db/picker.test.js",
     "test/schema/asset.test.js",
     "test/schema/bgg.test.js",
     "test/schema/collection.test.js",

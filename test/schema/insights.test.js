@@ -2,7 +2,7 @@ import { Collection, $check, $ } from "@axel669/aegis";
 import { schemaTest } from "@odatnurd/cf-requests/aegis";
 import { validateZod } from '#legacyvalidator';
 
-import { PlayerStatsParamSchema } from '#schema/insights';
+import { PlayerStatsParamSchema, PickerFilterSchema, PickerSearchSchema } from '#schema/insights';
 
 
 /******************************************************************************/
@@ -65,6 +65,77 @@ export default Collection`Insights Schema Validation`({
       .value(schemaTest('query', PlayerStatsParamSchema, {
         players: 'u:1',
         playType: 'nintendo'
+      }, validateZod))
+      .isResponseWithStatus($, 400);
+  },
+
+
+  /****************************************************************************/
+
+
+  "PickerFilterSchema": async ({ runScope: ctx }) => {
+    await $check`should fill in the picker defaults from an empty filter`
+      .value(schemaTest('json', PickerFilterSchema, { }, validateZod))
+      .isObject()
+      .eq($.version, 1)
+      .eq($.players.min, undefined)
+      .eq($.time.mode, 'overlap')
+      .eq($.complexity.max, undefined)
+      .eq($.categories.length, 0)
+      .eq($.mechanics.length, 0)
+      .eq($.history.enabled, false)
+      .eq($.history.players.length, 0)
+      .eq($.history.mode, 'exclude');
+
+    await $check`should deduplicate metadata slugs`
+      .value(schemaTest('json', PickerFilterSchema, {
+        categories: ['animals', 'animals'],
+        mechanics: ['open-drafting']
+      }, validateZod))
+      .isObject()
+      .eq($.categories.length, 1)
+      .eq($.mechanics[0], 'open-drafting');
+
+    await $check`should reject a reversed bound pair`
+      .value(schemaTest('json', PickerFilterSchema, {
+        players: { min: 4, max: 2 }
+      }, validateZod))
+      .isResponseWithStatus($, 400);
+
+    await $check`should reject history without anyone selected`
+      .value(schemaTest('json', PickerFilterSchema, {
+        history: { enabled: true, players: [] }
+      }, validateZod))
+      .isResponseWithStatus($, 400);
+
+    await $check`should reject a malformed history player key`
+      .value(schemaTest('json', PickerFilterSchema, {
+        history: { enabled: true, players: ['x:1'] }
+      }, validateZod))
+      .isResponseWithStatus($, 400);
+
+    await $check`should accept a complete search body`
+      .value(schemaTest('json', PickerSearchSchema, {
+        filter: {
+          players: { min: 2 },
+          history: {
+            enabled: true,
+            players: ['u:1'],
+            from: '2025-01-01T00:00:00.000Z',
+            mode: 'include'
+          }
+        },
+        excludeGameId: 14
+      }, validateZod))
+      .isObject()
+      .eq($.filter.players.min, 2)
+      .eq($.filter.history.mode, 'include')
+      .eq($.excludeGameId, 14);
+
+    await $check`should reject a non-positive exclusion`
+      .value(schemaTest('json', PickerSearchSchema, {
+        filter: {},
+        excludeGameId: 0
       }, validateZod))
       .isResponseWithStatus($, 400);
   }

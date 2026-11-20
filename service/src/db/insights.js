@@ -3,6 +3,8 @@
 
 import { getDBResult } from '#db/common';
 
+import { imgMapAssetListURLs } from '#lib/image';
+
 
 /******************************************************************************/
 
@@ -148,6 +150,208 @@ function playerPredicate(players) {
     sql: `WHERE (p.userId IN (SELECT value FROM json_each(?))
              OR p.guestId IN (SELECT value FROM json_each(?)))`,
     params: [JSON.stringify(players.users), JSON.stringify(players.guests)]
+  };
+}
+
+
+/******************************************************************************/
+
+
+/* The household whose collection the picker draws from. The application has a
+ * notion of a primary household per user; the lowest id breaks ties for legacy
+ * rows that predate the primary flag. Returns null when the user has none. */
+export async function dbUserPrimaryHousehold(ctx, userId) {
+  const result = await ctx.env.DB.prepare(`
+    SELECT householdId
+      FROM UserHousehold
+     WHERE userId = ?
+     ORDER BY isPrimary DESC, householdId
+     LIMIT 1
+  `).bind(userId).all();
+
+  return getDBResult('dbUserPrimaryHousehold', 'find_household', result)[0]?.householdId ?? null;
+}
+
+
+/******************************************************************************/
+
+
+/* Draw a game from the household's owned shelf using the picker filter.
+ *
+ * The query returns matches in random order, so the first row is a uniform draw
+ * from the pool; the response then sorts the same rows for the "also in the
+ * running" list. Only owned base games are eligible: a game that appears as an
+ * expansion is excluded unless it also appears as a base somewhere. Expansion
+ * links are checked by local id and BGG id because most imported rows carry
+ * only the BGG side of the relationship.
+ *
+ * History counts a game as played when any selected person appears in a session
+ * of that base game since the requested date. Learning sessions count: learning
+ * a game is still playing it. */
+export async function dbPickerSearch(ctx, options = {}) {
+  const { householdId = null, filter, excludeGameId = undefined } = options;
+
+  if (householdId === null) {
+    return { picked: null, matches: [], total: 0, onlyMatch: false, warnings: [] };
+  }
+
+  const where = [
+    'EXISTS (SELECT 1 FROM GameOwners AS o WHERE o.gameId = g.id AND o.householdId = ?)'
+  ];
+  const params = [householdId];
+
+  // Pure expansions are not pickable. A game that is both an expansion and a
+  // base game stays eligible.
+  where.push(`NOT (
+    EXISTS (
+      SELECT 1
+        FROM GameExpansion AS e
+       WHERE e.expansionGameId = g.id
+          OR (g.bggId > 0 AND e.expansionGameBggId = g.bggId)
+    )
+    AND NOT EXISTS (
+      SELECT 1
+        FROM GameExpansion AS b
+       WHERE b.baseGameId = g.id
+          OR (g.bggId > 0 AND b.baseGameBggId = g.bggId)
+    )
+  )`);
+
+  const players = filter.players ?? {};
+  if (players.min !== undefined) {
+    where.push('g.maxPlayers >= ?');
+    params.push(players.min);
+  }
+  if (players.max !== undefined) {
+    where.push('g.minPlayers <= ?');
+    params.push(players.max);
+  }
+
+  const time = filter.time ?? {};
+  if (time.min !== undefined) {
+    where.push('g.maxPlaytime >= ?');
+    params.push(time.min);
+  }
+  if (time.max !== undefined) {
+    where.push('g.minPlaytime <= ?');
+    params.push(time.max);
+  }
+
+  const complexity = filter.complexity ?? {};
+  if (complexity.min !== undefined) {
+    where.push('g.complexity >= ?');
+    params.push(complexity.min);
+  }
+  if (complexity.max !== undefined) {
+    where.push('g.complexity <= ?');
+    params.push(complexity.max);
+  }
+
+  const categories = filter.categories ?? [];
+  if (categories.length > 0) {
+    where.push(`EXISTS (
+      SELECT 1
+        FROM GameMetadataPlacement AS mp
+        JOIN GameMetadata AS m ON m.id = mp.itemId
+       WHERE mp.gameId = g.id
+         AND mp.metatype = 'category'
+         AND m.slug IN (SELECT value FROM json_each(?))
+    )`);
+    params.push(JSON.stringify(categories));
+  }
+
+  const mechanics = filter.mechanics ?? [];
+  if (mechanics.length > 0) {
+    where.push(`EXISTS (
+      SELECT 1
+        FROM GameMetadataPlacement AS mp
+        JOIN GameMetadata AS m ON m.id = mp.itemId
+       WHERE mp.gameId = g.id
+         AND mp.metatype = 'mechanic'
+         AND m.slug IN (SELECT value FROM json_each(?))
+    )`);
+    params.push(JSON.stringify(mechanics));
+  }
+
+  const history = filter.history ?? { enabled: false, players: [], mode: 'exclude' };
+  if (history.enabled === true && history.players.length > 0) {
+    const users = history.players
+      .filter(key => key.startsWith('u:'))
+      .map(key => Number(key.slice(2)));
+    const guests = history.players
+      .filter(key => key.startsWith('g:'))
+      .map(key => Number(key.slice(2)));
+
+    where.push(`${history.mode === 'include' ? 'EXISTS' : 'NOT EXISTS'} (
+      SELECT 1
+        FROM SessionReport AS s
+       WHERE s.gameId = g.id
+         AND datetime(s.sessionBegin) >= datetime(?)
+         AND EXISTS (
+           SELECT 1
+             FROM SessionReportPlayer AS p
+            WHERE p.sessionId = s.id
+              AND (
+                (p.userId IS NOT NULL AND p.userId IN (SELECT value FROM json_each(?)))
+                OR
+                (p.guestId IS NOT NULL AND p.guestId IN (SELECT value FROM json_each(?)))
+              )
+         )
+    )`);
+    params.push(
+      history.from ?? '1970-01-01T00:00:00.000Z',
+      JSON.stringify(users),
+      JSON.stringify(guests)
+    );
+  }
+
+  const lookup = await ctx.env.DB.prepare(`
+    SELECT g.id,
+           g.slug,
+           g.bggId,
+           gn.name,
+           g.minPlayers,
+           g.maxPlayers,
+           g.minPlaytime,
+           g.maxPlaytime,
+           g.complexity,
+           g.imagePath
+      FROM Game AS g
+      JOIN GameName AS gn ON gn.gameId = g.id AND gn.isPrimary = 1
+     WHERE ${where.join(' AND ')}
+     ORDER BY RANDOM()
+     LIMIT 500
+  `).bind(...params).all();
+
+  const rows = getDBResult('dbPickerSearch', 'find_games', lookup);
+  const games = imgMapAssetListURLs(ctx, rows.map(game => ({
+    id: game.id,
+    slug: game.slug,
+    name: game.name,
+    minPlayers: game.minPlayers,
+    maxPlayers: game.maxPlayers,
+    minPlaytime: game.minPlaytime,
+    maxPlaytime: game.maxPlaytime,
+    complexity: game.complexity,
+    imagePath: game.imagePath
+  })), 'imagePath', 'thumbnail');
+
+  let picked = null;
+  if (excludeGameId === undefined) {
+    picked = games[0] ?? null;
+  }
+  else {
+    picked = games.find(game => game.id !== excludeGameId) ?? games[0] ?? null;
+  }
+
+  const matches = [...games].sort((left, right) => left.name.localeCompare(right.name));
+
+  return {
+    picked,
+    matches,
+    total: games.length,
+    onlyMatch: games.length === 1,
+    warnings: []
   };
 }
 
