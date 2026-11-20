@@ -10,14 +10,9 @@
   import SummaryGrid from '$components/SummaryGrid.svelte';
   import SummaryCard from '$components/SummaryCard.svelte';
 
-  // The current shelf/status filter. Changing this also changes loaderKey,
-  // which makes SlugList reload and apply the filter again.
-  let status = 'all';
-
   const loader = async () => api.household.collection.contents($user.household);
 
-  // The unfiltered collection, so the summary keeps showing every shelf state
-  // even while one of them is selected in the filter.
+  // The complete collection; the summary cards break it down by shelf state.
   let collection = null;
 
   $: total = collection === null ? '—' : collection.length;
@@ -32,14 +27,6 @@
     : collection.filter(row => row.storagePath && row.isOnShelf !== true).length;
 
   const loaded = rows => collection = rows;
-
-  const filter = rows => rows.filter(row => {
-    if (status === 'all') return true;
-    if (status === 'unstored') return !row.storagePath;
-    if (status === 'on') return row.storagePath && row.isOnShelf === true;
-    if (status === 'off') return row.storagePath && row.isOnShelf !== true;
-    return true;
-  });
 
   const storageColumns = [
     {
@@ -63,8 +50,6 @@
     }
   ];
 
-  const pick = event => status = event.target.value;
-
   // The storage button is icon-only, so it needs a native tooltip. Web
   // Awesome's custom elements do not reflect the `title` property, so the
   // attribute has to be set directly for the browser to show it.
@@ -78,16 +63,8 @@
 {#if $user.household}
   <PageHead title="Collection"
             description={`Games owned by ${$user.household?.name ?? 'Unknown'}.`}
-            hideDescriptionOnNarrow>
+            hideDescriptionOnNarrow inlineActionsOnNarrow>
     <svelte:fragment slot="actions">
-      <wa-select size="s" class="wa-visually-hidden-label collection-filter"
-                 label="Shelf" value={status} on:change={pick} on:wa-input={pick}>
-        <wa-option value="all">All games</wa-option>
-        <wa-option value="unstored">Unstored</wa-option>
-        <wa-option value="on">On shelf</wa-option>
-        <wa-option value="off">Off shelf</wa-option>
-      </wa-select>
-
       <!-- The same box icon the profile drawer and storage tree use, so the
            action reads as "storage" without spending a row of header space. -->
       <wa-button bind:this={storageButton} size="s" variant="brand" appearance="filled"
@@ -110,9 +87,8 @@
                  title="Reshelve games that are off shelf" />
   </SummaryGrid>
 
-  <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader} {filter}
-            onrows={loaded} extraColumns={storageColumns} loaderKey={status}
-            gridKey="owned" />
+  <SlugList bggType='boardgame' baseLink='#/game/:slug' {loader}
+            onrows={loaded} extraColumns={storageColumns} gridKey="owned" />
 {:else}
   <PageHead title="Collection" />
   <EmptyState title="No household yet"
