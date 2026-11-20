@@ -3,6 +3,7 @@
 
 import { z } from 'zod';
 
+import { asNumber } from '#schema/common';
 import { PlayerFilterSchema, sessionPlayTypes } from '#schema/session';
 
 
@@ -105,6 +106,54 @@ export const PickerFilterSchema = z.object({
 export const PickerSearchSchema = z.object({
   filter: PickerFilterSchema,
   excludeGameId: z.number().int().positive().optional()
+});
+
+
+/******************************************************************************/
+
+
+/* Saved picker filters are capped so one household cannot store an unbounded
+ * blob. The serialized, normalised filter is what is measured. */
+const FILTER_MAX_BYTES = 4096;
+
+const filterSizeIssue = (value, zCtx) => {
+  const bytes = new TextEncoder().encode(JSON.stringify(value)).length;
+
+  if (bytes > FILTER_MAX_BYTES) {
+    zCtx.addIssue({
+      code: 'custom',
+      message: `filter must be at most ${FILTER_MAX_BYTES} bytes`
+    });
+  }
+};
+
+const FilterNameSchema = z.string().trim().min(1).max(60);
+
+
+export const PickerFilterSaveSchema = z.object({
+  name: FilterNameSchema,
+  filter: PickerFilterSchema
+}).superRefine((value, zCtx) => filterSizeIssue(value.filter, zCtx));
+
+
+export const PickerFilterUpdateSchema = z.object({
+  name: FilterNameSchema.optional(),
+  filter: PickerFilterSchema.optional()
+})
+  .refine(value => value.name !== undefined || value.filter !== undefined, {
+    message: 'provide a name, a filter, or both'
+  })
+  .superRefine((value, zCtx) => {
+    if (value.filter !== undefined) {
+      filterSizeIssue(value.filter, zCtx);
+    }
+  });
+
+
+export const PickerFilterIdSchema = z.object({
+  filterId: z.string().transform(asNumber(true)).refine(value => value > 0, {
+    message: 'filterId must be a positive number'
+  })
 });
 
 

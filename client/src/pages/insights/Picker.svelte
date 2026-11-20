@@ -1,13 +1,16 @@
 <script>
+  import { tick } from 'svelte';
   import { DateTime } from 'luxon';
 
   import { api } from '$api';
 
   import { people } from '$stores/people';
+  import { user } from '$stores/user';
 
   import PageHead from '$components/PageHead.svelte';
   import Panel from '$components/Panel.svelte';
   import GameImage from '$components/GameImage.svelte';
+  import IconButton from '$components/IconButton.svelte';
   import LoadingState from '$components/LoadingState.svelte';
   import ErrorState from '$components/ErrorState.svelte';
   import EmptyState from '$components/EmptyState.svelte';
@@ -50,6 +53,34 @@
   let categoryBox = null;
   let mechanicBox = null;
 
+  // Saved filters
+  let savedFilters = [];
+  let savedError = null;
+  let loadedFilter = null;
+  let dirty = false;
+  let baseline = filters;
+  let savedSelect = null;
+
+  let saveOpen = false;
+  let saveName = '';
+  let saveError = null;
+  let replaceId = null;
+  let saving = false;
+
+  let renameOpen = false;
+  let renameName = '';
+  let renameError = null;
+
+  // Draft state is not cleared until the first hydration attempt finishes, so
+  // the initial blank controls cannot overwrite a draft before it is restored.
+  let hydrated = false;
+
+  // A filter object is replaced, never mutated, so reference equality is enough
+  // to know that the controls moved away from the loaded filter.
+  $: if (filters !== baseline) {
+    dirty = true;
+  }
+
   const loadPeople = () => {
     peopleError = null;
     people.ensure().catch(failure => {
@@ -73,8 +104,8 @@
       });
   };
 
-  loadPeople();
-  loadMetadata();
+  // Saved filters and draft state are hydrated at the bottom of this module,
+  // once every helper they use has been defined.
 
   // ---------------------------------------------------------------------------
   // Derived values and validation
@@ -250,12 +281,7 @@
     }
   };
 
-  const reset = () => {
-    filters = blankFilters();
-    result = null;
-    error = null;
-    showAllMatches = false;
-
+  const resetComboboxText = () => {
     if (historyBox !== null) {
       historyBox.inputValue = '';
     }
@@ -265,6 +291,21 @@
     if (mechanicBox !== null) {
       mechanicBox.inputValue = '';
     }
+  };
+
+  const reset = () => {
+    filters = blankFilters();
+    baseline = filters;
+    loadedFilter = null;
+    dirty = false;
+    result = null;
+    error = null;
+    showAllMatches = false;
+    saveOpen = false;
+    renameOpen = false;
+    rememberSavedFilter(null);
+    clearDraft();
+    resetComboboxText();
   };
 
   const setHistoryPeople = keys => {
@@ -292,6 +333,441 @@
       ...filters,
       [key]: (values ?? []).map(Number).filter(Number.isInteger)
     };
+  };
+
+  // ---------------------------------------------------------------------------
+  // Saved filters
+  // ---------------------------------------------------------------------------
+
+  const textValue = value => (value === undefined || value === null)
+    ? ''
+    : String(value);
+
+  const applyStoredFilter = saved => {
+    const filter = saved.filter;
+
+    if (filter === null || filter === undefined) {
+      savedError = `the filter '${saved.name}' is unreadable; delete it and save a new one`;
+      return;
+    }
+
+    const next = blankFilters();
+
+    next.players = {
+      min: textValue(filter.players?.min),
+      max: textValue(filter.players?.max)
+    };
+    next.time = {
+      min: textValue(filter.time?.min),
+      max: textValue(filter.time?.max)
+    };
+    next.complexity = {
+      min: textValue(filter.complexity?.min),
+      max: textValue(filter.complexity?.max)
+    };
+    next.categories = [...(filter.categories ?? [])];
+    next.mechanics = [...(filter.mechanics ?? [])];
+    next.history = {
+      enabled: filter.history?.enabled === true,
+      players: [...(filter.history?.players ?? [])],
+      from: textValue(filter.history?.from),
+      mode: filter.history?.mode === 'include' ? 'include' : 'exclude'
+    };
+
+    filters = next;
+    baseline = filters;
+    loadedFilter = saved;
+    dirty = false;
+    result = null;
+    error = null;
+    showAllMatches = false;
+    saveOpen = false;
+    renameOpen = false;
+    savedError = null;
+    rememberSavedFilter(saved.name);
+    resetComboboxText();
+  };
+
+  const selectSavedFilter = async filterId => {
+    if (filterId === '' || filterId === undefined || filterId === null) {
+      loadedFilter = null;
+      dirty = false;
+      baseline = filters;
+      rememberSavedFilter(null);
+      return;
+    }
+
+    const saved = savedFilters.find(entry => String(entry.id) === String(filterId));
+
+    if (saved === undefined) {
+      return;
+    }
+
+    if (dirty && loadedFilter !== null) {
+      const discard = window.confirm(
+        `Discard unsaved changes to '${loadedFilter.name}'?`
+      );
+
+      if (discard === false) {
+        if (savedSelect !== null) {
+          savedSelect.value = loadedFilter === null ? '' : String(loadedFilter.id);
+          savedSelect.inputValue = loadedFilter?.name ?? 'None';
+        }
+        return;
+      }
+    }
+
+    applyStoredFilter(saved);
+  };
+
+  const openSave = () => {
+    saveOpen = true;
+    saveName = loadedFilter?.name ?? '';
+    saveError = null;
+    replaceId = null;
+    renameOpen = false;
+  };
+
+  const afterSave = saved => {
+    const without = savedFilters.filter(entry => entry.id !== saved.id);
+
+    savedFilters = [saved, ...without];
+    loadedFilter = saved;
+    baseline = filters;
+    dirty = false;
+    saveOpen = false;
+    saveName = '';
+    saveError = null;
+    replaceId = null;
+    savedError = null;
+    rememberSavedFilter(saved.name);
+  };
+
+  const findExistingId = async name => {
+    try {
+      savedFilters = await api.insights.picker.filters.list();
+      const existing = savedFilters.find(entry =>
+        entry.name.toLowerCase() === name.toLowerCase()
+      );
+
+      return existing?.id ?? null;
+    }
+    catch {
+      return null;
+    }
+  };
+
+  const saveAs = async () => {
+    const name = saveName.trim();
+
+    if (name === '' || saving) {
+      return;
+    }
+
+    saving = true;
+    saveError = null;
+
+    try {
+      const saved = await api.insights.picker.filters.create(name, payload());
+      afterSave(saved);
+    }
+    catch (failure) {
+      saveError = failure.message ?? 'unable to save the filter';
+
+      if (saveError.includes('already exists')) {
+        replaceId = await findExistingId(name);
+      }
+    }
+    finally {
+      saving = false;
+    }
+  };
+
+  const replaceSaved = async () => {
+    if (replaceId === null || saving) {
+      return;
+    }
+
+    saving = true;
+    saveError = null;
+
+    try {
+      const saved = await api.insights.picker.filters.update(replaceId, {
+        name: saveName.trim(),
+        filter: payload()
+      });
+      afterSave(saved);
+    }
+    catch (failure) {
+      saveError = failure.message ?? 'unable to replace the filter';
+    }
+    finally {
+      saving = false;
+    }
+  };
+
+  const saveLoaded = async () => {
+    if (loadedFilter === null || saving) {
+      return;
+    }
+
+    saving = true;
+    saveError = null;
+
+    try {
+      const saved = await api.insights.picker.filters.update(loadedFilter.id, {
+        filter: payload()
+      });
+      afterSave(saved);
+    }
+    catch (failure) {
+      saveError = failure.message ?? 'unable to save the filter';
+    }
+    finally {
+      saving = false;
+    }
+  };
+
+  const openRename = () => {
+    if (loadedFilter === null) {
+      return;
+    }
+
+    renameOpen = true;
+    renameName = loadedFilter.name;
+    renameError = null;
+    saveOpen = false;
+  };
+
+  const renameSaved = async () => {
+    const name = renameName.trim();
+
+    if (loadedFilter === null || name === '' || saving) {
+      return;
+    }
+
+    saving = true;
+    renameError = null;
+
+    try {
+      const saved = await api.insights.picker.filters.update(loadedFilter.id, { name });
+      savedFilters = savedFilters.map(entry => entry.id === saved.id ? saved : entry);
+      loadedFilter = saved;
+      renameOpen = false;
+      renameError = null;
+      rememberSavedFilter(saved.name);
+    }
+    catch (failure) {
+      renameError = failure.message ?? 'unable to rename the filter';
+    }
+    finally {
+      saving = false;
+    }
+  };
+
+  const deleteSaved = async () => {
+    if (loadedFilter === null || saving) {
+      return;
+    }
+
+    if (window.confirm(`Delete the saved filter '${loadedFilter.name}'?`) === false) {
+      return;
+    }
+
+    saving = true;
+    savedError = null;
+
+    try {
+      await api.insights.picker.filters.remove(loadedFilter.id);
+      savedFilters = savedFilters.filter(entry => entry.id !== loadedFilter.id);
+      loadedFilter = null;
+      dirty = false;
+      baseline = filters;
+      renameOpen = false;
+      saveOpen = false;
+      rememberSavedFilter(null);
+    }
+    catch (failure) {
+      savedError = failure.message ?? 'unable to delete the filter';
+    }
+    finally {
+      saving = false;
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Restored state
+  // ---------------------------------------------------------------------------
+
+  const userId = () => String($user?.id ?? 'anonymous');
+  const draftKey = () => `luddatumbazo:insights:picker:draft:${userId()}`;
+  const lastSavedKey = () => `luddatumbazo:insights:picker:last-filter:${userId()}`;
+
+  const storageRead = (storage, key) => {
+    try {
+      return storage.getItem(key);
+    }
+    catch {
+      return null;
+    }
+  };
+
+  const rememberSavedFilter = name => {
+    try {
+      if (name === undefined || name === null || name === '') {
+        localStorage.removeItem(lastSavedKey());
+      }
+      else {
+        localStorage.setItem(lastSavedKey(), String(name));
+      }
+    }
+    catch {
+      // Storage being unavailable only means the choice is not remembered.
+    }
+  };
+
+  const readLastSavedFilter = () => storageRead(localStorage, lastSavedKey()) ?? '';
+
+  const clearDraft = () => {
+    try {
+      sessionStorage.removeItem(draftKey());
+    }
+    catch {
+      // Nothing to clean up when storage is unavailable.
+    }
+  };
+
+  // Restore the in-progress picker (including a result) after visiting a game.
+  // The stored shape is validated field by field so an older or damaged draft
+  // falls back to the normal controls instead of breaking the page.
+  const restoreDraft = () => {
+    const raw = storageRead(sessionStorage, draftKey());
+
+    if (raw === null) {
+      return false;
+    }
+
+    try {
+      const draft = JSON.parse(raw);
+      const saved = draft?.filters;
+
+      if (saved === null || saved === undefined || typeof saved !== 'object') {
+        return false;
+      }
+
+      const blank = blankFilters();
+      const history = saved.history ?? {};
+
+      filters = {
+        ...blank,
+        players: { ...blank.players, ...(saved.players ?? {}) },
+        time: { ...blank.time, ...(saved.time ?? {}) },
+        complexity: { ...blank.complexity, ...(saved.complexity ?? {}) },
+        categories: Array.isArray(saved.categories) ? [...saved.categories] : [],
+        mechanics: Array.isArray(saved.mechanics) ? [...saved.mechanics] : [],
+        history: {
+          ...blank.history,
+          ...history,
+          players: Array.isArray(history.players) ? [...history.players] : []
+        }
+      };
+      baseline = filters;
+      result = draft.result !== null && typeof draft.result === 'object'
+        ? draft.result
+        : null;
+      loadedFilter = draft.loadedFilter ?? null;
+      dirty = draft.dirty === true;
+
+      if (result !== null && window.matchMedia('(max-width: 720px)').matches) {
+        filtersOpen = false;
+      }
+
+      return true;
+    }
+    catch {
+      return false;
+    }
+  };
+
+  const persistDraft = (nextFilters, nextResult, nextLoaded, nextDirty) => {
+    if (hydrated === false) {
+      return;
+    }
+
+    try {
+      const empty = nextResult === null &&
+        nextLoaded === null &&
+        JSON.stringify(nextFilters) === JSON.stringify(blankFilters());
+
+      if (empty) {
+        sessionStorage.removeItem(draftKey());
+      }
+      else {
+        sessionStorage.setItem(draftKey(), JSON.stringify({
+          filters: nextFilters,
+          result: nextResult,
+          loadedFilter: nextLoaded,
+          dirty: nextDirty
+        }));
+      }
+    }
+    catch {
+      // A full or unavailable store only costs the restore, never the page.
+    }
+  };
+
+  $: persistDraft(filters, result, loadedFilter, dirty);
+  $: if (savedSelect !== null) {
+    savedSelect.value = loadedFilter === null ? '' : String(loadedFilter.id);
+    savedSelect.inputValue = loadedFilter?.name ?? 'None';
+  }
+
+  const hydrateSavedFilters = async () => {
+    const restored = restoreDraft();
+    savedError = null;
+
+    try {
+      savedFilters = await api.insights.picker.filters.list();
+
+      if (loadedFilter !== null) {
+        const current = savedFilters.find(entry => entry.id === loadedFilter.id);
+
+        if (current === undefined) {
+          loadedFilter = null;
+          dirty = false;
+          baseline = filters;
+          rememberSavedFilter(null);
+        }
+        else {
+          loadedFilter = current;
+        }
+      }
+
+      // A draft belongs to this tab and outranks the last applied saved filter:
+      // it may contain deliberate unsaved edits. Only a fresh visit falls back
+      // to the remembered name.
+      if (restored === false) {
+        const name = readLastSavedFilter();
+        const saved = name === ''
+          ? undefined
+          : savedFilters.find(entry => entry.name === name);
+
+        if (saved !== undefined) {
+          applyStoredFilter(saved);
+          await tick();
+          find();
+        }
+        else if (name !== '') {
+          rememberSavedFilter(null);
+        }
+      }
+    }
+    catch (failure) {
+      savedError = failure.message ?? 'unable to load saved filters';
+    }
+    finally {
+      hydrated = true;
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -323,6 +799,10 @@
     day: 'numeric',
     year: 'numeric'
   });
+
+  loadPeople();
+  loadMetadata();
+  hydrateSavedFilters();
 </script>
 
 
@@ -340,6 +820,84 @@
     </button>
 
     <div class="rail-body">
+      <div class="saved-block">
+        <div class="saved-head">
+          <span class="group-label">Saved filters</span>
+          <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+          <wa-button size="xs" appearance="plain" on:click={openSave}>Save as</wa-button>
+        </div>
+
+        {#if savedError !== null}
+          <span class="field-error">{savedError}</span>
+        {/if}
+
+        {#if savedFilters.length > 0}
+          <div class="saved-picker">
+            <wa-combobox bind:this={savedSelect} label="Load saved filter"
+                         value={loadedFilter === null ? '' : String(loadedFilter.id)}
+                         placeholder="None" with-clear max-options-visible="6"
+                         on:change={event => selectSavedFilter(event.target.value)}>
+              <wa-option value="">None</wa-option>
+              {#each savedFilters as saved (saved.id)}
+                <wa-option value={String(saved.id)}>{saved.name}</wa-option>
+              {/each}
+            </wa-combobox>
+
+            <div class="saved-icons">
+              <IconButton caption="" icon="pencil-fill"
+                          label="Rename saved filter" title="Rename saved filter"
+                          variant="neutral" appearance="plain"
+                          disabled={loadedFilter === null || saving}
+                          onclick={openRename} />
+              <IconButton caption="" icon="trash3"
+                          label="Delete saved filter" title="Delete saved filter"
+                          variant="neutral" appearance="plain"
+                          disabled={loadedFilter === null || saving}
+                          onclick={deleteSaved} />
+            </div>
+          </div>
+        {/if}
+
+        {#if loadedFilter !== null && dirty}
+          <div class="loaded-filter">
+            <span class="loaded-name">Unsaved changes</span>
+            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+            <wa-button size="xs" appearance="outlined" variant="brand"
+                       disabled={saving} on:click={saveLoaded}>Save changes</wa-button>
+          </div>
+        {/if}
+
+        {#if saveOpen}
+          <div class="save-form">
+            <wa-input label="Filter name" maxlength="60" value={saveName}
+                      placeholder="Friday night"
+                      on:change={event => saveName = event.target.value}></wa-input>
+
+            {#if saveError !== null}
+              <span class="field-error">{saveError}</span>
+            {/if}
+
+            <div class="saved-actions">
+              <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+              <wa-button size="xs" appearance="plain"
+                         on:click={() => { saveOpen = false; saveError = null; replaceId = null; }}>
+                Cancel
+              </wa-button>
+              {#if replaceId !== null}
+                <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+                <wa-button size="xs" variant="warning" appearance="filled"
+                           disabled={saving} on:click={replaceSaved}>Replace</wa-button>
+              {:else}
+                <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+                <wa-button size="xs" variant="brand" appearance="filled"
+                           disabled={saving || saveName.trim() === ''}
+                           on:click={saveAs}>Save</wa-button>
+              {/if}
+            </div>
+          </div>
+        {/if}
+      </div>
+
       {#if peopleError !== null}
         <div class="rail-warning">
           <span>{peopleError}</span>
@@ -636,6 +1194,37 @@
 </div>
 
 
+{#if renameOpen && loadedFilter !== null}
+  <wa-dialog open label="Rename saved filter" style="max-width: 420px"
+             on:wa-hide={() => { renameOpen = false; renameError = null; }}>
+    <h3 slot="header">Rename saved filter</h3>
+
+    <!-- wa-input wraps a real input; the custom element's keydown is the one
+         Svelte cannot see into. -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <wa-input label="New name" maxlength="60" value={renameName}
+              on:input={event => renameName = event.target.value}
+              on:keydown={event => { if (event.key === 'Enter') { event.preventDefault(); renameSaved(); } }}></wa-input>
+
+    {#if renameError !== null}
+      <span class="field-error">{renameError}</span>
+    {/if}
+
+    <div slot="footer" class="dialog-actions">
+      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+      <wa-button appearance="outlined" variant="neutral"
+                 on:click={() => { renameOpen = false; renameError = null; }}>
+        Cancel
+      </wa-button>
+      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+      <wa-button variant="brand" appearance="filled"
+                 disabled={saving || renameName.trim() === ''}
+                 loading={saving} on:click={renameSaved}>Rename</wa-button>
+    </div>
+  </wa-dialog>
+{/if}
+
+
 <style>
   .picker-layout {
     display: grid;
@@ -701,6 +1290,73 @@
     padding: var(--app-panel-body-padding);
   }
 
+  .saved-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--wa-color-surface-border);
+  }
+
+  .saved-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .saved-picker {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .saved-picker wa-combobox {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .saved-icons {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding-bottom: 2px;
+  }
+
+  .loaded-filter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: var(--wa-border-radius-s);
+    background: var(--wa-color-surface-raised);
+  }
+
+  .loaded-name {
+    color: var(--wa-color-text-quiet);
+    font-size: var(--wa-font-size-s);
+  }
+
+  .saved-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .save-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+    border: 1px solid var(--wa-color-surface-border);
+    border-radius: var(--wa-border-radius-s);
+    background: var(--wa-color-surface-default);
+  }
+
   .filter-group {
     display: flex;
     flex-direction: column;
@@ -753,6 +1409,13 @@
     gap: 8px;
     flex-wrap: wrap;
     padding-top: 4px;
+  }
+
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    width: 100%;
   }
 
   .results {
@@ -950,6 +1613,7 @@
       align-items: end;
     }
 
+    .saved-block,
     .history-block {
       grid-column: 1 / -1;
     }

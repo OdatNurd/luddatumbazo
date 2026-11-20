@@ -365,6 +365,153 @@ export async function dbPickerSearch(ctx, options = {}) {
 /******************************************************************************/
 
 
+/* A saved filter's JSON is validated when written, but a row may outlive a
+ * schema change or be edited by hand. A broken row must not take down the
+ * list; it is returned with a null filter so the UI can still offer delete. */
+const mapPickerFilter = row => {
+  let filter = null;
+
+  try {
+    filter = JSON.parse(row.filterJson);
+  }
+  catch {
+    filter = null;
+  }
+
+  return {
+    id: row.id,
+    name: row.name,
+    filter,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt
+  };
+};
+
+
+async function findPickerFilter(ctx, householdId, filterId) {
+  const result = await ctx.env.DB.prepare(`
+    SELECT id, name, filterJson, createdAt, updatedAt
+      FROM GamePickerFilter
+     WHERE householdId = ? AND id = ?
+  `).bind(householdId, filterId).all();
+
+  return getDBResult('dbPickerFilter', 'find_filter', result)[0] ?? null;
+}
+
+
+async function pickerFilterNameTaken(ctx, householdId, name, excludeId = null) {
+  const result = await ctx.env.DB.prepare(`
+    SELECT id
+      FROM GamePickerFilter
+     WHERE householdId = ?
+       AND name = ? COLLATE NOCASE
+       AND (? IS NULL OR id != ?)
+     LIMIT 1
+  `).bind(householdId, name, excludeId, excludeId).all();
+
+  return getDBResult('dbPickerFilter', 'check_name', result)[0] ?? null;
+}
+
+
+/******************************************************************************/
+
+
+/* The household's saved filters, most recently updated first. */
+export async function dbPickerFiltersList(ctx, householdId) {
+  const result = await ctx.env.DB.prepare(`
+    SELECT id, name, filterJson, createdAt, updatedAt
+      FROM GamePickerFilter
+     WHERE householdId = ?
+     ORDER BY COALESCE(updatedAt, createdAt) DESC, id DESC
+  `).bind(householdId).all();
+
+  return getDBResult('dbPickerFiltersList', 'find_filters', result)
+    .map(mapPickerFilter);
+}
+
+
+/******************************************************************************/
+
+
+/* Save a filter for the whole household. Duplicate names are reported so the
+ * route can answer 409 and the UI can offer Replace. */
+export async function dbPickerFilterCreate(ctx, options = {}) {
+  const { householdId, userId, name, filter } = options;
+  const existing = await pickerFilterNameTaken(ctx, householdId, name);
+
+  if (existing !== null) {
+    return { conflict: true, existingId: existing.id, filter: null };
+  }
+
+  const insert = await ctx.env.DB.prepare(`
+    INSERT INTO GamePickerFilter (householdId, userId, name, filterJson, createdAt, updatedAt)
+    VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+  `).bind(householdId, userId, name, JSON.stringify(filter)).run();
+
+  const row = await findPickerFilter(ctx, householdId, insert.meta.last_row_id);
+
+  return { conflict: false, existingId: null, filter: mapPickerFilter(row) };
+}
+
+
+/******************************************************************************/
+
+
+/* Edit or rename a saved filter. Scoping the fetch by household is what turns
+ * a filter from another household into a 404 instead of a cross-tenant write. */
+export async function dbPickerFilterUpdate(ctx, options = {}) {
+  const { householdId, filterId, name, filter } = options;
+  const current = await findPickerFilter(ctx, householdId, filterId);
+
+  if (current === null) {
+    return { notFound: true, conflict: false, existingId: null, filter: null };
+  }
+
+  if (name !== undefined) {
+    const existing = await pickerFilterNameTaken(ctx, householdId, name, filterId);
+
+    if (existing !== null) {
+      return { notFound: false, conflict: true, existingId: existing.id, filter: null };
+    }
+  }
+
+  await ctx.env.DB.prepare(`
+    UPDATE GamePickerFilter
+       SET name = COALESCE(?, name),
+           filterJson = COALESCE(?, filterJson),
+           updatedAt = datetime('now')
+     WHERE householdId = ? AND id = ?
+  `).bind(
+    name ?? null,
+    filter === undefined ? null : JSON.stringify(filter),
+    householdId,
+    filterId
+  ).run();
+
+  const row = await findPickerFilter(ctx, householdId, filterId);
+
+  return { notFound: false, conflict: false, existingId: null, filter: mapPickerFilter(row) };
+}
+
+
+/******************************************************************************/
+
+
+/* Delete a saved filter. The household scope makes another household's id
+ * indistinguishable from a missing one. */
+export async function dbPickerFilterDelete(ctx, householdId, filterId) {
+  const result = await ctx.env.DB.prepare(`
+    DELETE FROM GamePickerFilter
+     WHERE householdId = ? AND id = ?
+  `).bind(householdId, filterId).run();
+
+  return result.meta.changes > 0;
+}
+
+
+/******************************************************************************/
+
+
 /* Aggregate a Player Stats report from the session history.
  *
  * The report is computed on demand from a small number of indexed queries; no

@@ -56,10 +56,38 @@ async function pickerSearch(filter, excludeGameId = undefined) {
 /******************************************************************************/
 
 
+/* Saved filters are shared by the household; all four calls are scoped to the
+ * signed-in user's primary household on the server. */
+async function savedFilterList() {
+  return raw.get('/insights/picker/filters');
+}
+
+async function savedFilterCreate(name, filter) {
+  return raw.post('/insights/picker/filters', { name, filter });
+}
+
+async function savedFilterUpdate(filterId, changes) {
+  return raw.put(`/insights/picker/filters/${filterId}`, changes);
+}
+
+async function savedFilterDelete(filterId) {
+  return raw.delete(`/insights/picker/filters/${filterId}`);
+}
+
+
+/******************************************************************************/
+
+
 export const insights = {
   players: playerStats,
   picker: {
-    search: pickerSearch
+    search: pickerSearch,
+    filters: {
+      list: savedFilterList,
+      create: savedFilterCreate,
+      update: savedFilterUpdate,
+      remove: savedFilterDelete
+    }
   }
 };
 

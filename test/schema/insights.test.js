@@ -2,7 +2,10 @@ import { Collection, $check, $ } from "@axel669/aegis";
 import { schemaTest } from "@odatnurd/cf-requests/aegis";
 import { validateZod } from '#legacyvalidator';
 
-import { PlayerStatsParamSchema, PickerFilterSchema, PickerSearchSchema } from '#schema/insights';
+import {
+  PlayerStatsParamSchema, PickerFilterSchema, PickerSearchSchema,
+  PickerFilterSaveSchema, PickerFilterUpdateSchema, PickerFilterIdSchema
+} from '#schema/insights';
 
 
 /******************************************************************************/
@@ -136,6 +139,69 @@ export default Collection`Insights Schema Validation`({
       .value(schemaTest('json', PickerSearchSchema, {
         filter: {},
         excludeGameId: 0
+      }, validateZod))
+      .isResponseWithStatus($, 400);
+  },
+
+
+  /****************************************************************************/
+
+
+  "saved Picker filters": async ({ runScope: ctx }) => {
+    await $check`should accept a named filter and normalise it`
+      .value(schemaTest('json', PickerFilterSaveSchema, {
+        name: '  Friday night  ',
+        filter: { players: { min: 2, max: 2 } }
+      }, validateZod))
+      .isObject()
+      .eq($.name, 'Friday night')
+      .eq($.filter.version, 1)
+      .eq($.filter.history.enabled, false);
+
+    await $check`should reject an empty name`
+      .value(schemaTest('json', PickerFilterSaveSchema, {
+        name: '   ',
+        filter: {}
+      }, validateZod))
+      .isResponseWithStatus($, 400);
+
+    await $check`should reject a name longer than 60 characters`
+      .value(schemaTest('json', PickerFilterSaveSchema, {
+        name: 'x'.repeat(61),
+        filter: {}
+      }, validateZod))
+      .isResponseWithStatus($, 400);
+
+    const oversized = Array.from({ length: 700 }, (_, index) => `u:${1000 + index}`);
+
+    await $check`should reject a serialized filter over 4 KB`
+      .value(schemaTest('json', PickerFilterSaveSchema, {
+        name: 'Too big',
+        filter: { history: { enabled: true, players: oversized } }
+      }, validateZod))
+      .isResponseWithStatus($, 400);
+
+    await $check`should allow a partial update`
+      .value(schemaTest('json', PickerFilterUpdateSchema, {
+        name: 'Renamed'
+      }, validateZod))
+      .isObject()
+      .eq($.name, 'Renamed');
+
+    await $check`should reject an empty update`
+      .value(schemaTest('json', PickerFilterUpdateSchema, { }, validateZod))
+      .isResponseWithStatus($, 400);
+
+    await $check`should parse a positive filter id`
+      .value(schemaTest('param', PickerFilterIdSchema, {
+        filterId: '12'
+      }, validateZod))
+      .isObject()
+      .eq($.filterId, 12);
+
+    await $check`should reject a zero filter id`
+      .value(schemaTest('param', PickerFilterIdSchema, {
+        filterId: '0'
       }, validateZod))
       .isResponseWithStatus($, 400);
   }

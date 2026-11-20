@@ -1,7 +1,10 @@
 import { Collection, $check, $ } from "@axel669/aegis";
 import { execSQLFiles } from "@odatnurd/d1-query/aegis";
 
-import { dbPickerSearch, dbUserPrimaryHousehold } from '#db/insights';
+import {
+  dbPickerFilterCreate, dbPickerFilterDelete, dbPickerFilterUpdate,
+  dbPickerFiltersList, dbPickerSearch, dbUserPrimaryHousehold
+} from '#db/insights';
 
 
 /******************************************************************************/
@@ -276,6 +279,149 @@ export default Collection`Game Picker`({
       .isObject()
       .eq($.total, 1)
       .eq($.picked.id, 104);
+  },
+
+
+  /****************************************************************************/
+
+
+  "saved filters": async ({ runScope: ctx }) => {
+    await execSQLFiles(ctx.env.DB, 'test/db/picker-setup.sql');
+
+    const friday = makeFilter({ players: { min: 2, max: 2 } });
+    const first = await dbPickerFilterCreate(ctx, {
+      householdId: 10,
+      userId: 1,
+      name: 'Friday night',
+      filter: friday
+    });
+
+    await $check`should create a named filter for the household`
+      .value(first)
+      .isObject()
+      .eq($.conflict, false)
+      .eq($.filter.name, 'Friday night')
+      .eq($.filter.filter.players.min, 2);
+
+    const duplicate = await dbPickerFilterCreate(ctx, {
+      householdId: 10,
+      userId: 2,
+      name: 'friday NIGHT',
+      filter: makeFilter()
+    });
+
+    await $check`should treat names as case-insensitive per household`
+      .value(duplicate)
+      .isObject()
+      .eq($.conflict, true)
+      .eq($.existingId, first.filter.id);
+
+    const second = await dbPickerFilterCreate(ctx, {
+      householdId: 10,
+      userId: 2,
+      name: 'Weeknight',
+      filter: makeFilter({ players: { max: 4 } })
+    });
+
+    const listed = await dbPickerFiltersList(ctx, 10);
+
+    await $check`should list the household's filters newest first`
+      .value(listed)
+      .isArray($)
+      .eq($.length, 2)
+      .eq($[0].name, 'Weeknight')
+      .eq($[1].name, 'Friday night');
+
+    const otherHousehold = await dbPickerFilterCreate(ctx, {
+      householdId: 11,
+      userId: 1,
+      name: 'Friday night',
+      filter: makeFilter()
+    });
+
+    await $check`should allow the same name in another household`
+      .value(otherHousehold)
+      .isObject()
+      .eq($.conflict, false);
+
+    const renamed = await dbPickerFilterUpdate(ctx, {
+      householdId: 10,
+      filterId: first.filter.id,
+      name: 'Friday games',
+      filter: makeFilter({ players: { min: 2, max: 2 }, complexity: { max: 3 } })
+    });
+
+    await $check`should rename and replace a saved filter`
+      .value(renamed)
+      .isObject()
+      .eq($.notFound, false)
+      .eq($.conflict, false)
+      .eq($.filter.name, 'Friday games')
+      .eq($.filter.filter.complexity.max, 3);
+
+    const collision = await dbPickerFilterUpdate(ctx, {
+      householdId: 10,
+      filterId: first.filter.id,
+      name: 'weeknight'
+    });
+
+    await $check`should refuse a rename onto another filter`
+      .value(collision)
+      .isObject()
+      .eq($.conflict, true)
+      .eq($.existingId, second.filter.id);
+
+    await $check`should report a missing filter instead of writing`
+      .value(await dbPickerFilterUpdate(ctx, {
+        householdId: 10,
+        filterId: 9999,
+        name: 'Ghost'
+      }))
+      .isObject()
+      .eq($.notFound, true);
+
+    await $check`should not update another household's filter`
+      .value(await dbPickerFilterUpdate(ctx, {
+        householdId: 11,
+        filterId: first.filter.id,
+        name: 'Stolen'
+      }))
+      .isObject()
+      .eq($.notFound, true);
+
+    await $check`should not delete another household's filter`
+      .value(await dbPickerFilterDelete(ctx, 11, first.filter.id))
+      .eq($, false);
+
+    await $check`should keep the filter after the refused delete`
+      .value((await dbPickerFiltersList(ctx, 10)).length)
+      .eq($, 2);
+
+    await $check`should delete a filter in the household`
+      .value(await dbPickerFilterDelete(ctx, 10, second.filter.id))
+      .eq($, true);
+
+    await $check`should drop the deleted filter from the list`
+      .value((await dbPickerFiltersList(ctx, 10)).map(filter => filter.name))
+      .isArray($)
+      .eq($.length, 1)
+      .eq($[0], 'Friday games');
+
+    // A malformed row must not take down the whole list; it is returned with
+    // no filter so the UI can still show its name and delete it.
+    await ctx.env.DB.prepare(`
+      INSERT INTO GamePickerFilter (householdId, userId, name, filterJson, createdAt, updatedAt)
+      VALUES (10, 1, 'Broken', '{not json', datetime('now'), datetime('now'))
+    `).run();
+
+    const resilient = await dbPickerFiltersList(ctx, 10);
+
+    await $check`should survive a saved filter with invalid JSON`
+      .value(resilient)
+      .isArray($)
+      .eq($.length, 2)
+      .eq($[0].name, 'Broken')
+      .eq($[0].filter, null);
   },
 
 
