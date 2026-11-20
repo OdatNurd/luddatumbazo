@@ -1,0 +1,489 @@
+{
+  "title": "Luddatumbazo",
+  "database": "sqlite",
+  "tables": [
+    {
+      "id": 0,
+      "name": "User",
+      "x": 80,
+      "y": 40,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "externalId", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": true, "notNull": true, "increment": false, "comment": "unique identifier from the external auth provider" },
+        { "id": 2, "name": "username", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "login handle at the external auth provider" },
+        { "id": 3, "name": "firstName", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "collate nocase" },
+        { "id": 4, "name": "lastName", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "collate nocase" },
+        { "id": 5, "name": "displayName", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "collate nocase" },
+        { "id": 6, "name": "name", "type": "GENERATED", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "GENERATED ALWAYS AS (firstName || ' ' || lastName) STORED" },
+        { "id": 7, "name": "emailAddress", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 8, "name": "picture", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "URL of the profile picture" }
+      ],
+      "comment": "A known user in the system; associates an external authentication ID with a specific user",
+      "indices": [
+        { "name": "idx_user_ext", "unique": false, "fields": ["externalId"] }
+      ],
+      "color": "#6360f7"
+    },
+    {
+      "id": 1,
+      "name": "GuestUser",
+      "x": 80,
+      "y": 470,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "firstName", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "collate nocase" },
+        { "id": 2, "name": "lastName", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "collate nocase" },
+        { "id": 3, "name": "displayName", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "collate nocase" },
+        { "id": 4, "name": "name", "type": "GENERATED", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "GENERATED ALWAYS AS (firstName || ' ' || lastName) STORED" }
+      ],
+      "comment": "A guest user of the system; for participating in session reports",
+      "indices": [
+        { "name": "idx_guest_name", "unique": true, "fields": ["firstName", "lastName"] }
+      ],
+      "color": "#6360f7"
+    },
+    {
+      "id": 2,
+      "name": "Game",
+      "x": 420,
+      "y": 40,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "bggId", "type": "INTEGER", "default": "0", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "0 when there is no BGG entry" },
+        { "id": 2, "name": "slug", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": true, "notNull": true, "increment": false, "comment": "based on the primary name when the game was added" },
+        { "id": 3, "name": "description", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 4, "name": "publishedIn", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 5, "name": "minPlayers", "type": "INTEGER", "default": "1", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 6, "name": "maxPlayers", "type": "INTEGER", "default": "1", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 7, "name": "minPlayerAge", "type": "INTEGER", "default": "1", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 8, "name": "playtime", "type": "INTEGER", "default": "1", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 9, "name": "minPlaytime", "type": "INTEGER", "default": "1", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 10, "name": "maxPlaytime", "type": "INTEGER", "default": "1", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 11, "name": "complexity", "type": "REAL", "default": "1.0", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 12, "name": "officialURL", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 13, "name": "teachingURL", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "Link to a YT video that teaches this game" },
+        { "id": 14, "name": "imagePath", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "a URI like cfi://imagename" }
+      ],
+      "comment": "A representation of a unique game",
+      "indices": [
+        { "name": "idx_game_slug", "unique": false, "fields": ["slug"] }
+      ],
+      "color": "#175e7a"
+    },
+    {
+      "id": 3,
+      "name": "GameName",
+      "x": 420,
+      "y": 680,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "gameId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "name", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "collate nocase" },
+        { "id": 3, "name": "isPrimary", "type": "INTEGER", "default": "false", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "the name this game is best known by" }
+      ],
+      "comment": "Associates alternate game names with game IDs. idx_gamename_primary is partial (WHERE isPrimary = 1)",
+      "indices": [
+        { "name": "idx_gamename_id", "unique": false, "fields": ["gameId"] },
+        { "name": "idx_gamename_primary", "unique": true, "fields": ["gameId", "isPrimary"] },
+        { "name": "idx_gamename_name", "unique": false, "fields": ["name"] }
+      ],
+      "color": "#175e7a"
+    },
+    {
+      "id": 4,
+      "name": "GameExpansion",
+      "x": 420,
+      "y": 930,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "baseGameId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "null when this game is not in the DB yet" },
+        { "id": 2, "name": "baseGameBggId", "type": "INTEGER", "default": "0", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 3, "name": "expansionGameId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "null when this game is not in the DB yet" },
+        { "id": 4, "name": "expansionGameBggId", "type": "INTEGER", "default": "0", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 5, "name": "entryName", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "name of the missing side of the relation" }
+      ],
+      "comment": "Associates a game with an expansion; one side always has a gameId, the other may be null. BGG indexes are partial",
+      "indices": [
+        { "name": "idx_game_expand_base", "unique": false, "fields": ["baseGameId"] },
+        { "name": "idx_game_expand_expansion", "unique": false, "fields": ["expansionGameId"] },
+        { "name": "idx_game_expand_base_bgg", "unique": false, "fields": ["baseGameBggId"] },
+        { "name": "idx_game_expand_expansion_bgg", "unique": false, "fields": ["expansionGameBggId"] }
+      ],
+      "color": "#175e7a"
+    },
+    {
+      "id": 5,
+      "name": "GameMetadata",
+      "x": 420,
+      "y": 1250,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "metatype", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "designer, artist, publisher, mechanic, category" },
+        { "id": 2, "name": "bggId", "type": "INTEGER", "default": "0", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 3, "name": "slug", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 4, "name": "name", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" }
+      ],
+      "comment": "Typed metadata record; each record associates with a potential BGG entry",
+      "indices": [
+        { "name": "idx_metadata_type_map", "unique": false, "fields": ["metatype", "bggId"] },
+        { "name": "idx_metadata_metaslug_map", "unique": true, "fields": ["metatype", "slug"] },
+        { "name": "idx_metadata_slug_map", "unique": false, "fields": ["slug"] }
+      ],
+      "color": "#175e7a"
+    },
+    {
+      "id": 6,
+      "name": "GameMetadataPlacement",
+      "x": 420,
+      "y": 1500,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "gameId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "metatype", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "designer, artist, publisher, mechanic, category" },
+        { "id": 3, "name": "itemId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" }
+      ],
+      "comment": "Associates known metadata records with a specific game",
+      "indices": [
+        { "name": "idx_metadata_place_map", "unique": false, "fields": ["gameId", "metatype", "itemId"] }
+      ],
+      "color": "#175e7a"
+    },
+    {
+      "id": 7,
+      "name": "Household",
+      "x": 80,
+      "y": 760,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "name", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": true, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "slug", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": true, "notNull": true, "increment": false, "comment": "" }
+      ],
+      "comment": "Users can exist in one or more households; a household tracks who owns games",
+      "indices": [
+        { "name": "idx_household_slug", "unique": false, "fields": ["slug"] }
+      ],
+      "color": "#32c9b0"
+    },
+    {
+      "id": 8,
+      "name": "UserHousehold",
+      "x": 80,
+      "y": 980,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "userId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "householdId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 3, "name": "isPrimary", "type": "INTEGER", "default": "false", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "the primary household for this user" }
+      ],
+      "comment": "Register that a specific user resides in a specific household. idx_user_household_primary is partial (WHERE isPrimary = 1)",
+      "indices": [
+        { "name": "idx_user_household_combo", "unique": true, "fields": ["userId", "householdId"] },
+        { "name": "idx_user_household", "unique": false, "fields": ["householdId"] },
+        { "name": "idx_user_household_primary", "unique": true, "fields": ["userId"] }
+      ],
+      "color": "#32c9b0"
+    },
+    {
+      "id": 9,
+      "name": "StorageLocation",
+      "x": 80,
+      "y": 1230,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "householdId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "parentId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "null for a top-level location" },
+        { "id": 3, "name": "name", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "case-insensitive; unique among siblings" },
+        { "id": 4, "name": "slug", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "stable slug created with the location" }
+      ],
+      "comment": "Household-owned storage tree. Sibling index uses COALESCE(parentId, 0). Triggers keep parent and child in the same household",
+      "indices": [
+        { "name": "idx_storage_location_sibling_name", "unique": true, "fields": ["householdId", "parentId", "name"] },
+        { "name": "idx_storage_location_slug", "unique": true, "fields": ["householdId", "slug"] },
+        { "name": "idx_storage_location_household", "unique": false, "fields": ["householdId"] },
+        { "name": "idx_storage_location_parent", "unique": false, "fields": ["parentId"] }
+      ],
+      "color": "#32c9b0"
+    },
+    {
+      "id": 10,
+      "name": "GameOwners",
+      "x": 420,
+      "y": 1750,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "householdId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "gameId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 3, "name": "gameName", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 4, "name": "gamePublisher", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 5, "name": "storageLocationId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "NULL means Unstored" },
+        { "id": 6, "name": "isOnShelf", "type": "INTEGER", "default": "0", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "only valid when storageLocationId is set" }
+      ],
+      "comment": "Game ownership is tracked by household; storage is per owned copy. Triggers enforce same-household storage and on-shelf consistency",
+      "indices": [
+        { "name": "idx_game_owner_games", "unique": false, "fields": ["gameId"] },
+        { "name": "idx_game_owner_list", "unique": false, "fields": ["householdId", "gameId", "gameName"] },
+        { "name": "idx_game_owner_storage", "unique": false, "fields": ["householdId", "storageLocationId", "isOnShelf"] }
+      ],
+      "color": "#32c9b0"
+    },
+    {
+      "id": 11,
+      "name": "GameLoans",
+      "x": 80,
+      "y": 1520,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "gameId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "loanedTo", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 3, "name": "loanTime", "type": "DATE", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" }
+      ],
+      "comment": "A game copy currently (or formerly) loaned to another household",
+      "indices": [],
+      "color": "#32c9b0"
+    },
+    {
+      "id": 12,
+      "name": "WishList",
+      "x": 1100,
+      "y": 40,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "householdId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "name", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 3, "name": "slug", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 4, "name": "isRoot", "type": "INTEGER", "default": "false", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "marks the default wishlist" }
+      ],
+      "comment": "A named wishlist owned by a household. idx_wishlist_roots is partial (WHERE isRoot = 1)",
+      "indices": [
+        { "name": "idx_wishlist", "unique": true, "fields": ["householdId", "slug"] },
+        { "name": "idx_wishlist_roots", "unique": true, "fields": ["householdId"] }
+      ],
+      "color": "#a751e8"
+    },
+    {
+      "id": 13,
+      "name": "WishlistContents",
+      "x": 1100,
+      "y": 320,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "householdId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "wishlistId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 3, "name": "gameId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 4, "name": "gameName", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 5, "name": "addedByUserId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" }
+      ],
+      "comment": "Games wished for inside a specific household wishlist",
+      "indices": [
+        { "name": "idx_wishlist_content", "unique": false, "fields": ["householdId", "gameId", "gameName", "wishlistId"] }
+      ],
+      "color": "#a751e8"
+    },
+    {
+      "id": 14,
+      "name": "SessionReport",
+      "x": 760,
+      "y": 40,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "gameId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "gameName", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 3, "name": "playType", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "cardboard, boardgamearena, steam, gog, android" },
+        { "id": 4, "name": "loggingPlayerId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "the user who filed the report" },
+        { "id": 5, "name": "sessionBegin", "type": "TIME", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 6, "name": "sessionEnd", "type": "TIME", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 7, "name": "isLearning", "type": "INTEGER", "default": "false", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" }
+      ],
+      "comment": "An entry for a specific session report. playType is constrained to the five values in session_play_type",
+      "indices": [
+        { "name": "idx_session_game", "unique": false, "fields": ["gameId"] },
+        { "name": "idx_session_game_names", "unique": false, "fields": ["gameId", "gameName"] },
+        { "name": "idx_session_logging_player", "unique": false, "fields": ["loggingPlayerId"] },
+        { "name": "idx_session_game_begin", "unique": false, "fields": ["gameId", "sessionBegin"] },
+        { "name": "idx_session_begin", "unique": false, "fields": ["sessionBegin"] }
+      ],
+      "color": "#ff4f81"
+    },
+    {
+      "id": 15,
+      "name": "SessionReportExpansions",
+      "x": 760,
+      "y": 1060,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "sessionId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "expansionId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 3, "name": "expansionName", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" }
+      ],
+      "comment": "Associates game expansions used during a play session",
+      "indices": [
+        { "name": "idx_session_expansion_game", "unique": false, "fields": ["sessionId", "expansionId"] }
+      ],
+      "color": "#ff4f81"
+    },
+    {
+      "id": 16,
+      "name": "SessionReportPlayer",
+      "x": 760,
+      "y": 430,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "sessionId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "userId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "null when the record tracks a guest" },
+        { "id": 3, "name": "guestId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "null when the record tracks a user" },
+        { "id": 4, "name": "isReporter", "type": "INTEGER", "default": "false", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "back-compat display flag" },
+        { "id": 5, "name": "isStartingPlayer", "type": "INTEGER", "default": "false", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 6, "name": "score", "type": "INTEGER", "default": "0", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 7, "name": "isWinner", "type": "INTEGER", "default": "false", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" }
+      ],
+      "comment": "Tracks a specific player or user in a session report. All four indexes are partial",
+      "indices": [
+        { "name": "idx_session_players", "unique": false, "fields": ["sessionId", "userId"] },
+        { "name": "idx_session_guests", "unique": false, "fields": ["sessionId", "guestId"] },
+        { "name": "idx_session_players_by_user", "unique": false, "fields": ["userId", "sessionId"] },
+        { "name": "idx_session_guests_by_guest", "unique": false, "fields": ["guestId", "sessionId"] }
+      ],
+      "color": "#ff4f81"
+    },
+    {
+      "id": 17,
+      "name": "SessionReportDetails",
+      "x": 760,
+      "y": 820,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "sessionId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "title", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 3, "name": "content", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" }
+      ],
+      "comment": "Contains the textual content of a detailed session report",
+      "indices": [
+        { "name": "idx_session_details", "unique": false, "fields": ["sessionId"] }
+      ],
+      "color": "#ff4f81"
+    },
+    {
+      "id": 18,
+      "name": "SessionGameType",
+      "x": 760,
+      "y": 1300,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "slug", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": true, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "name", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 3, "name": "icon", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" }
+      ],
+      "comment": "Lookup table of game platforms. Seeded with cardboard, boardgamearena, steam, gog, android, tabletsimulator, drgncards",
+      "indices": [],
+      "color": "#ff4f81"
+    },
+    {
+      "id": 19,
+      "name": "GamePickerFilter",
+      "x": 1100,
+      "y": 640,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "householdId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "userId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 3, "name": "name", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "collate nocase" },
+        { "id": 4, "name": "filterJson", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "validated filter JSON" },
+        { "id": 5, "name": "createdAt", "type": "TIME", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 6, "name": "updatedAt", "type": "TIME", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" }
+      ],
+      "comment": "Saved Game Picker filters; household-scoped and named",
+      "indices": [
+        { "name": "idx_picker_filter_name", "unique": true, "fields": ["householdId", "name"] },
+        { "name": "idx_picker_filter_household", "unique": false, "fields": ["householdId", "updatedAt"] }
+      ],
+      "color": "#a751e8"
+    },
+    {
+      "id": 20,
+      "name": "GameAssets",
+      "x": 1100,
+      "y": 990,
+      "width": 240,
+      "fields": [
+        { "id": 0, "name": "id", "type": "INTEGER", "default": "", "check": "", "primary": true, "unique": true, "notNull": true, "increment": true, "comment": "" },
+        { "id": 1, "name": "gameId", "type": "INTEGER", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 2, "name": "mimetype", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 3, "name": "filename", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 4, "name": "description", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 5, "name": "createdAt", "type": "TIME", "default": "", "check": "", "primary": false, "unique": false, "notNull": true, "increment": false, "comment": "" },
+        { "id": 6, "name": "updatedAt", "type": "TIME", "default": "", "check": "", "primary": false, "unique": false, "notNull": false, "increment": false, "comment": "" },
+        { "id": 7, "name": "bucketKey", "type": "TEXT", "default": "", "check": "", "primary": false, "unique": true, "notNull": true, "increment": false, "comment": "object key in the file bucket" }
+      ],
+      "comment": "Stored binary asset metadata; bucketKey identifies the object in the file bucket",
+      "indices": [
+        { "name": "idx_game_asset_bucketKey", "unique": false, "fields": ["bucketKey"] }
+      ],
+      "color": "#ffe159"
+    }
+  ],
+  "relationships": [
+    { "id": 0, "name": "game_expansion_base_game_id_fk", "startTableId": 4, "startFieldId": 1, "endTableId": 2, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 1, "name": "game_expansion_expansion_game_id_fk", "startTableId": 4, "startFieldId": 3, "endTableId": 2, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 2, "name": "game_metadata_placement_game_id_fk", "startTableId": 6, "startFieldId": 1, "endTableId": 2, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 3, "name": "game_metadata_placement_item_id_fk", "startTableId": 6, "startFieldId": 3, "endTableId": 5, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 4, "name": "game_name_game_id_fk", "startTableId": 3, "startFieldId": 1, "endTableId": 2, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 5, "name": "user_household_user_id_fk", "startTableId": 8, "startFieldId": 1, "endTableId": 0, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 6, "name": "user_household_household_id_fk", "startTableId": 8, "startFieldId": 2, "endTableId": 7, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 7, "name": "storage_location_household_id_fk", "startTableId": 9, "startFieldId": 1, "endTableId": 7, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "Cascade" },
+    { "id": 8, "name": "storage_location_parent_id_fk", "startTableId": 9, "startFieldId": 2, "endTableId": 9, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "Restrict" },
+    { "id": 9, "name": "game_owners_household_id_fk", "startTableId": 10, "startFieldId": 1, "endTableId": 7, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 10, "name": "game_owners_game_id_fk", "startTableId": 10, "startFieldId": 2, "endTableId": 2, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 11, "name": "game_owners_game_name_fk", "startTableId": 10, "startFieldId": 3, "endTableId": 3, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 12, "name": "game_owners_game_publisher_fk", "startTableId": 10, "startFieldId": 4, "endTableId": 5, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 13, "name": "game_owners_storage_location_id_fk", "startTableId": 10, "startFieldId": 5, "endTableId": 9, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "Restrict" },
+    { "id": 14, "name": "game_loans_game_id_fk", "startTableId": 11, "startFieldId": 1, "endTableId": 10, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 15, "name": "game_loans_loaned_to_fk", "startTableId": 11, "startFieldId": 2, "endTableId": 7, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 16, "name": "wish_list_household_id_fk", "startTableId": 12, "startFieldId": 1, "endTableId": 7, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 17, "name": "wishlist_contents_household_id_fk", "startTableId": 13, "startFieldId": 1, "endTableId": 7, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 18, "name": "wishlist_contents_wishlist_id_fk", "startTableId": 13, "startFieldId": 2, "endTableId": 12, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 19, "name": "wishlist_contents_game_id_fk", "startTableId": 13, "startFieldId": 3, "endTableId": 2, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 20, "name": "wishlist_contents_game_name_fk", "startTableId": 13, "startFieldId": 4, "endTableId": 3, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 21, "name": "wishlist_contents_added_by_user_id_fk", "startTableId": 13, "startFieldId": 5, "endTableId": 0, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 22, "name": "game_picker_filter_household_id_fk", "startTableId": 19, "startFieldId": 1, "endTableId": 7, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "Cascade" },
+    { "id": 23, "name": "game_picker_filter_user_id_fk", "startTableId": 19, "startFieldId": 2, "endTableId": 0, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 24, "name": "session_report_game_id_fk", "startTableId": 14, "startFieldId": 1, "endTableId": 2, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 25, "name": "session_report_game_name_fk", "startTableId": 14, "startFieldId": 2, "endTableId": 3, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 26, "name": "session_report_logging_player_id_fk", "startTableId": 14, "startFieldId": 4, "endTableId": 0, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 27, "name": "session_report_details_session_id_fk", "startTableId": 17, "startFieldId": 1, "endTableId": 14, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 28, "name": "session_report_expansions_session_id_fk", "startTableId": 15, "startFieldId": 1, "endTableId": 14, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 29, "name": "session_report_expansions_expansion_id_fk", "startTableId": 15, "startFieldId": 2, "endTableId": 2, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 30, "name": "session_report_expansions_expansion_name_fk", "startTableId": 15, "startFieldId": 3, "endTableId": 3, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 31, "name": "session_report_player_session_id_fk", "startTableId": 16, "startFieldId": 1, "endTableId": 14, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 32, "name": "session_report_player_user_id_fk", "startTableId": 16, "startFieldId": 2, "endTableId": 0, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 33, "name": "session_report_player_guest_id_fk", "startTableId": 16, "startFieldId": 3, "endTableId": 1, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" },
+    { "id": 34, "name": "game_assets_game_id_fk", "startTableId": 20, "startFieldId": 1, "endTableId": 2, "endFieldId": 0, "cardinality": "many_to_one", "updateConstraint": "No action", "deleteConstraint": "No action" }
+  ],
+  "notes": [],
+  "subjectAreas": [],
+  "types": [],
+  "enums": [
+    { "name": "metadata_type", "values": ["designer", "artist", "publisher", "mechanic", "category"] },
+    { "name": "session_play_type", "values": ["cardboard", "boardgamearena", "steam", "gog", "android"] }
+  ],
+  "views": []
+}

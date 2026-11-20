@@ -27,21 +27,20 @@ Project Luddatumbazo {
 // -----------------------------------------------------------------------------
 
 Table User {
-  userId INTEGER [unique, increment, pk, note: 'internal identifier for this user']
-  externalId TEXT [unique, note: 'unique identifier based on the external auth being used']
+  id INTEGER [pk, unique, increment]
 
+  externalId TEXT [unique, not null, note: 'unique identifier based on the external auth being used']
   username TEXT [note: 'the login handle of the user at the external auth provider']
 
-  firstName TEXT [not null]
-  lastName TEXT [not null]
-  displayName TEXT [not null, note: 'this field is collate nocase']
+  firstName TEXT [not null, note: 'collate nocase']
+  lastName TEXT [not null, note: 'collate nocase']
+  displayName TEXT [not null, note: 'collate nocase']
 
   // SQLite generates this automatically whenever a record is added or
   // updated.
-  name GENERATED [note: 'Generated automatically by SQLite as a concatenation of firstName lastName']
+  name GENERATED [note: 'GENERATED ALWAYS AS (firstName || space || lastName) STORED']
 
   emailAddress TEXT [not null]
-
   picture TEXT [note: 'URL of the profile picture of this user']
 
   indexes {
@@ -54,18 +53,18 @@ Table User {
 // -----------------------------------------------------------------------------
 
 Table GuestUser {
-  id INTEGER [unique, increment, pk]
+  id INTEGER [pk, unique, increment]
 
-  firstName TEXT [not null, note: 'this field is collate nocase']
-  lastName TEXT [not null, note: 'this field is collate nocase']
-  displayName TEXT [not null, note: 'this field is collate nocase']
+  firstName TEXT [not null, note: 'collate nocase']
+  lastName TEXT [not null, note: 'collate nocase']
+  displayName TEXT [not null, note: 'collate nocase']
 
   // SQLite generates this automatically whenever a record is added or
   // updated.
-  name GENERATED [note: 'Generated automatically by SQLite as a concatenation of firstName lastName']
+  name GENERATED [note: 'GENERATED ALWAYS AS (firstName || space || lastName) STORED']
 
   indexes {
-    (firstName, lastName) [name: 'idx_guest_name']
+    (firstName, lastName) [name: 'idx_guest_name', unique]
   }
 
   Note: 'A guest user of the system; for participating in session reports'
@@ -90,7 +89,7 @@ Table GuestUser {
 // -----------------------------------------------------------------------------
 
 Table Game {
-  id INTEGER [unique, increment, pk]
+  id INTEGER [pk, unique, increment]
   bggId INTEGER [not null, default: 0]
 
   slug TEXT [unique, not null, note: 'the slug is based on the primary name of the game at the time it was added']
@@ -100,15 +99,20 @@ Table Game {
   minPlayers INTEGER [default: 1]
   maxPlayers INTEGER [default: 1]
   minPlayerAge INTEGER [default: 1]
-  playTime INTEGER [default: 1]
-  minPlayTime INTEGER [default: 1]
-  maxPlayTime INTEGER [default: 1]
-  complexity DECIMAL [default: 1]
+
+  playtime INTEGER [default: 1]
+  minPlaytime INTEGER [default: 1]
+  maxPlaytime INTEGER [default: 1]
+  complexity REAL [default: 1.0]
 
   officialURL TEXT [default: '']
   teachingURL TEXT [default: '', note: 'Link to a YT video that teaches this game']
 
   imagePath TEXT [default: '', note: 'a URI like cfi://imagename']
+
+  indexes {
+    slug [name: 'idx_game_slug']
+  }
 
   Note: 'A representation of a unique game'
 }
@@ -116,13 +120,19 @@ Table Game {
 // -----------------------------------------------------------------------------
 
 Table GameName {
-  id INTEGER [unique, increment, pk]
+  id INTEGER [pk, unique, increment]
   gameId INTEGER [not null, ref: > Game.id]
 
-  name TEXT [not null, note: 'this field is collate nocase']
-  isPrimary BOOLEAN [default: false, note: 'The primary is the name this is best known by']
+  name TEXT [not null, note: 'collate nocase']
+  isPrimary INTEGER [default: false, note: 'The primary is the name this is best known by']
 
-  Note: 'Associates alternate game names with game IDs'
+  indexes {
+    gameId [name: 'idx_gamename_id']
+    (gameId, isPrimary) [name: 'idx_gamename_primary']
+    name [name: 'idx_gamename_name']
+  }
+
+  Note: 'Associates alternate game names with game IDs. idx_gamename_primary is a partial unique index (WHERE isPrimary = 1)'
 }
 
 // -----------------------------------------------------------------------------
@@ -143,16 +153,23 @@ Table GameName {
 // it provides a human readable hint as to which part of the association was
 // originally missing.
 Table GameExpansion {
-    id INTEGER [unique, increment, pk]
+  id INTEGER [pk, unique, increment]
 
-    baseGameid INTEGER [null, ref: <> Game.id, note: 'is null when this game is not in the DB yet']
-    baseGameBggId INTEGER [default: 0]
-    expansionGameId INTEGER [null, ref: <> Game.id, note: 'is null when this game is not in the DB yet']
-    expansionGameBggId INTEGER [default: 0]
+  baseGameId INTEGER [ref: > Game.id, note: 'is null when this game is not in the DB yet']
+  baseGameBggId INTEGER [default: 0]
+  expansionGameId INTEGER [ref: > Game.id, note: 'is null when this game is not in the DB yet']
+  expansionGameBggId INTEGER [default: 0]
 
-    entryName TEXT [note: 'this is only used when one side of the relation is not a game, to reflect the name of that item']
+  entryName TEXT [note: 'this is only used when one side of the relation is not a game, to reflect the name of that item']
 
-    Note: 'Associates a game with an expansion for that game; one side always has a gameId, the other could be null'
+  indexes {
+    baseGameId [name: 'idx_game_expand_base']
+    expansionGameId [name: 'idx_game_expand_expansion']
+    baseGameBggId [name: 'idx_game_expand_base_bgg']
+    expansionGameBggId [name: 'idx_game_expand_expansion_bgg']
+  }
+
+  Note: 'Associates a game with an expansion for that game; one side always has a gameId, the other could be null. The bgg indexes are partial (WHERE bggId > 0)'
 }
 
 
@@ -167,21 +184,27 @@ Table GameExpansion {
 // value that is not here throws a constraint error.
 enum metadata_type {
   designer
-  publisher
   artist
-  category
+  publisher
   mechanic
+  category
 }
 
 // -----------------------------------------------------------------------------
 
 Table GameMetadata {
-  id INTEGER [unique, increment, pk]
+  id INTEGER [pk, unique, increment]
 
-  metaType metadata_type
+  metatype metadata_type
   bggId INTEGER [default: 0]
   slug TEXT [not null]
   name TEXT [not null]
+
+  indexes {
+    (metatype, bggId) [name: 'idx_metadata_type_map']
+    (metatype, slug) [name: 'idx_metadata_metaslug_map', unique]
+    slug [name: 'idx_metadata_slug_map']
+  }
 
   Note: 'Typed metadata record; each record associates with a potential BGG entry'
 }
@@ -189,16 +212,161 @@ Table GameMetadata {
 // -----------------------------------------------------------------------------
 
 // There is one row in this table for every association of a metadata item with
-// a game
+// a game.
 Table GameMetadataPlacement {
-  id INTEGER [unique, increment, pk]
+  id INTEGER [pk, unique, increment]
 
   gameId INTEGER [not null, ref: > Game.id]
 
-  metatType metadata_type [not null]
+  metatype metadata_type [not null]
   itemId INTEGER [ref: > GameMetadata.id]
 
+  indexes {
+    (gameId, metatype, itemId) [name: 'idx_metadata_place_map']
+  }
+
   Note: 'Associates known metadata records with a specific game'
+}
+
+
+// -----------------------------------------------------------------------------
+// Tables in this section are related to the ownership of games and the
+// relationships between different users.
+//
+// We take the tack of saying that games are owned or wished for not by a user
+// but by a "household" instead, so that multiple users from the same house do
+// not need to maintain their collection of games distinctly. The presumption
+// is that people living in the same house can play the same games.
+//
+// Thus, we create one or more households, assign users to one or more household
+// groups, and then associate game ownership, loans and wishlists to a household
+// instead.
+// -----------------------------------------------------------------------------
+
+Table Household {
+  id INTEGER [pk, unique, increment]
+
+  name TEXT [not null, unique]
+  slug TEXT [not null, unique]
+
+  indexes {
+    slug [name: 'idx_household_slug']
+  }
+
+  Note: 'Users can exist in one or more households; a household tracks who owns games'
+}
+
+// -----------------------------------------------------------------------------
+
+Table UserHousehold {
+  id INTEGER [pk, unique, increment]
+
+  userId INTEGER [not null, ref: > User.id]
+  householdId INTEGER [not null, ref: > Household.id]
+  isPrimary INTEGER [default: false, note: 'The primary household for this user']
+
+  indexes {
+    (userId, householdId) [name: 'idx_user_household_combo', unique]
+    householdId [name: 'idx_user_household']
+    userId [name: 'idx_user_household_primary']
+  }
+
+  Note: 'Register that a specific user resides in a specific household. idx_user_household_primary is a partial unique index (WHERE isPrimary = 1)'
+}
+
+// -----------------------------------------------------------------------------
+
+Table StorageLocation {
+  id INTEGER [pk, unique, increment]
+
+  householdId INTEGER [not null, ref: > Household.id, delete: cascade]
+  parentId INTEGER [ref: > StorageLocation.id, delete: restrict]
+  name TEXT [not null, note: 'case-insensitive; unique among siblings']
+  slug TEXT [not null, note: 'stable slug created when the location is created']
+
+  indexes {
+    (householdId, parentId, name) [name: 'idx_storage_location_sibling_name', unique]
+    (householdId, slug) [name: 'idx_storage_location_slug', unique]
+    householdId [name: 'idx_storage_location_household']
+    parentId [name: 'idx_storage_location_parent']
+  }
+
+  Note: 'Household-owned storage tree; null parent is a top-level location. The sibling index uses COALESCE(parentId, 0) so root siblings are unique too. Triggers keep parent and child in the same household'
+}
+
+// -----------------------------------------------------------------------------
+
+Table GameOwners {
+  id INTEGER [pk, unique, increment]
+
+  householdId INTEGER [not null, ref: > Household.id]
+  gameId INTEGER [not null, ref: > Game.id]
+
+  gameName INTEGER [not null, ref: > GameName.id]
+  gamePublisher INTEGER [not null, ref: > GameMetadata.id]
+
+  storageLocationId INTEGER [ref: > StorageLocation.id, delete: restrict, note: 'NULL means Unstored']
+  isOnShelf INTEGER [not null, default: 0, note: 'Only valid when storageLocationId is set']
+
+  indexes {
+    gameId [name: 'idx_game_owner_games']
+    (householdId, gameId, gameName) [name: 'idx_game_owner_list']
+    (householdId, storageLocationId, isOnShelf) [name: 'idx_game_owner_storage']
+  }
+
+  Note: 'Game ownership is tracked by household; storage is per owned copy. Triggers keep the storage location in the same household and reject on-shelf rows without a location'
+}
+
+// -----------------------------------------------------------------------------
+
+Table GameLoans {
+  id INTEGER [pk, unique, increment]
+
+  gameId INTEGER [not null, ref: > GameOwners.id]
+
+  loanedTo INTEGER [not null, ref: > Household.id]
+  loanTime DATE [not null]
+
+  Note: 'A game copy currently (or formerly) loaned to another household'
+}
+
+// -----------------------------------------------------------------------------
+
+Table WishList {
+  id INTEGER [pk, unique, increment]
+
+  householdId INTEGER [not null, ref: > Household.id]
+  name TEXT [not null]
+  slug TEXT [not null]
+
+  isRoot INTEGER [default: false]
+
+  indexes {
+    (householdId, slug) [name: 'idx_wishlist', unique]
+    householdId [name: 'idx_wishlist_roots']
+  }
+
+  Note: 'A named wishlist owned by a household; isRoot marks its default list. idx_wishlist_roots is a partial unique index (WHERE isRoot = 1)'
+}
+
+// -----------------------------------------------------------------------------
+
+Table WishlistContents {
+  id INTEGER [pk, unique, increment]
+
+  householdId INTEGER [not null, ref: > Household.id]
+  wishlistId INTEGER [not null, ref: > WishList.id]
+
+  gameId INTEGER [not null, ref: > Game.id]
+  gameName INTEGER [not null, ref: > GameName.id]
+
+  addedByUserId INTEGER [not null, ref: > User.id]
+
+  indexes {
+    (householdId, gameId, gameName, wishlistId) [name: 'idx_wishlist_content']
+  }
+
+  Note: 'Games wished for inside a specific household wishlist'
 }
 
 
@@ -207,7 +375,7 @@ Table GameMetadataPlacement {
 //
 // Session reports track the game that was played, any expansions that were used
 // as a part of the play, a title and some descriptive text, the time the
-// session started and stopped,  and a set of players and their scores.
+// session started and stopped, and a set of players and their scores.
 //
 // For the purposes of session reporting, it is possible for people that are
 // not users of the system to participate, so Guests are allowed to participate
@@ -234,37 +402,45 @@ enum session_play_type {
 // -----------------------------------------------------------------------------
 
 Table SessionReport {
-  id INTEGER [unique, increment, pk]
+  id INTEGER [pk, unique, increment]
 
-  gameID INTEGER [not null, ref: > Game.id]
+  gameId INTEGER [not null, ref: > Game.id]
   gameName INTEGER [not null, ref: > GameName.id]
   playType session_play_type
 
   // The authenticated user who filed the report. This is nullable only for
   // legacy rows from before the session reporting migration; new reports
   // always set it. It is the source of truth for who may edit a closed report.
-  loggingPlayerId INTEGER [ref: > User.userId]
+  loggingPlayerId INTEGER [ref: > User.id]
 
-  sessionBegin TIME [default: 'now()']
+  sessionBegin TIME [not null]
   sessionEnd TIME [default: null]
 
   isLearning INTEGER [default: false]
 
   indexes {
+    gameId [name: 'idx_session_game']
+    (gameId, gameName) [name: 'idx_session_game_names']
     loggingPlayerId [name: 'idx_session_logging_player']
+    (gameId, sessionBegin) [name: 'idx_session_game_begin']
+    sessionBegin [name: 'idx_session_begin']
   }
 
-  Note: 'An entry for a specific session report'
+  Note: 'An entry for a specific session report. playType is constrained to the five values in session_play_type even though SessionGameType seeds additional types'
 }
 
 // -----------------------------------------------------------------------------
 
 Table SessionReportExpansions {
-  id INTEGER [unique, increment, pk]
+  id INTEGER [pk, unique, increment]
 
-  sessionId INTEGER [not null, ref: < SessionReport.id]
-  expansionId INTEGER [not null, ref: <> Game.id]
-  expansionName INTEGER [not null, ref: <> GameName.id]
+  sessionId INTEGER [not null, ref: > SessionReport.id]
+  expansionId INTEGER [not null, ref: > Game.id]
+  expansionName INTEGER [not null, ref: > GameName.id]
+
+  indexes {
+    (sessionId, expansionId) [name: 'idx_session_expansion_game']
+  }
 
   Note: 'Entries in this table are used to associate game expansions used during a play session'
 }
@@ -272,10 +448,10 @@ Table SessionReportExpansions {
 // -----------------------------------------------------------------------------
 
 Table SessionReportPlayer {
-  id INTEGER [unique, increment, pk]
+  id INTEGER [pk, unique, increment]
 
-  sessionID INTEGER [not null, ref: - SessionReport.id]
-  userId INTEGER [ref: > User.userId, note: 'is null when the record tracks a guest']
+  sessionId INTEGER [not null, ref: > SessionReport.id]
+  userId INTEGER [ref: > User.id, note: 'is null when the record tracks a guest']
   guestId INTEGER [ref: > GuestUser.id, note: 'is null when the record tracks a user']
 
   // Display/back-compat flag: true only when this player is also the session's
@@ -284,127 +460,97 @@ Table SessionReportPlayer {
   isStartingPlayer INTEGER [default: false]
 
   score INTEGER [default: 0]
-  isWinner BOOLEAN [default: false]
+  isWinner INTEGER [default: false]
 
-  Note: 'Tracks a specific player or user in a specific session report entry'
+  indexes {
+    (sessionId, userId) [name: 'idx_session_players']
+    (sessionId, guestId) [name: 'idx_session_guests']
+    (userId, sessionId) [name: 'idx_session_players_by_user']
+    (guestId, sessionId) [name: 'idx_session_guests_by_guest']
+  }
+
+  Note: 'Tracks a specific player or user in a specific session report entry. All four indexes are partial: player indexes require the matching id to be non-null'
 }
 
 // -----------------------------------------------------------------------------
 
 Table SessionReportDetails {
-  id INTEGER [unique, increment, pk]
+  id INTEGER [pk, unique, increment]
 
-  sessionID INTEGER [not null, ref: - SessionReport.id]
+  sessionId INTEGER [not null, ref: > SessionReport.id]
   title TEXT [default: '']
-  contents TEXT [default: '']
+  content TEXT [default: '']
+
+  indexes {
+    sessionId [name: 'idx_session_details']
+  }
 
   Note: 'Contains the textual content of a detailed session report'
 }
 
-
-// -----------------------------------------------------------------------------
-// Tables in this section are related to the ownership of games and the
-// relationships between different users.
-//
-// We take the tack of saying that games are owned or wished for not by a user
-// but by a "household" instead, so that multiple users from the same house do
-// not need to maintain their collection of games distinctly. The presumption
-// is that people living in the same house can play the same games.
-//
-// Thus, we create one or more households, assign users to one or more household
-// groups, and then associate game ownership, loans and wishlists to a household
-// instead.
 // -----------------------------------------------------------------------------
 
-Table Household {
-  id INTEGER [unique, increment, pk]
+Table SessionGameType {
+  id INTEGER [pk, unique, increment]
 
-  name TEXT [not null, unique]
-  slug TEXT [not null, unique]
+  slug TEXT [unique, not null]
+  name TEXT [not null]
+  icon TEXT [not null]
+
+  Note: 'Lookup table of game platforms. Seed rows: cardboard, boardgamearena, steam, gog, android, tabletsimulator, drgncards'
+}
+
+
+// -----------------------------------------------------------------------------
+// Saved Game Picker filter sets, shared by everyone in a household. The filter
+// itself is validated JSON; the schema is the contract, not this column.
+// -----------------------------------------------------------------------------
+
+Table GamePickerFilter {
+  id INTEGER [pk, unique, increment]
+
+  householdId INTEGER [not null, ref: > Household.id, delete: cascade]
+  userId INTEGER [not null, ref: > User.id]
+
+  name TEXT [not null, note: 'collate nocase']
+  filterJson TEXT [not null]
+
+  createdAt TIME [not null]
+  updatedAt TIME [default: null]
 
   indexes {
-    slug [name: 'idx_household_slug']
+    (householdId, name) [name: 'idx_picker_filter_name', unique]
+    (householdId, updatedAt) [name: 'idx_picker_filter_household']
   }
 
-  Note: 'Users can exist in one or more households; a household tracks who owns games'
+  Note: 'Saved Game Picker filters; household-scoped and named'
 }
 
+
+// -----------------------------------------------------------------------------
+// Binary assets (images and similar) stored for games in object storage.
 // -----------------------------------------------------------------------------
 
-Table UserHousehold {
-  id INTEGER [unique, increment, pk]
+Table GameAssets {
+  id INTEGER [pk, unique, increment]
 
-  userId INTEGER [not null, ref: < User.id]
-  householdId INTEGER [not null, ref: < Household.id]
-  isPrimary BOOLEAN [default: false, note: 'The primary household for this user']
+  gameId INTEGER [not null, ref: > Game.id]
+
+  mimetype TEXT [not null]
+  filename TEXT [not null]
+
+  description TEXT [not null]
+
+  createdAt TIME [not null]
+  updatedAt TIME [default: null]
+
+  bucketKey TEXT [unique, not null]
 
   indexes {
-    (userId, householdId) [name: 'idx_user_household_combo']
-    householdId [name: 'idx_user_household']
+    bucketKey [name: 'idx_game_asset_bucketKey']
   }
 
-  Note: 'Register that a specific user resides in a specific household'
-}
-
-// -----------------------------------------------------------------------------
-
-Table StorageLocation {
-  id INTEGER [unique, increment, pk]
-
-  householdId INTEGER [not null, ref: > Household.id]
-  parentId INTEGER [ref: > StorageLocation.id]
-  name TEXT [not null, note: 'case-insensitive; unique among siblings']
-  slug TEXT [not null, note: 'stable slug created when the location is created']
-
-  indexes {
-    (householdId, parentId, name) [name: 'idx_storage_location_sibling_name']
-    (householdId, slug) [name: 'idx_storage_location_slug', unique]
-    householdId [name: 'idx_storage_location_household']
-    parentId [name: 'idx_storage_location_parent']
-  }
-
-  Note: 'Household-owned storage tree; null parent is a top-level location'
-}
-
-// -----------------------------------------------------------------------------
-
-Table GameOwners {
-  id INTEGER [unique, increment, pk]
-  householdId INTEGER [not NULL, ref: < Household.id]
-  gameId INTEGER [not NULL, ref: < Game.id]
-
-  gameName INTEGER [not NULL, ref: < GameName.id]
-  gamePublisher INTEGER [not NULL, ref: < GameMetadata.id]
-
-  storageLocationId INTEGER [ref: > StorageLocation.id, note: 'NULL means Unstored']
-  isOnShelf BOOLEAN [not null, default: false, note: 'Only valid when storageLocationId is set']
-
-  Note: 'Game ownership is tracked by household; storage is per owned copy'
-}
-
-// -----------------------------------------------------------------------------
-
-Table GameLoans {
-  id INTEGER [unique, increment, pk]
-
-  gameId INTEGER [not null, ref: < Game.id]
-
-  loanedTo INTEGER [not null, ref: < Household.id]
-  loanTime DATE [not null]
-}
-
-// -----------------------------------------------------------------------------
-
-Table Wishlist {
-  id INTEGER [unique, increment, pk]
-
-  householdId INTEGER [not NULL, ref: < Household.id]
-  gameId INTEGER [not NULL, ref: < Game.id]
-  gameName INTEGER [not NULL, ref: < GameName.id]
-
-  addedByUserId INTEGER [ref: < User.userId]
-
-  Note: 'Game wishlist is tracked by household; the wishing user is stored'
+  Note: 'Stored binary asset metadata; bucketKey identifies the object in the file bucket'
 }
 
 // -----------------------------------------------------------------------------

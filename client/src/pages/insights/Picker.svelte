@@ -173,11 +173,14 @@
 
   const metadataName = (list, id) => list.find(entry => entry.id === id)?.name ?? '';
 
-  $: activeChips = (() => {
+  // Chips describe the filter that produced a result. The game's own player
+  // count, duration and weight already sit in the pick's meta line, so they are
+  // deliberately not repeated here.
+  const filterChips = (source, categoryList, mechanicList, includeHistoryDate) => {
     const chips = [];
-    const players = rangeLabel(filters.players, filters.players.min === filters.players.max ? 'player' : 'players');
-    const time = rangeLabel(filters.time, 'min');
-    const weight = rangeLabel(filters.complexity, 'weight');
+    const players = rangeLabel(source.players, source.players.min === source.players.max ? 'player' : 'players');
+    const time = rangeLabel(source.time, 'min');
+    const weight = rangeLabel(source.complexity, 'weight');
 
     if (players !== '') {
       chips.push(players);
@@ -188,27 +191,30 @@
     if (weight !== '') {
       chips.push(`Weight ${weight}`);
     }
-    if (filters.categories.length > 0) {
-      chips.push(filters.categories
-        .map(id => metadataName(categories, id))
+    if (source.categories.length > 0) {
+      chips.push(source.categories
+        .map(id => metadataName(categoryList, id))
         .filter(name => name !== '')
-        .join(' · ') || `${filters.categories.length} categories`);
+        .join(' · ') || `${source.categories.length} categories`);
     }
-    if (filters.mechanics.length > 0) {
-      chips.push(filters.mechanics
-        .map(id => metadataName(mechanics, id))
+    if (source.mechanics.length > 0) {
+      chips.push(source.mechanics
+        .map(id => metadataName(mechanicList, id))
         .filter(name => name !== '')
-        .join(' · ') || `${filters.mechanics.length} mechanics`);
+        .join(' · ') || `${source.mechanics.length} mechanics`);
     }
-    if (filters.history.enabled) {
-      chips.push(filters.history.mode === 'include' ? 'Played recently' : 'New to us');
-      if (filters.history.from !== '') {
-        chips.push(`since ${filters.history.from}`);
+    if (source.history.enabled) {
+      chips.push(source.history.mode === 'include' ? 'Played recently' : 'New to us');
+      if (includeHistoryDate && source.history.from !== '') {
+        chips.push(`since ${source.history.from}`);
       }
     }
 
     return chips;
-  })();
+  };
+
+  $: activeChips = filterChips(filters, categories, mechanics, true);
+  $: pickChips = filterChips(filters, categories, mechanics, false);
 
   $: activeSummary = activeChips.length === 0
     ? 'no filters'
@@ -1106,14 +1112,14 @@
                 {gamePlayers(picked)} · {gameTime(picked)} · weight {weight(picked)}
               </p>
 
-              <div class="card-chips">
-                <span>{gamePlayers(picked)}</span>
-                <span>{gameTime(picked)}</span>
-                <span>Weight {weight(picked)}</span>
-                {#if filters.history.enabled}
-                  <span>{filters.history.mode === 'include' ? 'Played recently' : 'New to us'}</span>
-                {/if}
-              </div>
+              {#if pickChips.length > 0}
+                <div class="card-chips" aria-label="Filters used for this pick">
+                  <span class="criteria-label">Filtered by</span>
+                  {#each pickChips as chip}
+                    <span>{chip}</span>
+                  {/each}
+                </div>
+              {/if}
 
               {#if result.onlyMatch}
                 <p class="only-match">
@@ -1527,6 +1533,12 @@
     border-radius: 999px;
     background: var(--wa-color-surface-raised);
     font-size: var(--wa-font-size-s);
+  }
+
+  .card-chips .criteria-label {
+    padding: 2px 0;
+    background: none;
+    color: var(--wa-color-text-quiet);
   }
 
   .only-match {
