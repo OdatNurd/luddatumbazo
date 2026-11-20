@@ -195,25 +195,38 @@ export async function dbPickerSearch(ctx, options = {}) {
     return { picked: null, matches: [], total: 0, onlyMatch: false, warnings: [] };
   }
 
-  const where = [
-    'EXISTS (SELECT 1 FROM GameOwners AS o WHERE o.gameId = g.id AND o.householdId = ?)'
-  ];
+  // Anchor the query on the household's ownership rows. Starting from GameName
+  // makes SQLite scan every name in the database and filter afterwards.
+  const where = [];
   const params = [householdId];
 
   // Pure expansions are not pickable. A game that is both an expansion and a
-  // base game stays eligible.
+  // base game stays eligible. Local and BGG ids are separate EXISTS terms so
+  // each one can use its own index; an OR here falls back to a table scan. The
+  // explicit `> 0` terms match the partial indexes' predicates.
   where.push(`NOT (
-    EXISTS (
-      SELECT 1
-        FROM GameExpansion AS e
-       WHERE e.expansionGameId = g.id
-          OR (g.bggId > 0 AND e.expansionGameBggId = g.bggId)
+    (
+      EXISTS (
+        SELECT 1 FROM GameExpansion AS e WHERE e.expansionGameId = g.id
+      )
+      OR EXISTS (
+        SELECT 1 FROM GameExpansion AS e
+         WHERE g.bggId > 0
+           AND e.expansionGameBggId = g.bggId
+           AND e.expansionGameBggId > 0
+      )
     )
-    AND NOT EXISTS (
-      SELECT 1
-        FROM GameExpansion AS b
-       WHERE b.baseGameId = g.id
-          OR (g.bggId > 0 AND b.baseGameBggId = g.bggId)
+    AND NOT
+    (
+      EXISTS (
+        SELECT 1 FROM GameExpansion AS b WHERE b.baseGameId = g.id
+      )
+      OR EXISTS (
+        SELECT 1 FROM GameExpansion AS b
+         WHERE g.bggId > 0
+           AND b.baseGameBggId = g.bggId
+           AND b.baseGameBggId > 0
+      )
     )
   )`);
 
@@ -321,9 +334,10 @@ export async function dbPickerSearch(ctx, options = {}) {
            g.maxPlaytime,
            g.complexity,
            g.imagePath
-      FROM Game AS g
+      FROM GameOwners AS go
+      JOIN Game AS g ON g.id = go.gameId
       JOIN GameName AS gn ON gn.gameId = g.id AND gn.isPrimary = 1
-     WHERE ${where.join(' AND ')}
+     WHERE go.householdId = ?${where.length === 0 ? '' : ` AND ${where.join(' AND ')}`}
      ORDER BY RANDOM()
      LIMIT 500
   `).bind(...params).all();

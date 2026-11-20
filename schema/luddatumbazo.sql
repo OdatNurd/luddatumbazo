@@ -15,6 +15,10 @@ CREATE TABLE GameExpansion (
 );
 CREATE INDEX idx_game_expand_base ON GameExpansion(baseGameId);
 CREATE INDEX idx_game_expand_expansion ON GameExpansion(expansionGameId);
+CREATE INDEX idx_game_expand_base_bgg ON GameExpansion(baseGameBggId)
+  WHERE baseGameBggId > 0;
+CREATE INDEX idx_game_expand_expansion_bgg ON GameExpansion(expansionGameBggId)
+  WHERE expansionGameBggId > 0;
 
 
 --------------------------------------------------------------------------------

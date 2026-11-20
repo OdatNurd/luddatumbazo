@@ -871,7 +871,7 @@
           <div class="save-form">
             <wa-input label="Filter name" maxlength="60" value={saveName}
                       placeholder="Friday night"
-                      on:change={event => saveName = event.target.value}></wa-input>
+                      on:input={event => saveName = event.target.value}></wa-input>
 
             {#if saveError !== null}
               <span class="field-error">{saveError}</span>

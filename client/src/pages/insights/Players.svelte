@@ -283,11 +283,11 @@
     : playerPlays.reduce((total, value) => total + value, 0) / playerPlays.length;
 
   const warningText = warning => ({
-    'undecided-sessions': `${number(warning.count)} multiplayer sessions had no winner and are excluded from win rates.`,
-    'solo-sessions': `${number(warning.count)} solo plays count as plays, not wins.`,
-    'missing-starters': `${number(warning.count)} sessions had no starting player; seat stats use only the sessions where one was recorded.`,
-    'invalid-durations': `${number(warning.count)} sessions ended at or before they started and are excluded from duration averages.`,
-    'learning-excluded': `${number(warning.count)} learning sessions are excluded.`
+    'undecided-sessions': `${number(warning.count)} multiplayer ${warning.count === 1 ? 'session had' : 'sessions had'} no winner and ${warning.count === 1 ? 'is' : 'are'} excluded from win rates.`,
+    'solo-sessions': `${number(warning.count)} solo ${warning.count === 1 ? 'play counts' : 'plays count'} as plays, not wins.`,
+    'missing-starters': `${number(warning.count)} ${warning.count === 1 ? 'session had' : 'sessions had'} no starting player; seat stats use only the sessions where one was recorded.`,
+    'invalid-durations': `${number(warning.count)} ${warning.count === 1 ? 'session ended' : 'sessions ended'} at or before ${warning.count === 1 ? 'it' : 'they'} started and ${warning.count === 1 ? 'is' : 'are'} excluded from duration averages.`,
+    'learning-excluded': `${number(warning.count)} learning ${warning.count === 1 ? 'session is' : 'sessions are'} excluded.`
   })[warning.code] ?? warning.code;
 </script>
 
@@ -712,8 +712,26 @@
     font-size: var(--wa-font-size-s);
   }
 
-  .stats-summary {
-    --app-summary-min: 210px;
+  /* The persistent sidebar leaves about 538px of content at a 768px viewport. A
+     160px card minimum keeps six summary cards at three across instead of
+     letting them collapse to two. Wider desktop windows use the shared default
+     and fit all six on one row. */
+  @media (min-width: 1024px) and (max-width: 1199px) {
+    .stats-summary {
+      --app-summary-min: 210px;
+    }
+  }
+
+  @media (min-width: 721px) and (max-width: 1023px) {
+    .stats-summary {
+      --app-summary-min: 160px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .stats-summary {
+      --app-summary-min: 200px;
+    }
   }
 
   .stats-columns {
@@ -874,6 +892,23 @@
     gap: var(--app-page-head-margin);
   }
 
+  @media (max-width: 1100px) {
+    .stats-columns {
+      flex-direction: column;
+    }
+
+    .stats-columns > :global(.panel) {
+      flex: 1 1 auto;
+      width: 100%;
+    }
+
+    .seat-card,
+    .range-card {
+      flex: 1 1 auto;
+      width: 100%;
+    }
+  }
+
   @media (max-width: 1023px) {
     .field {
       flex: 1 1 160px;
@@ -891,16 +926,6 @@
 
     .switch-field {
       flex: 1 1 100%;
-    }
-
-    .stats-columns {
-      flex-direction: column;
-    }
-
-    .seat-card,
-    .range-card {
-      flex: 1 1 auto;
-      width: 100%;
     }
 
     .table-wrap {
