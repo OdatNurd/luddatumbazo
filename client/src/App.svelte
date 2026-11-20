@@ -29,6 +29,8 @@
   import SessionList from '$pages/sessions/List.svelte';
   import SessionDetails from '$pages/sessions/Details.svelte';
 
+  import PlayerStats from '$pages/insights/Players.svelte';
+
   import MetaList from '$pages/metadata/List.svelte';
   import MetaDetails from '$pages/metadata/Details.svelte';
 
@@ -50,6 +52,8 @@
 
     { path: '/sessions',          component: SessionList,    props: {} },
     { path: '/session/:id',       component: SessionDetails, props: {} },
+
+    { path: '/insights/players',  component: PlayerStats,    props: {} },
 
     { path: '/categories',  component: MetaList,    props: { metaType: 'category'  } },
     { path: '/mechanics',   component: MetaList,    props: { metaType: 'mechanic'  } },

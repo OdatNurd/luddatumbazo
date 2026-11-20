@@ -9,6 +9,7 @@ import { session } from './session.js';
 import { guest } from './guest.js';
 import { metadata } from './metadata.js';
 import { bgg } from './bgg.js';
+import { insights } from './insights.js';
 
 
 /******************************************************************************/
@@ -25,6 +26,7 @@ export const api = {
   session,
   guest,
   bgg,
+  insights,
 }
 
 

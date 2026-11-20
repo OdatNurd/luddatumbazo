@@ -20,6 +20,7 @@
     { label: "Collection",  value: "#/games/owned",  icon: "star-fill", requiresHousehold: true },
     { label: "Sessions",    value: "#/sessions",     icon: "calendar-event" },
     { label: "---" },
+    { label: "Player Stats", value: "#/insights/players", icon: "graph-up" },
     { label: "Categories",  value: "#/categories", icon: "bookmark-star-fill" },
     { label: "Mechanics",   value: "#/mechanics",  icon: "gear-fill" },
     { label: "Designers",   value: "#/designers",  icon: "pencil-fill" },
