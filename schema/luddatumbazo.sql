@@ -310,6 +310,31 @@ CREATE INDEX idx_wishlist_content ON WishlistContents(householdId, gameId, gameN
 --------------------------------------------------------------------------------
 
 
+/* Saved Game Picker filter sets, shared by everyone in a household. The filter
+ * itself is validated JSON; the schema is the contract, not this column. */
+DROP TABLE IF EXISTS GamePickerFilter;
+CREATE TABLE GamePickerFilter (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    householdId INTEGER NOT NULL REFERENCES Household(id) ON DELETE CASCADE,
+    userId INTEGER NOT NULL REFERENCES User(id),
+
+    name TEXT NOT NULL COLLATE NOCASE,
+    filterJson TEXT NOT NULL,
+
+    createdAt TIME NOT NULL,
+    updatedAt TIME DEFAULT(NULL)
+);
+
+CREATE UNIQUE INDEX idx_picker_filter_name
+  ON GamePickerFilter(householdId, name);
+CREATE INDEX idx_picker_filter_household
+  ON GamePickerFilter(householdId, updatedAt DESC);
+
+
+--------------------------------------------------------------------------------
+
+
 DROP TABLE IF EXISTS GuestUser;
 CREATE TABLE GuestUser (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -419,6 +444,22 @@ CREATE TABLE SessionReport (
 CREATE INDEX idx_session_game ON SessionReport(gameId);
 CREATE INDEX idx_session_game_names ON SessionReport(gameId, gameName);
 CREATE INDEX idx_session_logging_player ON SessionReport(loggingPlayerId);
+
+-- Person-first lookups for the Insights reports. The existing player indexes
+-- lead with sessionId, which suits loading one session but not answering
+-- "which sessions include this person".
+CREATE INDEX idx_session_players_by_user
+  ON SessionReportPlayer(userId, sessionId)
+  WHERE userId IS NOT NULL;
+CREATE INDEX idx_session_guests_by_guest
+  ON SessionReportPlayer(guestId, sessionId)
+  WHERE guestId IS NOT NULL;
+
+-- Game and date scoped reports, used by both Insights pages.
+CREATE INDEX idx_session_game_begin
+  ON SessionReport(gameId, sessionBegin);
+CREATE INDEX idx_session_begin
+  ON SessionReport(sessionBegin);
 
 
 --------------------------------------------------------------------------------

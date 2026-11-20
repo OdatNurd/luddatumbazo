@@ -38,7 +38,7 @@ export const SessionIDSchema = z.object({
  * The accepted form is the stable key used by the list response: `u:<id>` for a
  * user and `g:<id>` for a guest. Duplicates collapse so that `match=all` counts
  * identities rather than repeated query values. */
-const PlayerFilterSchema = z.union([
+export const PlayerFilterSchema = z.union([
   z.string().default(''),
   z.array(z.string()).default([])
 ])
